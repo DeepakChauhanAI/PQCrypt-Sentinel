@@ -91,26 +91,6 @@ interface Asset {
   first_scan_group_name?: string | null;
 }
 
-  // Copy helper
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const copyToClipboard = async (text: string, id: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch {
-      // fallback for older browsers
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    }
-  };
-
 export default function Assets() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,6 +113,26 @@ export default function Assets() {
   // Rescan State
   const [rescanning, setRescanning] = useState(false);
   const [rescanSuccess, setRescanSuccess] = useState<string | null>(null);
+
+  // Copy helper
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copyToClipboard = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
 
   const fetchAssets = async () => {
     try {
