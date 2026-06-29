@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TLS — Complete Reference for the PQC Scanner Project</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1eb; --surface: #faf8f3; --surface2: #ede9df;
+    --border: #d4cfc4; --border2: #c5bfb2;
+    --ink: #1c1a16; --ink2: #3d3a34; --muted: #7a7469;
+    --accent: #1a3a5c; --accent-light: #2c5f8a;
+    --red: #8b2a1a; --orange: #9a4a10; --yellow: #7a6010; --green: #1a5c35;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --display: 'Playfair Display', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.65; }
+
+  /* HEADER */
+  .site-header { background: var(--accent); color: #fff; padding: 48px 0 40px; border-bottom: 3px solid #0d2240; }
+  .header-inner { max-width: 1100px; margin: 0 auto; padding: 0 40px; }
+  .header-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .header-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.15); max-width: 200px; }
+  h1.site-title { font-family: var(--display); font-size: clamp(28px,4vw,48px); font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; color: #fff; margin-bottom: 16px; }
+  h1.site-title span { color: #7ab3d4; }
+  .header-meta { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.45); display: flex; gap: 24px; flex-wrap: wrap; }
+
+  /* NAV */
+  .tab-nav { background: var(--ink); position: sticky; top: 0; z-index: 100; border-bottom: 2px solid #0d0c0a; }
+  .tab-nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 40px; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .tab-nav-inner::-webkit-scrollbar { display: none; }
+  .tab-btn { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.4); background: none; border: none; padding: 14px 18px; cursor: pointer; white-space: nowrap; transition: all 0.2s; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .tab-btn:hover { color: rgba(255,255,255,0.75); }
+  .tab-btn.active { color: #fff; border-bottom-color: #7ab3d4; }
+
+  /* MAIN */
+  .main { max-width: 1100px; margin: 0 auto; padding: 40px 40px 80px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeUp 0.3s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+  /* SECTION TITLES */
+  .section-title { font-family: var(--display); font-size: 26px; font-weight: 700; color: var(--accent); margin-bottom: 6px; margin-top: 44px; padding-bottom: 10px; border-bottom: 2px solid var(--accent); }
+  .section-title:first-child { margin-top: 0; }
+  .section-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 22px; }
+  .content-h2 { font-family: var(--display); font-size: 19px; font-weight: 700; color: var(--ink); margin: 36px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .content-h2:first-child { margin-top: 0; }
+  .content-h3 { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.12em; margin: 26px 0 8px; }
+
+  /* PROSE */
+  .prose { color: var(--ink2); font-size: 13.5px; line-height: 1.75; margin-bottom: 18px; max-width: 860px; }
+  .prose strong { color: var(--ink); }
+  .prose code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border: 1px solid var(--border); }
+
+  /* BOXES */
+  .infobox { background: #e8f0f8; border: 1px solid #b8cfe0; border-left: 4px solid var(--accent); padding: 16px 20px; margin-bottom: 22px; font-size: 13px; color: var(--accent); line-height: 1.65; }
+  .infobox strong { display: block; margin-bottom: 4px; font-weight: 600; }
+  .warnbox { background: #fdf5e0; border: 1px solid #e8d080; border-left: 4px solid var(--yellow); padding: 16px 20px; margin-bottom: 22px; font-size: 13px; color: #5a4a10; line-height: 1.65; }
+  .warnbox strong { display: block; margin-bottom: 4px; color: var(--yellow); font-weight: 600; }
+  .greenbox { background: #e6f4ea; border: 1px solid #a8dab5; border-left: 4px solid var(--green); padding: 16px 20px; margin-bottom: 22px; font-size: 13px; color: #1a4a28; line-height: 1.65; }
+  .greenbox strong { display: block; margin-bottom: 4px; font-weight: 600; color: var(--green); }
+  .redbox { background: #f9ecea; border: 1px solid #e8bdb8; border-left: 4px solid var(--red); padding: 16px 20px; margin-bottom: 22px; font-size: 13px; color: #5a1a10; line-height: 1.65; }
+  .redbox strong { display: block; margin-bottom: 4px; font-weight: 600; color: var(--red); }
+
+  /* TABLES */
+  .table-wrap { overflow-x: auto; margin-bottom: 26px; border: 1px solid var(--border2); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 480px; }
+  thead tr { background: var(--accent); color: #fff; }
+  thead th { padding: 10px 14px; text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 10px 14px; vertical-align: top; color: var(--ink2); line-height: 1.5; }
+  tbody tr:nth-child(even) { background: var(--surface); }
+  tbody tr:nth-child(even):hover { background: var(--surface2); }
+  td code, th code { font-family: var(--mono); font-size: 11px; background: rgba(255,255,255,0.15); padding: 1px 4px; }
+  td code { background: var(--surface2); border: 1px solid var(--border); color: var(--accent); }
+
+  /* CODE BLOCKS */
+  .code-block { background: #1c1a16; color: #e8e4da; font-family: var(--mono); font-size: 12px; padding: 20px 24px; overflow-x: auto; margin-bottom: 22px; line-height: 1.6; border-left: 3px solid var(--accent-light); }
+  .code-block .cm { color: #7a7469; }
+  .code-block .st { color: #7ab3d4; }
+  .code-block .kw { color: #c8a060; }
+  .code-block .fn { color: #90c090; }
+  .code-block .vl { color: #c8e890; }
+  .code-block .hl { color: #ffd080; }
+  .code-block .rd { color: #e87a6a; }
+  .code-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; margin-top: 18px; }
+
+  /* BADGES */
+  .badge { display: inline-block; font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; font-weight: 600; white-space: nowrap; vertical-align: middle; }
+  .badge-safe  { background: #d8f0e4; color: var(--green); border: 1px solid #a8d8bc; }
+  .badge-vuln  { background: #f5e0dd; color: var(--red); border: 1px solid #e8bdb8; }
+  .badge-hybrid{ background: #daeaf5; color: var(--accent); border: 1px solid #b0ccdf; }
+  .badge-dead  { background: var(--surface2); color: var(--muted); border: 1px solid var(--border2); }
+  .badge-warn  { background: #fdf5d8; color: var(--yellow); border: 1px solid #e8d888; }
+
+  /* HANDSHAKE FLOW */
+  .handshake-flow { display: flex; flex-direction: column; gap: 0; margin-bottom: 24px; }
+  .hs-step { display: grid; grid-template-columns: 40px 90px 1fr; border: 1px solid var(--border2); border-bottom: none; background: var(--surface); transition: background 0.15s; }
+  .hs-step:last-child { border-bottom: 1px solid var(--border2); }
+  .hs-step:hover { background: var(--surface2); }
+  .hs-num { background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 17px; font-weight: 900; color: #7ab3d4; border-right: 1px solid #0d2240; }
+  .hs-dir { padding: 12px 14px; border-right: 1px solid var(--border2); display: flex; align-items: center; }
+  .hs-dir-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); line-height: 1.4; }
+  .hs-dir-arrow { font-size: 16px; color: var(--accent); margin-top: 3px; }
+  .hs-body { padding: 12px 16px; }
+  .hs-title { font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 4px; }
+  .hs-desc { font-size: 12.5px; color: var(--ink2); line-height: 1.55; }
+  .hs-mono { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+  .hs-pqc { font-family: var(--mono); font-size: 9px; margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px; }
+
+  /* CIPHER SUITE DECODER */
+  .suite-decoder { background: var(--surface); border: 1px solid var(--border2); margin-bottom: 22px; overflow: hidden; }
+  .suite-decoder-header { background: #1c1a16; color: #e8e4da; font-family: var(--mono); font-size: 13px; padding: 14px 20px; letter-spacing: 0.05em; }
+  .suite-decoder-header .vuln { color: #e87a6a; }
+  .suite-decoder-header .safe { color: #90c090; }
+  .suite-parts { display: grid; padding: 0; }
+  .suite-part { display: grid; grid-template-columns: 200px 1fr auto; border-bottom: 1px solid var(--border); padding: 11px 20px; gap: 16px; align-items: start; transition: background 0.15s; }
+  .suite-part:last-child { border-bottom: none; }
+  .suite-part:hover { background: var(--surface2); }
+  .suite-part-name { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); }
+  .suite-part-desc { font-size: 12.5px; color: var(--ink2); line-height: 1.5; }
+  .suite-part-status { white-space: nowrap; }
+
+  /* COMPONENT STACK */
+  .comp-row { display: grid; grid-template-columns: 220px 180px 1fr 100px; border: 1px solid var(--border2); border-bottom: none; background: var(--surface); transition: background 0.15s; }
+  .comp-row:last-child { border-bottom: 1px solid var(--border2); }
+  .comp-row:hover { background: var(--surface2); }
+  .comp-row.header { background: var(--surface2); }
+  .comp-cell { padding: 10px 14px; border-right: 1px solid var(--border); font-size: 12.5px; color: var(--ink2); }
+  .comp-cell:last-child { border-right: none; text-align: center; }
+  .comp-cell.label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .comp-name { font-weight: 600; color: var(--ink); margin-bottom: 2px; font-size: 12.5px; }
+  .comp-detail { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+  /* OUTPUT BLOCK */
+  .output-block { background: #1c1a16; color: #e8e4da; font-family: var(--mono); font-size: 12px; padding: 20px 24px; margin-bottom: 22px; line-height: 1.7; border-left: 3px solid var(--accent-light); overflow-x: auto; }
+  .output-block .host { color: #ffd080; font-weight: 600; }
+  .output-block .pqc-yes { color: #90c090; }
+  .output-block .pqc-no { color: #e87a6a; }
+  .output-block .lib { color: #7ab3d4; }
+  .output-block .port { color: var(--muted); }
+
+  /* TERM CARDS */
+  .terms-grid { display: flex; flex-direction: column; gap: 2px; margin-bottom: 24px; }
+  .term-row { display: grid; grid-template-columns: 220px 1fr; border: 1px solid var(--border2); background: var(--surface); transition: background 0.15s; }
+  .term-row:hover { background: var(--surface2); }
+  .term-name { padding: 11px 16px; font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); border-right: 1px solid var(--border2); background: var(--surface2); }
+  .term-def { padding: 11px 16px; font-size: 12.5px; color: var(--ink2); line-height: 1.55; }
+
+  /* VFLOW */
+  .vflow { display: flex; flex-direction: column; gap: 0; margin-bottom: 22px; }
+  .vflow-step { display: grid; grid-template-columns: 44px 1fr; border: 1px solid var(--border2); border-bottom: none; background: var(--surface); }
+  .vflow-step:last-child { border-bottom: 1px solid var(--border2); }
+  .vflow-step:hover { background: var(--surface2); }
+  .vflow-left { background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 16px; font-weight: 900; color: #7ab3d4; border-right: 1px solid #0d2240; }
+  .vflow-right { padding: 12px 16px; }
+  .vflow-title { font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 3px; }
+  .vflow-desc { font-size: 12.5px; color: var(--ink2); line-height: 1.55; }
+  .vflow-mono { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* TAGS */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .tag { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; padding: 2px 7px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); text-transform: uppercase; }
+  .tag.g { background: #e6f4ea; color: var(--green); border-color: #a8dab5; }
+  .tag.r { background: #f5e0dd; color: var(--red); border-color: #e8bdb8; }
+  .tag.b { background: #daeaf5; color: var(--accent); border-color: #b0ccdf; }
+
+  /* SITE FOOTER */
+  .site-footer { background: var(--ink); color: rgba(255,255,255,0.3); font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; padding: 20px 40px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+  @media (max-width: 768px) {
+    .header-inner, .main { padding: 24px 20px; }
+    .tab-nav-inner { padding: 0 20px; }
+    .suite-part { grid-template-columns: 1fr; gap: 6px; }
+    .comp-row { grid-template-columns: 1fr 1fr; }
+    .comp-row .comp-cell:nth-child(2), .comp-row .comp-cell:nth-child(3) { display: none; }
+    .term-row { grid-template-columns: 1fr; }
+    .term-name { border-right: none; border-bottom: 1px solid var(--border2); }
+    .hs-step { grid-template-columns: 36px 1fr; }
+    .hs-dir { display: none; }
+    .site-footer { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-eyebrow">PQC Scanner · Protocol Reference</div>
+    <h1 class="site-title">TLS<br><span>Complete Reference Guide</span></h1>
+    <div class="header-meta">
+      <span>May 2026 · Internal Reference</span>
+      <span>12 Sections · Protocol Internals · PQC Handshake · Scanner Implications</span>
+      <span>RFC 8446 · RFC 8996 · FIPS 203/204/205</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="showTab('t1',this)">01 · The Misconception</button>
+    <button class="tab-btn" onclick="showTab('t2',this)">02 · Version Timeline</button>
+    <button class="tab-btn" onclick="showTab('t3',this)">03 · Handshake Deep Dive</button>
+    <button class="tab-btn" onclick="showTab('t4',this)">04 · PQC in TLS</button>
+    <button class="tab-btn" onclick="showTab('t5',this)">05 · Per-Component TLS</button>
+    <button class="tab-btn" onclick="showTab('t6',this)">06 · Scanner Implications</button>
+    <button class="tab-btn" onclick="showTab('t7',this)">07 · Cipher Suite Reference</button>
+    <button class="tab-btn" onclick="showTab('t8',this)">08 · Glossary</button>
+  </div>
+</nav>
+
+<main class="main">
+
+
+<!-- ============================================================ -->
+<!-- TAB 1: THE MISCONCEPTION                                     -->
+<!-- ============================================================ -->
+<div id="t1" class="tab-panel active">
+
+  <div class="section-title">The Common Misconception</div>
+  <div class="section-sub">Why "upgrade to TLS 1.3 and you're safe" is wrong — and what the scanner actually needs to check</div>
+
+  <div class="infobox">
+    <strong>The wrong mental model</strong>
+    "Older TLS versions used cryptographically vulnerable encryption, and newer versions don't." This is a common but slightly wrong way to think about it. Old TLS versions were deprecated for two entirely different reasons — and only one of them is fixed by upgrading the TLS version.
+  </div>
+
+  <div class="content-h2">Two Separate Vulnerability Stories</div>
+  <p class="prose">The deprecation of TLS 1.0 and 1.1 happened for one reason. The PQC migration of TLS 1.3 is happening for a completely different reason. They are separate problems, requiring separate fixes. A PQC scanner needs to track both independently.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Reason for deprecation / concern</th><th>Fixed by upgrading TLS version?</th><th>What fixes it?</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Protocol design weaknesses</strong> — how the protocol handled padding, compression, renegotiation (BEAST, POODLE, CRIME, ROBOT attacks)</td>
+          <td><span class="badge badge-safe">Yes</span></td>
+          <td>TLS 1.2 and TLS 1.3 redesigned the protocol. These attacks are not possible against a correctly implemented TLS 1.3 server.</td>
+        </tr>
+        <tr>
+          <td><strong>Weak or quantum-vulnerable public-key algorithms</strong> — RSA, ECDSA, DH, ECDH used inside the handshake</td>
+          <td><span class="badge badge-vuln">No</span></td>
+          <td>Replacing the algorithms inside the handshake with PQC equivalents (ML-KEM for key exchange, ML-DSA for signatures). TLS version is irrelevant to this problem.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="warnbox">
+    <strong>The critical implication for the scanner</strong>
+    A TLS 1.3 endpoint using X25519 for key exchange will pass every classic TLS security check — correct version, strong cipher, perfect forward secrecy. It will still be flagged as quantum-vulnerable by the PQC scanner, because X25519 (ECDH) is broken by Shor's algorithm. TLS version and PQC readiness are orthogonal measurements. The scanner must check both.
+  </div>
+
+  <div class="content-h2">The Protocol Attack Family (Story A)</div>
+  <p class="prose">These are the named attacks that killed TLS 1.0 and 1.1. They are all protocol-level weaknesses — problems with how the handshake was designed, not with the underlying math of RSA or ECDH. Moving to TLS 1.2 or 1.3 closes all of these.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Attack</th><th>Year</th><th>What it exploited</th><th>TLS versions affected</th></tr></thead>
+      <tbody>
+        <tr><td><strong>BEAST</strong></td><td>2011</td><td>CBC-mode encryption with predictable IVs in TLS 1.0 — allowed plaintext recovery</td><td>TLS 1.0 only</td></tr>
+        <tr><td><strong>POODLE</strong></td><td>2014</td><td>SSL 3.0's CBC padding handling — forced downgrade to SSL 3.0, then exploited</td><td>SSL 3.0 (POODLE v2 hit TLS 1.x)</td></tr>
+        <tr><td><strong>CRIME</strong></td><td>2012</td><td>TLS compression — compressed data leaked info about the plaintext via size differences</td><td>TLS 1.0, 1.1, 1.2 with compression</td></tr>
+        <tr><td><strong>ROBOT</strong></td><td>2017</td><td>RSA PKCS#1 v1.5 padding oracle in TLS 1.2 implementations — allowed RSA decryption</td><td>TLS 1.2 implementations (not the protocol itself)</td></tr>
+        <tr><td><strong>DROWN</strong></td><td>2016</td><td>SSLv2 export cipher suites — servers supporting both SSLv2 and TLS 1.x were vulnerable</td><td>Servers with SSLv2 enabled</td></tr>
+        <tr><td><strong>SWEET32</strong></td><td>2016</td><td>64-bit block ciphers (3DES) — birthday attacks on long sessions</td><td>Any TLS version using 3DES</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">The Public-Key Algorithm Problem (Story B — PQC)</div>
+  <p class="prose">Inside every TLS handshake, regardless of version, there are three categories of public-key operations. Every standard algorithm currently used in all three categories is broken by Shor's algorithm on a sufficiently powerful quantum computer.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Operation</th><th>Purpose</th><th>Classical algorithms in use</th><th>PQC replacement</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Key Exchange</strong></td>
+          <td>How both sides agree on a shared session key without ever sending it over the network</td>
+          <td>RSA key transport, (EC)DHE, ECDH, X25519 — all quantum-vulnerable</td>
+          <td>ML-KEM (FIPS 203) — as standalone or hybrid with X25519</td>
+        </tr>
+        <tr>
+          <td><strong>Server Authentication</strong></td>
+          <td>Proof that the server really is who the certificate says it is — prevents impersonation</td>
+          <td>RSA-PSS, ECDSA, Ed25519 — all quantum-vulnerable</td>
+          <td>ML-DSA (FIPS 204), SLH-DSA (FIPS 205), Falcon</td>
+        </tr>
+        <tr>
+          <td><strong>Client Authentication</strong> (optional mTLS)</td>
+          <td>Proof that the client holds a specific private key — used in mTLS, device auth, smartcards</td>
+          <td>Same as server auth — RSA-PSS, ECDSA — quantum-vulnerable</td>
+          <td>ML-DSA, SLH-DSA</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="greenbox">
+    <strong>What is NOT quantum-vulnerable in TLS</strong>
+    AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305 (bulk data encryption) — all safe. SHA-256, SHA-384 (hash / HMAC) — safe at current sizes. HKDF key derivation — safe. The quantum vulnerability is exclusively in the public-key operations in the handshake phase. Once the session key is established via a safe key exchange, the data transmission is quantum-safe.
+  </div>
+
+</div><!-- /t1 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 2: VERSION TIMELINE                                      -->
+<!-- ============================================================ -->
+<div id="t2" class="tab-panel">
+
+  <div class="section-title">TLS Version Timeline</div>
+  <div class="section-sub">Every version from SSL 2.0 to TLS 1.3 — what was wrong, when it died, and what the scanner flags</div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Version</th><th>Year</th><th>Status</th><th>Scanner finding</th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>SSL 2.0</strong></td>
+          <td>1995</td>
+          <td><span class="badge badge-dead">Dead since 2011</span></td>
+          <td><span class="badge badge-vuln">Critical — flag immediately</span></td>
+          <td>Broken handshake design, weak MAC (MD5), no protection against protocol downgrade</td>
+        </tr>
+        <tr>
+          <td><strong>SSL 3.0</strong></td>
+          <td>1996</td>
+          <td><span class="badge badge-dead">Dead since 2015</span></td>
+          <td><span class="badge badge-vuln">Critical — flag immediately</span></td>
+          <td>POODLE attack (2014) — CBC padding oracle. RFC 7568 formally prohibited it.</td>
+        </tr>
+        <tr>
+          <td><strong>TLS 1.0</strong></td>
+          <td>1999</td>
+          <td><span class="badge badge-dead">Deprecated 2021 (RFC 8996)</span></td>
+          <td><span class="badge badge-vuln">High — flag as deprecated</span></td>
+          <td>BEAST attack on CBC mode, vulnerable to downgrade to SSL 3.0. IETF formally deprecated in RFC 8996.</td>
+        </tr>
+        <tr>
+          <td><strong>TLS 1.1</strong></td>
+          <td>2006</td>
+          <td><span class="badge badge-dead">Deprecated 2021 (RFC 8996)</span></td>
+          <td><span class="badge badge-vuln">High — flag as deprecated</span></td>
+          <td>Same family of issues as TLS 1.0. No AEAD cipher support. Deprecated alongside TLS 1.0 in RFC 8996.</td>
+        </tr>
+        <tr>
+          <td><strong>TLS 1.2</strong></td>
+          <td>2008 (RFC 5246)</td>
+          <td><span class="badge badge-warn">Still used — legacy</span></td>
+          <td><span class="badge badge-warn">Medium — check cipher suite</span></td>
+          <td>No major protocol breaks. Still widely deployed. No native PQC support. The cipher suites it uses determine the PQC risk. Flag if cipher suite is quantum-vulnerable.</td>
+        </tr>
+        <tr>
+          <td><strong>TLS 1.3</strong></td>
+          <td>2018 (RFC 8446)</td>
+          <td><span class="badge badge-safe">Current standard</span></td>
+          <td><span class="badge badge-hybrid">Check named group for PQC</span></td>
+          <td>Clean redesign. Mandatory AEAD ciphers, no RSA key transport, 1-RTT handshake, supports PQC via key_share named groups. PQC readiness depends on the named group negotiated.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">What RFC 8996 (2021) Actually Did</div>
+  <p class="prose">RFC 8996 — "Deprecating TLS 1.0 and TLS 1.1" — made these versions formally prohibited in the IETF standards track. Before 2021, they were simply "not recommended." After 2021, offering TLS 1.0 or 1.1 is a standards violation. Every major browser removed support in 2020–2021. The scanner should treat any endpoint advertising TLS 1.0 or 1.1 as a distinct finding category: <strong>deprecated protocol version</strong>, separate from the PQC algorithm finding.</p>
+
+  <div class="content-h2">What Changed Between TLS 1.2 and TLS 1.3</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Feature</th><th>TLS 1.2</th><th>TLS 1.3</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Handshake round trips</strong></td><td>2-RTT (two round trips before data flows)</td><td>1-RTT (one round trip) — 0-RTT optional for session resumption</td></tr>
+        <tr><td><strong>RSA key transport</strong></td><td>Allowed — server picks the session key, encrypts with client's RSA public key. No forward secrecy.</td><td>Removed entirely. All key exchange uses ephemeral DH (ECDHE) or PQC KEM.</td></tr>
+        <tr><td><strong>Cipher suite structure</strong></td><td>Single string encodes key exchange + auth + bulk cipher + MAC: <code>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</code></td><td>Separate: cipher suite names only bulk cipher + hash (<code>TLS_AES_256_GCM_SHA384</code>). Key exchange specified in <code>key_share</code> extension as a named group.</td></tr>
+        <tr><td><strong>Forward secrecy</strong></td><td>Optional — depends on cipher suite. <code>TLS_RSA_*</code> suites have none.</td><td>Mandatory — all key exchanges use ephemeral keys. Every session is independently protected.</td></tr>
+        <tr><td><strong>Compression</strong></td><td>Optionally supported — enabled CRIME attack</td><td>Removed entirely</td></tr>
+        <tr><td><strong>Renegotiation</strong></td><td>Supported — enabled several attacks</td><td>Removed. Replaced with post-handshake authentication.</td></tr>
+        <tr><td><strong>Certificate encryption</strong></td><td>Server certificate sent in plaintext — visible to passive observer</td><td>Certificate encrypted after handshake keys established — only servername (SNI) is visible in plaintext</td></tr>
+        <tr><td><strong>PQC support</strong></td><td>None in the protocol. Cipher suite names don't accommodate PQC.</td><td>Yes — via <code>supported_groups</code> and <code>key_share</code> extensions. PQC named groups like <code>X25519MLKEM768</code> are defined here.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">How the Scanner Uses Version Information</div>
+  <p class="prose">The scanner reports TLS version as a separate finding field, not just as part of the cipher suite. Every finding record carries both the version and the key exchange algorithm. This matters because the remediation path differs:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>What the scanner finds</th><th>Finding category</th><th>Remediation</th></tr></thead>
+      <tbody>
+        <tr><td>TLS 1.0 or 1.1 offered</td><td>Deprecated protocol version</td><td>Disable TLS 1.0/1.1 in server config. No algorithm changes needed.</td></tr>
+        <tr><td>TLS 1.2 with <code>TLS_RSA_*</code> cipher (no PFS)</td><td>Protocol weakness + quantum-vulnerable</td><td>Disable RSA key transport cipher suites. Enable ECDHE suites at minimum.</td></tr>
+        <tr><td>TLS 1.2 with <code>TLS_ECDHE_RSA_*</code> cipher</td><td>Quantum-vulnerable (algorithm, not protocol)</td><td>Upgrade to TLS 1.3 with hybrid PQC named group.</td></tr>
+        <tr><td>TLS 1.3 with <code>x25519</code> named group</td><td>Quantum-vulnerable (algorithm only)</td><td>Enable <code>X25519MLKEM768</code> named group. Server must use OpenSSL 3.5+ or equivalent.</td></tr>
+        <tr><td>TLS 1.3 with <code>X25519MLKEM768</code> named group</td><td>Hybrid PQC — acceptable transitional state</td><td>No immediate action. Monitor for pure PQC migration timeline.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /t2 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 3: HANDSHAKE DEEP DIVE                                   -->
+<!-- ============================================================ -->
+<div id="t3" class="tab-panel">
+
+  <div class="section-title">The TLS Handshake — Deep Dive</div>
+  <div class="section-sub">Every message in the TLS 1.3 handshake — what it contains, what the scanner reads, and where PQC fits</div>
+
+  <div class="infobox">
+    <strong>Why the handshake matters to the scanner</strong>
+    The scanner reads the handshake phase — specifically the ClientHello, ServerHello, and Certificate messages — and aborts the connection before it completes. This means zero production impact, no credentials needed, and complete cryptographic visibility into what the server supports and what it chose to use.
+  </div>
+
+  <div class="content-h2">TLS 1.3 Handshake — Step by Step</div>
+
+  <div class="handshake-flow">
+    <div class="hs-step">
+      <div class="hs-num">1</div>
+      <div class="hs-dir"><div><div class="hs-dir-label">Client</div><div class="hs-dir-arrow">→</div><div class="hs-dir-label">Server</div></div></div>
+      <div class="hs-body">
+        <div class="hs-title">ClientHello</div>
+        <div class="hs-desc">Opens the TCP connection and sends ClientHello — the client's opening offer. Contains everything the client is willing to accept. The scanner sends its own ClientHello advertising the maximum possible set of capabilities, including all PQC named groups, so the server reveals exactly what it supports.</div>
+        <div class="hs-mono">
+          legacy_version: 0x0303 (TLS 1.2 for compatibility — actual version in extensions)<br>
+          random: 32 bytes of client randomness<br>
+          cipher_suites: [TLS_AES_256_GCM_SHA384, TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256]<br>
+          extensions:<br>
+          &nbsp;&nbsp;supported_versions: [TLS 1.3, TLS 1.2]<br>
+          &nbsp;&nbsp;supported_groups: [X25519MLKEM768, x25519, secp256r1, secp384r1]  ← scanner adds all PQC groups<br>
+          &nbsp;&nbsp;key_share: [x25519 pubkey bytes, X25519MLKEM768 pubkey bytes]  ← client's ephemeral public keys<br>
+          &nbsp;&nbsp;server_name: "api.company.com"  ← SNI — visible in plaintext even in TLS 1.3
+        </div>
+        <div class="hs-pqc">
+          <span class="badge badge-hybrid">Scanner reads: supported_groups list</span>
+          <span class="badge badge-hybrid">Scanner reads: key_share groups offered</span>
+          <span class="badge badge-hybrid">Scanner reads: SNI for hostname</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hs-step">
+      <div class="hs-num">2</div>
+      <div class="hs-dir"><div><div class="hs-dir-label">Server</div><div class="hs-dir-arrow">→</div><div class="hs-dir-label">Client</div></div></div>
+      <div class="hs-body">
+        <div class="hs-title">ServerHello</div>
+        <div class="hs-desc">Server responds with its chosen cipher suite and chosen key exchange group. This is the first scanner finding — the negotiated named group tells you what key exchange algorithm was actually used, which is the critical PQC data point.</div>
+        <div class="hs-mono">
+          cipher_suite: TLS_AES_256_GCM_SHA384  ← chosen bulk cipher + hash (safe — AES-256)<br>
+          extensions:<br>
+          &nbsp;&nbsp;supported_versions: TLS 1.3<br>
+          &nbsp;&nbsp;key_share: {group: X25519MLKEM768, key_exchange: [server's ML-KEM + X25519 pubkey]}
+        </div>
+        <div class="hs-pqc">
+          <span class="badge badge-vuln">If group = x25519 → quantum-vulnerable finding</span>
+          <span class="badge badge-hybrid">If group = X25519MLKEM768 → hybrid PQC — safe for now</span>
+          <span class="badge badge-safe">If group = MLKEM768 → pure PQC — future state</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hs-step">
+      <div class="hs-num">3</div>
+      <div class="hs-dir"><div><div class="hs-dir-label">Server</div><div class="hs-dir-arrow">→</div><div class="hs-dir-label">Client</div></div></div>
+      <div class="hs-body">
+        <div class="hs-title">EncryptedExtensions + Certificate + CertificateVerify</div>
+        <div class="hs-desc">Server sends its X.509 certificate chain (one or more certs) and a signature proving it holds the private key. In TLS 1.3 these are encrypted — but the scanner already has the session key from step 2, so it can decrypt and read them.</div>
+        <div class="hs-mono">
+          Certificate chain: [leaf cert → intermediate CA → (root CA optional)]<br>
+          &nbsp;&nbsp;leaf cert: subjectPublicKeyInfo.algorithm = rsaEncryption, modulus = 2048 bits  ← KEY PQC FINDING<br>
+          &nbsp;&nbsp;leaf cert: signatureAlgorithm = sha256WithRSAEncryption (OID 1.2.840.113549.1.1.11)  ← PQC FINDING<br>
+          &nbsp;&nbsp;leaf cert: notAfter = 2027-05-01  ← lifecycle finding<br>
+          &nbsp;&nbsp;leaf cert: subjectAltName = dns:api.company.com<br>
+          CertificateVerify: signature_algorithm = rsa_pss_rsae_sha256  ← how server proves key ownership
+        </div>
+        <div class="hs-pqc">
+          <span class="badge badge-vuln">RSA-2048 cert → quantum-vulnerable finding — deadline 2035</span>
+          <span class="badge badge-vuln">sha256WithRSAEncryption → OID in scanner registry — flags as vulnerable</span>
+          <span class="badge badge-safe">If cert algo = ML-DSA-65 → quantum-safe certificate</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hs-step">
+      <div class="hs-num">4</div>
+      <div class="hs-dir"><div><div class="hs-dir-label">Server</div><div class="hs-dir-arrow">→</div><div class="hs-dir-label">Client</div></div></div>
+      <div class="hs-body">
+        <div class="hs-title">Finished</div>
+        <div class="hs-desc">Server sends a Finished message — a MAC over the entire handshake transcript. This confirms neither side tampered with the handshake messages. The client responds with its own Finished. The scanner closes the connection here. No application data is exchanged.</div>
+        <div class="hs-mono">Finished: HMAC-SHA256 over handshake transcript  ← symmetric, quantum-safe</div>
+        <div class="hs-pqc"><span class="badge badge-safe">Scanner closes connection here — all data collected, zero production impact</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-h2">The TLS 1.2 Handshake Difference</div>
+  <p class="prose">TLS 1.2 has a 2-RTT handshake and slightly different structure. The key difference relevant to the scanner: in TLS 1.2, RSA key transport is possible — the client generates the session key and encrypts it with the server's RSA public key. There is no forward secrecy. This is the worst-case scenario for HNDL: an attacker who recorded the TLS 1.2 session only needs to break the server's RSA public key (not an ephemeral key) to decrypt everything. The scanner flags <code>TLS_RSA_*</code> cipher suites distinctly from <code>TLS_ECDHE_RSA_*</code> because the HNDL exposure is fundamentally different.</p>
+
+  <div class="content-h2">What the Scanner Extracts — Summary</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Field</th><th>Source message</th><th>PQC finding type</th><th>CBOM record type</th></tr></thead>
+      <tbody>
+        <tr><td>TLS version negotiated</td><td>ServerHello.supported_versions</td><td>Deprecated protocol if 1.0 or 1.1</td><td>Protocol</td></tr>
+        <tr><td>Key exchange named group</td><td>ServerHello.key_share.group</td><td>Quantum-vulnerable if x25519, secp256r1, etc.</td><td>Protocol + Algorithm</td></tr>
+        <tr><td>Cipher suite</td><td>ServerHello.cipher_suite</td><td>Bulk cipher (AES-256 = safe, AES-128 = flag)</td><td>Protocol</td></tr>
+        <tr><td>Certificate signature algorithm OID</td><td>Certificate.signatureAlgorithm</td><td>Quantum-vulnerable if RSA or ECDSA</td><td>Certificate + Algorithm</td></tr>
+        <tr><td>Certificate public key algorithm</td><td>Certificate.subjectPublicKeyInfo.algorithm</td><td>Quantum-vulnerable if RSA or EC</td><td>Certificate + Key</td></tr>
+        <tr><td>Certificate public key size</td><td>Certificate.subjectPublicKeyInfo.subjectPublicKey</td><td>Informs risk scoring (RSA-1024 more urgent than RSA-4096)</td><td>Key</td></tr>
+        <tr><td>Certificate expiry</td><td>Certificate.validity.notAfter</td><td>Lifecycle — certs expiring after 2030 must be migrated at next renewal</td><td>Certificate</td></tr>
+        <tr><td>Certificate SANs</td><td>Certificate.extensions.subjectAltName</td><td>Coverage scope — which hostnames are under this cert</td><td>Certificate</td></tr>
+        <tr><td>Full certificate chain</td><td>Certificate message (multiple certs)</td><td>Dependency graph — which CA signed this cert</td><td>Certificate (each in chain)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /t3 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 4: PQC IN TLS                                            -->
+<!-- ============================================================ -->
+<div id="t4" class="tab-panel">
+
+  <div class="section-title">PQC in TLS — The Full Picture</div>
+  <div class="section-sub">HNDL threat, hybrid schemes, pure PQC, signature algorithms, and real-world deployment status</div>
+
+  <div class="content-h2">Why TLS 1.3 Is Still Quantum-Vulnerable</div>
+  <p class="prose">TLS 1.3 is the most secure protocol version ever standardised. The public-key algorithms used inside it are quantum-vulnerable. These are two separate facts that coexist. A TLS 1.3 server using X25519 for key exchange will pass every classic security audit — correct version, strong AEAD cipher, perfect forward secrecy, no deprecated features. It will still be broken by a sufficiently powerful quantum computer.</p>
+
+  <div class="content-h2">The HNDL Threat — Why This Matters Now</div>
+  <p class="prose">The quantum computer that breaks TLS doesn't exist yet. The threat is real now because of the <strong>Harvest Now, Decrypt Later (HNDL)</strong> attack pattern:</p>
+  <div class="vflow">
+    <div class="vflow-step">
+      <div class="vflow-left">1</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Attacker records today's TLS traffic</div>
+        <div class="vflow-desc">Nation-state adversaries passively capture TLS sessions at internet exchange points, ISP taps, or cable intercepts. The captured traffic is useless today — they cannot decrypt it.</div>
+        <div class="vflow-mono">TLS 1.3 session: ClientHello (X25519 pubkey), ServerHello (X25519 pubkey + ciphertext), encrypted records</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">2</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Attacker stores the ciphertext</div>
+        <div class="vflow-desc">The captured handshake + encrypted session data is archived. Storage is cheap. A terabyte of captured TLS sessions costs dollars to store indefinitely. This is already happening.</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">3</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Quantum computer arrives (est. 5–15 years)</div>
+        <div class="vflow-desc">A cryptographically relevant quantum computer (CRQC) runs Shor's algorithm against the stored X25519 public keys from the recorded handshakes.</div>
+        <div class="vflow-mono">Shor's algorithm breaks X25519 discrete log → recovers the shared secret → derives the session key</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">4</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Attacker decrypts all stored sessions</div>
+        <div class="vflow-desc">With the session key recovered, every encrypted record from that TLS session is decrypted. Any data transmitted under that session — API calls, authentication tokens, sensitive documents, private communications — is now readable.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="redbox">
+    <strong>The central business argument for PQC migration of TLS</strong>
+    If the data protected by a TLS session has a confidentiality requirement longer than the time until a quantum computer exists, that data is already compromised. For any organisation transmitting data that must remain confidential for 5+ years — trade secrets, long-term contracts, health records, identity data — the HNDL window is already open. Migration cannot wait.
+  </div>
+
+  <div class="content-h2">Hybrid PQC Key Exchange — The Current Standard</div>
+  <p class="prose">The industry solution for HNDL mitigation without breaking compatibility is <strong>hybrid key exchange</strong>: run a classical algorithm (X25519) and a PQC algorithm (ML-KEM-768) in parallel in the same TLS connection. The session key is derived from both. The connection is secure if <em>either</em> algorithm holds.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Hybrid named group</th><th>Components</th><th>IANA code</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>X25519MLKEM768</code></td>
+          <td>X25519 (classical ECDH) + ML-KEM-768 (FIPS 203 PQC KEM)</td>
+          <td><code>0x639A</code></td>
+          <td><span class="badge badge-safe">Current default</span> — Chrome, Firefox, Cloudflare, AWS. Over 52% of TLS 1.3 traffic as of 2025.</td>
+        </tr>
+        <tr>
+          <td><code>X25519Kyber768</code></td>
+          <td>X25519 + Kyber-768 (pre-standard name — Kyber was renamed to ML-KEM)</td>
+          <td><code>0x4588</code></td>
+          <td><span class="badge badge-warn">Legacy draft name</span> — still seen in the wild. Scanner should recognise and map to ML-KEM.</td>
+        </tr>
+        <tr>
+          <td><code>P256MLKEM768</code></td>
+          <td>NIST P-256 (ECDH) + ML-KEM-768</td>
+          <td><code>0x639C</code></td>
+          <td><span class="badge badge-hybrid">Less common</span> — alternative for environments that require P-256.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">Pure PQC Key Exchange</div>
+  <p class="prose">For environments where all clients and servers are PQC-capable and backward compatibility is not a concern, pure PQC key exchange drops the classical component entirely:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Named group</th><th>Security level</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><code>MLKEM512</code></td><td>Level 1 (≈ AES-128)</td><td>Not common in production — no classical fallback, may break older clients</td></tr>
+        <tr><td><code>MLKEM768</code></td><td>Level 3 (≈ AES-192) — recommended</td><td>The target end state for key exchange</td></tr>
+        <tr><td><code>MLKEM1024</code></td><td>Level 5 (≈ AES-256)</td><td>For highest-assurance applications</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">PQC Signature Algorithms in TLS</div>
+  <p class="prose">Key exchange is only half the picture. Server authentication — proving the server's identity via its certificate — also uses public-key cryptography. The server's certificate contains an RSA or ECDSA public key, and the CA that signed it used RSA or ECDSA. Both are quantum-vulnerable. The PQC replacements for TLS authentication are:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Algorithm</th><th>Standard</th><th>Former name</th><th>Security basis</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td><code>ML-DSA-44</code>, <code>ML-DSA-65</code>, <code>ML-DSA-87</code></td><td>FIPS 204</td><td>CRYSTALS-Dilithium</td><td>Module lattice (MLWE + SelfTargetMSIS)</td><td>Primary PQC signature standard. Larger signatures than RSA/ECDSA — check protocol size limits.</td></tr>
+        <tr><td><code>SLH-DSA</code> (multiple parameter sets)</td><td>FIPS 205</td><td>SPHINCS+</td><td>Hash functions only</td><td>Conservative backup. Security relies only on hash functions — simpler assumptions. Slower, larger. Use for root CAs and long-lived signing keys.</td></tr>
+        <tr><td><code>Falcon-512</code>, <code>Falcon-1024</code></td><td>NIST Round 4</td><td>Falcon</td><td>NTRU lattice</td><td>Smaller signatures than ML-DSA. Complex implementation. Not yet widely deployed.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="infobox">
+    <strong>Real-world PQC deployment status (2026)</strong>
+    Key exchange (ML-KEM hybrid) is deployed at scale — Chrome, Firefox, Cloudflare, AWS, Go 1.24+, OpenSSL 3.5+ all support X25519MLKEM768. Certificate/signature migration (ML-DSA) is not yet deployed at scale — most TLS certificates in production still use RSA or ECDSA. This means the scanner will find: key exchange = hybrid safe, certificate = still RSA/ECDSA vulnerable. Both findings are correct and both need remediation on different timelines.
+  </div>
+
+</div><!-- /t4 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 5: PER-COMPONENT TLS                                     -->
+<!-- ============================================================ -->
+<div id="t5" class="tab-panel">
+
+  <div class="section-title">Per-Component TLS — Why One Scan Per Host Is Not Enough</div>
+  <div class="section-sub">TLS is not an OS feature — every application bundles its own library, and they don't share state</div>
+
+  <div class="infobox">
+    <strong>The key insight</strong>
+    TLS is not implemented by the operating system. It is implemented by a library that each application bundles, links against, or ships with. Different applications on the same host use completely separate TLS stacks with different versions, different cipher support, and different PQC readiness. A single "host is PQC-ready" finding is meaningless — it has to be per-component.
+  </div>
+
+  <div class="content-h2">Typical Enterprise TLS Stack Inventory on One Host</div>
+  <p class="prose">A typical production host can have 6–10 distinct TLS stacks running concurrently. Here is what a mid-size production server might look like in 2026:</p>
+
+  <div class="comp-row header">
+    <div class="comp-cell label">Component</div>
+    <div class="comp-cell label">TLS Library</div>
+    <div class="comp-cell label">PQC Support (2026)</div>
+    <div class="comp-cell label">Status</div>
+  </div>
+  <div class="comp-row">
+    <div class="comp-cell"><div class="comp-name">Nginx (web server)</div><div class="comp-detail">Port 443 — internet-facing</div></div>
+    <div class="comp-cell"><div class="comp-name">OpenSSL (linked)</div><div class="comp-detail">Version depends on system</div></div>
+    <div class="comp-cell">Yes, if OpenSSL 3.5+ with oqs-provider. <code>X25519MLKEM768</code> supported.</div>
+    <div class="comp-cell"><span class="badge badge-hybrid">Depends on version</span></div>
+  </div>
+  <div class="comp-row">
+    <div class="comp-cell"><div class="comp-name">PostgreSQL</div><div class="comp-detail">Port 5432 — encrypted connections</div></div>
+    <div class="comp-cell"><div class="comp-name">libpq + OpenSSL</div><div class="comp-detail">Uses system OpenSSL</div></div>
+    <div class="comp-cell">Same as the linked OpenSSL version — not independently updatable.</div>
+    <div class="comp-cell"><span class="badge badge-hybrid">Depends on OpenSSL</span></div>
+  </div>
+  <div class="comp-row">
+    <div class="comp-cell"><div class="comp-name">Java app server (Tomcat)</div><div class="comp-detail">Port 8443 — internal API</div></div>
+    <div class="comp-cell"><div class="comp-name">JCE / JSSE (JDK-bundled)</div><div class="comp-detail">Version tied to JDK</div></div>
+    <div class="comp-cell">JDK 24+ supports ML-KEM in JSSE. JDK 21 (LTS) does not.</div>
+    <div class="comp-cell"><span class="badge badge-vuln">JDK &lt; 24 = not PQC</span></div>
+  </div>
+  <div class="comp-row">
+    <div class="comp-cell"><div class="comp-name">Python application</div><div class="comp-detail">Port 8000 — background service</div></div>
+    <div class="comp-cell"><div class="comp-name">Python ssl module</div><div class="comp-detail">Links system OpenSSL</div></div>
+    <div class="comp-cell">Same as system OpenSSL — but if the app ships a vendored OpenSSL via a wheel, it may be different.</div>
+    <div class="comp-cell"><span class="badge badge-hybrid">Check vendored libs</span></div>
+  </div>
+  <div class="comp-row">
+    <div class="comp-cell"><div class="comp-name">Node.js application</div><div class="comp-detail">Port 3000 — microservice</div></div>
+    <div class="comp-cell"><div class="comp-name">BoringSSL (vendored)</div><div class="comp-detail">Forked, bundled by Node</div></div>
+    <div class="comp-cell">Node.js 24+ supports <code>X25519MLKEM768</code>. Node 18 LTS does not.</div>
+    <div class="comp-cell"><span class="badge badge-vuln">Node &lt; 24 = not PQC</span></div>
+  </div>
+  <div class="comp-row">
+    <div class="comp-cell"><div class="comp-name">Go service</div><div class="comp-detail">Port 9090 — internal metrics</div></div>
+    <div class="comp-cell"><div class="comp-name">Go crypto/tls (pure Go)</div><div class="comp-detail">Compiled into the binary</div></div>
+    <div class="comp-cell">Go 1.24+ enables <code>X25519MLKEM768</code> by default. Go 1.21 supports it experimentally.</div>
+    <div class="comp-cell"><span class="badge badge-hybrid">Go ≥ 1.24 = PQC</span></div>
+  </div>
+  <div class="comp-row">
+    <div class="comp-cell"><div class="comp-name">kubelet (Kubernetes)</div><div class="comp-detail">Port 10250 — node agent</div></div>
+    <div class="comp-cell"><div class="comp-name">Go crypto/tls</div><div class="comp-detail">Compiled into kubelet binary</div></div>
+    <div class="comp-cell">Kubernetes 1.32+ ships with Go 1.24 — PQC enabled. Older Kubernetes not PQC-ready.</div>
+    <div class="comp-cell"><span class="badge badge-hybrid">Depends on K8s version</span></div>
+  </div>
+  <div class="comp-row">
+    <div class="comp-cell"><div class="comp-name">.NET application</div><div class="comp-detail">Port 7000 — internal service</div></div>
+    <div class="comp-cell"><div class="comp-name">.NET SslStream / CryptoAPI</div><div class="comp-detail">Bundled with .NET runtime</div></div>
+    <div class="comp-cell">.NET 10+ supports ML-KEM. .NET 8 (LTS) does not.</div>
+    <div class="comp-cell"><span class="badge badge-vuln">.NET &lt; 10 = not PQC</span></div>
+  </div>
+  <div class="comp-row">
+    <div class="comp-cell"><div class="comp-name">Monitoring agent (Datadog, etc.)</div><div class="comp-detail">Outbound to monitoring SaaS</div></div>
+    <div class="comp-cell"><div class="comp-name">Varies by vendor</div><div class="comp-detail">Often bundled, often old</div></div>
+    <div class="comp-cell">Monitoring agents are often a year or two behind in library updates.</div>
+    <div class="comp-cell"><span class="badge badge-warn">Often lagging</span></div>
+  </div>
+
+  <div class="content-h2">Three Concrete Implications</div>
+
+  <div class="content-h3">Same host, different PQC readiness</div>
+  <p class="prose">A host running Nginx (OpenSSL 3.5) and a Java app (JDK 21): Port 443 (Nginx) supports <code>X25519MLKEM768</code> — PQC-ready. Port 8443 (Java) supports only <code>x25519</code> and <code>secp256r1</code> — quantum-vulnerable. Both are on the same machine. Both are part of the same business service. They have completely different PQC exposure. The scanner must report per-port, not per-host.</p>
+
+  <div class="content-h3">Libraries are pinned at build time, not runtime</div>
+  <p class="prose">Most production apps do not dynamically reload their TLS library. The library version is whatever was linked when the binary was built. So even if you upgrade OpenSSL on the host, a Python app that statically links its own OpenSSL (via a wheel) or a Java app running on JDK 21 keeps the old one. Host-level library upgrades are necessary but not sufficient — each application must be rebuilt or restarted against the new library.</p>
+
+  <div class="content-h3">The negotiated algorithm is the intersection of both sides</div>
+  <p class="prose">PQC is only negotiated when both client and server support it. A Java microservice (JDK 21, no PQC) calling another service (Go 1.24, PQC-capable) will negotiate X25519 — because the Java client dictates the maximum the connection can use. One slow component holds back the whole call chain.</p>
+
+  <div class="content-h2">Blast Radius — Migration Order on a Single Host</div>
+  <p class="prose">You cannot PQC-upgrade a host. You have to PQC-upgrade each component, in dependency order, against the dependencies of the things it talks to.</p>
+  <div class="vflow">
+    <div class="vflow-step"><div class="vflow-left">1</div><div class="vflow-right"><div class="vflow-title">Upgrade host-level OpenSSL to 3.5+</div><div class="vflow-desc">This unlocks PQC for all components that dynamically link the system OpenSSL: nginx, curl, wget, Python (non-vendored), PostgreSQL's libpq.</div></div></div>
+    <div class="vflow-step"><div class="vflow-left">2</div><div class="vflow-right"><div class="vflow-title">Rebuild and redeploy every Python app that statically links OpenSSL</div><div class="vflow-desc">Apps using vendored OpenSSL (via pip wheels) must be rebuilt with updated dependencies. <code>pip install --upgrade cryptography pyOpenSSL</code> then redeploy.</div></div></div>
+    <div class="vflow-step"><div class="vflow-left">3</div><div class="vflow-right"><div class="vflow-title">Upgrade JDK from 21 to 24 for every Java app</div><div class="vflow-desc">JDK upgrade is a significant change — test thoroughly. Every Java app on the host must be tested against JDK 24.</div></div></div>
+    <div class="vflow-step"><div class="vflow-left">4</div><div class="vflow-right"><div class="vflow-title">Upgrade Node.js from 18 to 24 for every Node app</div><div class="vflow-desc">Node 18 is the current LTS but does not support <code>X25519MLKEM768</code>. Node 24 is required.</div></div></div>
+    <div class="vflow-step"><div class="vflow-left">5</div><div class="vflow-right"><div class="vflow-title">Rebuild Go binaries with Go 1.24+</div><div class="vflow-desc">Go compiles the TLS library into the binary. Each Go service must be recompiled with Go 1.24+. The Go runtime cannot be updated without recompiling.</div></div></div>
+    <div class="vflow-step"><div class="vflow-left">6</div><div class="vflow-right"><div class="vflow-title">Restart services in dependency order</div><div class="vflow-desc">Databases first (they are depended upon), then internal services, then edge proxies last. If any one step is missed, the negotiated cipher falls back to classical X25519.</div></div></div>
+  </div>
+
+  <div class="content-h2">Practical Scanner Output Format</div>
+  <p class="prose">A scanner that understands the per-component reality produces output like this — one line per port per host, not one line per host:</p>
+  <div class="output-block">
+<span class="host">Host: api-prod-42</span>  (10.14.22.17)
+  <span class="port">Port 443   (nginx 1.26)</span>          PQC: <span class="pqc-yes">hybrid (X25519MLKEM768)</span>   Library: <span class="lib">OpenSSL 3.5.0</span>
+  <span class="port">Port 8443  (tomcat / JDK 21)</span>     PQC: <span class="pqc-no">none (x25519 only)</span>         Library: <span class="lib">JDK 21.0.5 JSSE</span>
+  <span class="port">Port 5432  (postgres client)</span>     PQC: <span class="pqc-yes">hybrid</span>                     Library: <span class="lib">libpq + OpenSSL 3.5.0</span>
+  <span class="port">Port 3000  (node.js 18)</span>          PQC: <span class="pqc-no">none (x25519 only)</span>         Library: <span class="lib">BoringSSL (Node 18)</span>
+  <span class="port">Port 9090  (go service)</span>          PQC: <span class="pqc-yes">hybrid</span>                     Library: <span class="lib">Go 1.24.1 crypto/tls</span>
+  <span class="port">Container: sidecar-proxy</span>         PQC: <span class="pqc-no">none (vendored OpenSSL 3.0.2)</span>  Library: <span class="lib">OpenSSL 3.0.2 (pinned in image)</span>
+  </div>
+  <p class="prose" style="color:var(--muted); font-style:italic; font-size:12px;">That is what "complete PQC inventory" actually looks like. Anything less is a single-layer snapshot that misses the real picture.</p>
+
+</div><!-- /t5 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 6: SCANNER IMPLICATIONS                                  -->
+<!-- ============================================================ -->
+<div id="t6" class="tab-panel">
+
+  <div class="section-title">Why TLS Is Significant for the Scanner Project</div>
+  <div class="section-sub">Five specific reasons TLS is the foundation of a PQC scanner — not just a feature</div>
+
+  <div class="infobox">
+    <strong>The bottom line up front</strong>
+    TLS is not just a feature in the PQC scanner. It is the foundation, the proof of value, the largest data source, the easiest to scan, and the only place where PQC is observably deployed today. If the scanner had to be cut down to its absolute essentials, TLS scanning, CBOM generation from the results, and a hybrid-PQC-aware handshake classifier are the three capabilities that would still make it useful.
+  </div>
+
+  <div class="content-h2">Reason 1 — TLS Is the Largest Public-Key Crypto Surface in Any Organisation</div>
+  <p class="prose">Every web service, API, microservice call, database connection (when encrypted), load balancer, API gateway, CDN, mail server, VPN, and most internal service-to-service traffic uses TLS. A typical mid-size enterprise has tens of thousands of TLS endpoints. There is no other crypto surface that comes close in volume.</p>
+  <p class="prose">Code signing certificates number in the dozens. Root CAs number in single digits. SSH keys number in thousands. TLS endpoints number in tens of thousands for even a moderate-sized organisation. The scanner that does TLS well immediately covers the overwhelming majority of the cryptographic attack surface.</p>
+
+  <div class="content-h2">Reason 2 — TLS Is the Only Place Where PQC Is Deployed at Scale Today</div>
+  <p class="prose">PQC for code signing, document signing, S/MIME email, firmware updates, and PKI certificates is still research and pilot. But PQC for TLS already works, ships in browsers, ships in CDNs, and is deployed at massive scale:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Implementation</th><th>PQC support</th><th>Default?</th></tr></thead>
+      <tbody>
+        <tr><td>Chrome (all platforms)</td><td><code>X25519MLKEM768</code> key exchange</td><td>Default since Chrome 124</td></tr>
+        <tr><td>Firefox</td><td><code>X25519MLKEM768</code></td><td>Default since Firefox 128</td></tr>
+        <tr><td>Cloudflare CDN</td><td><code>X25519MLKEM768</code></td><td>Default since 2024 — over 52% of TLS 1.3 traffic</td></tr>
+        <tr><td>AWS (ALB, CloudFront)</td><td><code>X25519MLKEM768</code></td><td>Supported, opt-in security policy</td></tr>
+        <tr><td>OpenSSL 3.5+</td><td><code>X25519MLKEM768</code>, pure ML-KEM groups</td><td>Available, requires oqs-provider for non-standard groups</td></tr>
+        <tr><td>Go 1.24+</td><td><code>X25519MLKEM768</code></td><td>Default — enabled automatically</td></tr>
+        <tr><td>BoringSSL (Chrome, Android)</td><td><code>X25519MLKEM768</code></td><td>Default in Chrome-based browsers</td></tr>
+        <tr><td>JDK 24+</td><td>ML-KEM in JSSE</td><td>Available since JDK 24</td></tr>
+        <tr><td>.NET 10+</td><td>ML-KEM key exchange</td><td>Available since .NET 10</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose">TLS is the only place where a PQC scanner can produce real, measurable, observable findings today — not forecasts, not readiness assessments, but actual "this endpoint supports X25519MLKEM768 and this one does not." Everything else is prediction. TLS is the present.</p>
+
+  <div class="content-h2">Reason 3 — TLS Is the Lowest-Friction Discovery Source</div>
+  <p class="prose">For every other layer (SBOM, CA, cloud KMS, HSM), the scanner needs credentials, integration, and explicit access grants. For TLS, it only needs a network path to port 443. An active handshake is the simplest possible probe — it is what <code>curl -v</code> does.</p>
+  <p class="prose">This has three practical consequences: (1) the TLS scanner is the easiest module to deploy — it requires zero customer-side changes; (2) it produces findings within minutes of pointing it at an IP range; (3) it is the first signal that proves the tool works, which is critical for customer onboarding and internal demos. The scanner's most reliable, highest-coverage, lowest-permission data source is "send a ClientHello, read the ServerHello."</p>
+
+  <div class="content-h2">Reason 4 — TLS Is What an Attacker Would Break First</div>
+  <p class="prose">In the HNDL threat model, the most valuable traffic to record and break later is TLS — because that is where long-lived sensitive data flows in motion. An attacker is not recording raw database TDE ciphertext or stored PGP-encrypted files; they are recording TLS sessions that carry the same data as it moves between services, from user to application, from application to database.</p>
+  <p class="prose">This means a customer's CFO will fund PQC remediation for TLS long before they fund it for legacy code signing or HSM firmware upgrades. The scanner that surfaces <em>"you have 4,217 TLS endpoints, 3,891 of which are quantum-vulnerable, of which 412 are HNDL-exposed based on data classification"</em> is the one that gets the budget conversation started.</p>
+
+  <div class="content-h2">Reason 5 — TLS Scanning Is the On-Ramp to the Rest of the Inventory</div>
+  <p class="prose">Once the scanner does TLS well, every other layer extends the same inventory model. The CBOM built from TLS data — certificates, algorithms, protocols, dependencies — is the same CBOM enriched with CA data, SBOM data, and KMS data. The relationship graph built from TLS endpoints and their certificate chains is the same graph extended with software and business service relationships.</p>
+  <p class="prose">A scanner that nails TLS first has a working, demonstrable product by month 3. A scanner that tries to do all 7 layers simultaneously has nothing demonstrable by month 3. TLS-first is the only realistic MVP path, and TLS is the substrate that the rest of the product grows on.</p>
+
+  <div class="content-h2">Practical Scanner Design Consequences</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Design decision</th><th>Rationale from TLS reality</th></tr></thead>
+      <tbody>
+        <tr><td>Scan per-port, not per-host</td><td>Each port may run a different TLS library with different PQC readiness — one finding per host is wrong</td></tr>
+        <tr><td>Classify named groups, not just cipher suites</td><td>In TLS 1.3, the cipher suite name doesn't encode key exchange — it's in the key_share named group. Must parse extensions.</td></tr>
+        <tr><td>Report key exchange and certificate separately</td><td>Key exchange may be hybrid PQC while the certificate is still RSA — two separate findings with different deadlines</td></tr>
+        <tr><td>Detect both X25519Kyber768 and X25519MLKEM768</td><td>Older draft name is still in the wild — scanner must recognise both and map both to ML-KEM in the algorithm registry</td></tr>
+        <tr><td>Parse full certificate chain, not just leaf</td><td>An intermediate CA using RSA-2048 is a finding even if the leaf cert is ML-DSA — the chain is only as strong as its weakest link</td></tr>
+        <tr><td>SBOM integration is required for complete picture</td><td>Active TLS scan tells you the negotiated cipher; SBOM tells you why — which library version caused it. Both needed for remediation guidance.</td></tr>
+        <tr><td>CMDB integration enables risk scoring</td><td>TLS finding on a Tier 1 internet-facing API is P1; same finding on a dev server is P4. Algorithm alone doesn't determine priority.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /t6 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 7: CIPHER SUITE REFERENCE                                -->
+<!-- ============================================================ -->
+<div id="t7" class="tab-panel">
+
+  <div class="section-title">Cipher Suite Reference</div>
+  <div class="section-sub">Every cipher suite and named group you will encounter when scanning — grouped by PQC status</div>
+
+  <div class="content-h2">How to Read a TLS 1.2 Cipher Suite Name</div>
+
+  <div class="suite-decoder">
+    <div class="suite-decoder-header">
+      TLS_<span class="vuln">ECDHE</span>_<span class="vuln">RSA</span>_WITH_<span class="safe">AES_256_GCM</span>_<span class="safe">SHA384</span>
+    </div>
+    <div class="suite-parts">
+      <div class="suite-part">
+        <div class="suite-part-name">ECDHE</div>
+        <div class="suite-part-desc">Key exchange — Elliptic Curve Diffie-Hellman Ephemeral. How the session key is derived. Ephemeral means a fresh key pair is generated for each connection, providing forward secrecy. But ECDH is broken by Shor's algorithm.</div>
+        <div class="suite-part-status"><span class="badge badge-vuln">Quantum-vulnerable</span></div>
+      </div>
+      <div class="suite-part">
+        <div class="suite-part-name">RSA</div>
+        <div class="suite-part-desc">Authentication — how the server proves its identity. This means the server's TLS certificate uses an RSA public key and was signed with RSA. Quantum-vulnerable.</div>
+        <div class="suite-part-status"><span class="badge badge-vuln">Quantum-vulnerable</span></div>
+      </div>
+      <div class="suite-part">
+        <div class="suite-part-name">AES_256_GCM</div>
+        <div class="suite-part-desc">Bulk data encryption — the symmetric cipher used to encrypt all session data after the handshake. AES-256 in GCM (authenticated encryption) mode. This part is quantum-safe — Grover's reduces AES-256 to 128-bit effective security, which is still acceptable.</div>
+        <div class="suite-part-status"><span class="badge badge-safe">Quantum-safe</span></div>
+      </div>
+      <div class="suite-part">
+        <div class="suite-part-name">SHA384</div>
+        <div class="suite-part-desc">Message authentication code (MAC) / PRF. SHA-384 is used for HMAC-based integrity verification and key derivation. Quantum-safe at SHA-384.</div>
+        <div class="suite-part-status"><span class="badge badge-safe">Quantum-safe</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-h2">Worst Case: TLS 1.2 RSA Key Transport</div>
+
+  <div class="suite-decoder">
+    <div class="suite-decoder-header">
+      TLS_<span class="vuln">RSA</span>_WITH_<span class="safe">AES_256_GCM</span>_<span class="safe">SHA384</span>
+    </div>
+    <div class="suite-parts">
+      <div class="suite-part">
+        <div class="suite-part-name">RSA (first position)</div>
+        <div class="suite-part-desc"><strong>RSA key transport</strong> — the client generates the pre-master secret and encrypts it directly with the server's RSA public key. There is NO forward secrecy. If the server's private RSA key is ever broken — by a quantum computer, by theft, by a future vulnerability — every session ever recorded with this key can be decrypted retroactively. This is the worst-case HNDL scenario.</div>
+        <div class="suite-part-status"><span class="badge badge-vuln">Worst case — no PFS</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="warnbox">
+    <strong>RSA key transport vs ECDHE — different HNDL exposure</strong>
+    The scanner must distinguish these. <code>TLS_RSA_*</code> (no PFS) means an attacker only needs to break the long-term RSA server key — once — to decrypt all past sessions that used that key. <code>TLS_ECDHE_RSA_*</code> (PFS via ephemeral ECDH) means the attacker must break a unique ephemeral key per session. Both are quantum-vulnerable, but <code>TLS_RSA_*</code> is categorically worse and should be flagged as a separate, more urgent finding.
+  </div>
+
+  <div class="content-h2">TLS 1.3 Named Groups Reference</div>
+  <p class="prose">In TLS 1.3, key exchange is specified in the <code>supported_groups</code> and <code>key_share</code> extensions — not in the cipher suite name. The scanner must parse these extensions to determine PQC readiness.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Named group</th><th>IANA code</th><th>Type</th><th>PQC status</th><th>Scanner action</th></tr></thead>
+      <tbody>
+        <tr><td><code>X25519MLKEM768</code></td><td>0x639A</td><td>Hybrid — X25519 + ML-KEM-768</td><td><span class="badge badge-hybrid">Hybrid PQC</span></td><td>Report as hybrid-safe. Ideal current state.</td></tr>
+        <tr><td><code>X25519Kyber768</code></td><td>0x4588</td><td>Hybrid — X25519 + Kyber-768 (pre-standard name)</td><td><span class="badge badge-hybrid">Hybrid PQC (draft)</span></td><td>Report as hybrid-safe. Map to ML-KEM in registry — Kyber was renamed.</td></tr>
+        <tr><td><code>P256MLKEM768</code></td><td>0x639C</td><td>Hybrid — P-256 + ML-KEM-768</td><td><span class="badge badge-hybrid">Hybrid PQC</span></td><td>Report as hybrid-safe.</td></tr>
+        <tr><td><code>MLKEM512</code></td><td>TBD</td><td>Pure PQC — ML-KEM-512 only</td><td><span class="badge badge-safe">Pure PQC</span></td><td>Report as quantum-safe. Flag: no classical fallback.</td></tr>
+        <tr><td><code>MLKEM768</code></td><td>TBD</td><td>Pure PQC — ML-KEM-768 only</td><td><span class="badge badge-safe">Pure PQC</span></td><td>Report as quantum-safe. Target end state.</td></tr>
+        <tr><td><code>MLKEM1024</code></td><td>TBD</td><td>Pure PQC — ML-KEM-1024 only</td><td><span class="badge badge-safe">Pure PQC (high security)</span></td><td>Report as quantum-safe.</td></tr>
+        <tr><td><code>x25519</code></td><td>0x001D</td><td>Classical — X25519 ECDH</td><td><span class="badge badge-vuln">Quantum-vulnerable</span></td><td>Flag as quantum-vulnerable. Primary finding for most TLS 1.3 endpoints today.</td></tr>
+        <tr><td><code>secp256r1</code> (P-256)</td><td>0x0017</td><td>Classical — ECDH P-256</td><td><span class="badge badge-vuln">Quantum-vulnerable</span></td><td>Flag as quantum-vulnerable.</td></tr>
+        <tr><td><code>secp384r1</code> (P-384)</td><td>0x0018</td><td>Classical — ECDH P-384</td><td><span class="badge badge-vuln">Quantum-vulnerable</span></td><td>Flag as quantum-vulnerable.</td></tr>
+        <tr><td><code>ffdhe2048</code>, <code>ffdhe3072</code></td><td>0x0100, 0x0101</td><td>Classical — finite-field DH</td><td><span class="badge badge-vuln">Quantum-vulnerable</span></td><td>Flag as quantum-vulnerable. Also computationally expensive — deprecation recommended.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">TLS 1.2 Cipher Suite Categories</div>
+
+  <div class="content-h3">Hybrid PQC — Not in TLS 1.2</div>
+  <p class="prose">TLS 1.2's cipher suite naming convention has no way to express hybrid PQC key exchange. PQC in TLS is exclusively a TLS 1.3 feature via the named groups extension. If you see a TLS 1.2 endpoint, it is quantum-vulnerable in key exchange regardless of what cipher suite it uses.</p>
+
+  <div class="content-h3">Classical key exchange — quantum-vulnerable (TLS 1.2)</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Cipher suite pattern</th><th>Key exchange</th><th>Forward secrecy</th><th>PQC risk level</th></tr></thead>
+      <tbody>
+        <tr><td><code>TLS_RSA_WITH_*</code></td><td>RSA key transport — no DH at all</td><td>None</td><td><span class="badge badge-vuln">Worst case — flag urgently</span></td></tr>
+        <tr><td><code>TLS_DHE_RSA_WITH_*</code></td><td>Finite-field Diffie-Hellman Ephemeral + RSA auth</td><td>Yes</td><td><span class="badge badge-vuln">Quantum-vulnerable</span></td></tr>
+        <tr><td><code>TLS_ECDHE_RSA_WITH_*</code></td><td>ECDH Ephemeral + RSA auth</td><td>Yes</td><td><span class="badge badge-vuln">Quantum-vulnerable</span></td></tr>
+        <tr><td><code>TLS_ECDHE_ECDSA_WITH_*</code></td><td>ECDH Ephemeral + ECDSA auth</td><td>Yes</td><td><span class="badge badge-vuln">Quantum-vulnerable</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h3">Safe components (appear in all cipher suite names)</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Examples</th><th>Quantum status</th></tr></thead>
+      <tbody>
+        <tr><td>Bulk encryption</td><td>AES_256_GCM, AES_128_GCM, CHACHA20_POLY1305</td><td><span class="badge badge-safe">Safe (AES-256) / flag for upgrade (AES-128)</span></td></tr>
+        <tr><td>MAC / hash</td><td>SHA256, SHA384</td><td><span class="badge badge-safe">Safe</span></td></tr>
+        <tr><td>Deprecated bulk</td><td>3DES_EDE_CBC, RC4</td><td><span class="badge badge-vuln">Classically broken — flag immediately</span></td></tr>
+        <tr><td>Deprecated MAC</td><td>SHA (SHA-1), MD5</td><td><span class="badge badge-vuln">Classically broken — flag immediately</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /t7 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 8: GLOSSARY                                              -->
+<!-- ============================================================ -->
+<div id="t8" class="tab-panel">
+
+  <div class="section-title">Glossary — Key Technical Terms</div>
+  <div class="section-sub">Every term used in TLS and PQC scanning — defined precisely</div>
+
+  <div class="content-h2">Protocol &amp; Standard Terms</div>
+
+  <div class="terms-grid">
+    <div class="term-row"><div class="term-name">TLS</div><div class="term-def">Transport Layer Security. The current standard protocol for encrypted network communication, successor to SSL. Versions: 1.0 (deprecated), 1.1 (deprecated), 1.2 (still in use), 1.3 (current standard, RFC 8446).</div></div>
+    <div class="term-row"><div class="term-name">SSL</div><div class="term-def">Secure Sockets Layer. The predecessor to TLS. SSL 2.0 and 3.0 are completely broken and formally prohibited. In everyday speech, "SSL" is often used as a synonym for TLS — the HTTPS padlock in a browser uses TLS, not SSL.</div></div>
+    <div class="term-row"><div class="term-name">RFC 8446</div><div class="term-def">The IETF standard that defines TLS 1.3 (2018). Specifies the protocol redesign: mandatory AEAD ciphers, removal of RSA key transport, 1-RTT handshake, and the named groups extension that enables PQC key exchange.</div></div>
+    <div class="term-row"><div class="term-name">RFC 8996</div><div class="term-def">The IETF standard that formally deprecated TLS 1.0 and TLS 1.1 (2021). Before RFC 8996 they were "not recommended." After RFC 8996 they are prohibited. The scanner flags any endpoint advertising these versions.</div></div>
+    <div class="term-row"><div class="term-name">Cipher suite</div><div class="term-def">A named combination of cryptographic algorithms negotiated during the TLS handshake. In TLS 1.2: encodes key exchange + auth + bulk cipher + MAC in a single string. In TLS 1.3: encodes only bulk cipher + hash — key exchange is in the named group extension separately.</div></div>
+    <div class="term-row"><div class="term-name">Named group</div><div class="term-def">In TLS 1.3, the discrete set of key exchange algorithms offered (ClientHello) or chosen (ServerHello) via the supported_groups and key_share extensions. Examples: x25519, secp256r1, X25519MLKEM768. This is where PQC lives in TLS 1.3.</div></div>
+    <div class="term-row"><div class="term-name">Forward secrecy (PFS)</div><div class="term-def">Perfect Forward Secrecy — a property where each session uses a unique ephemeral key that is discarded after use. If the server's long-term private key is later compromised, previously recorded sessions cannot be decrypted. Required in TLS 1.3; optional in TLS 1.2.</div></div>
+    <div class="term-row"><div class="term-name">AEAD</div><div class="term-def">Authenticated Encryption with Associated Data. A cipher mode that simultaneously encrypts and provides integrity verification. AES-GCM and ChaCha20-Poly1305 are AEAD ciphers. TLS 1.3 mandates AEAD-only cipher suites. Older CBC-mode ciphers (which enabled BEAST/POODLE) are removed.</div></div>
+    <div class="term-row"><div class="term-name">SNI</div><div class="term-def">Server Name Indication. A TLS extension in ClientHello that tells the server which hostname the client wants to connect to. Visible in plaintext even in TLS 1.3 (before the encrypted session is established). The scanner reads SNI to confirm which hostname is being scanned.</div></div>
+  </div>
+
+  <div class="content-h2">Handshake &amp; Key Exchange Terms</div>
+
+  <div class="terms-grid">
+    <div class="term-row"><div class="term-name">ClientHello</div><div class="term-def">The first message in a TLS handshake, sent by the client. Lists all cipher suites and named groups the client supports. The scanner sends a custom ClientHello advertising every PQC named group to maximise the server's response information.</div></div>
+    <div class="term-row"><div class="term-name">ServerHello</div><div class="term-def">The server's response to ClientHello. Contains the single cipher suite and named group the server chose. The scanner's primary data source — the chosen named group reveals the key exchange algorithm actually used.</div></div>
+    <div class="term-row"><div class="term-name">Key exchange</div><div class="term-def">The step where both sides agree on a shared session key without transmitting it. Classical: RSA (no PFS), ECDH, DHE. PQC: ML-KEM (KEM = Key Encapsulation Mechanism). Hybrid: X25519MLKEM768 = classical + PQC in parallel.</div></div>
+    <div class="term-row"><div class="term-name">KEM</div><div class="term-def">Key Encapsulation Mechanism. The type of key exchange used by ML-KEM (PQC). Unlike DH (both sides contribute), in a KEM: the client generates a random key, encapsulates it under the server's public key, and the server decapsulates it. The result is a shared secret neither side transmitted.</div></div>
+    <div class="term-row"><div class="term-name">ECDHE</div><div class="term-def">Elliptic Curve Diffie-Hellman Ephemeral. Classical key exchange — both sides generate an ephemeral (one-time) EC key pair, exchange public keys, compute the same shared secret via the DH protocol. Provides forward secrecy. Quantum-vulnerable via Shor's algorithm.</div></div>
+    <div class="term-row"><div class="term-name">RSA key transport</div><div class="term-def">TLS 1.2-only mechanism: the client generates the pre-master secret and encrypts it directly with the server's RSA public key. No forward secrecy — if the server's private key is ever broken, all past sessions decrypt. Removed in TLS 1.3. Flagged as the most urgent finding by the scanner.</div></div>
+    <div class="term-row"><div class="term-name">HKDF</div><div class="term-def">HMAC-based Key Derivation Function. Used in TLS 1.3 to derive all session keys from the shared secret established during key exchange. Quantum-safe at SHA-256/SHA-384. Not a vulnerability — the scanner notes but does not flag it.</div></div>
+  </div>
+
+  <div class="content-h2">PQC Algorithm Terms</div>
+
+  <div class="terms-grid">
+    <div class="term-row"><div class="term-name">ML-KEM (FIPS 203)</div><div class="term-def">Module-Lattice-based Key Encapsulation Mechanism. The NIST PQC standard for key exchange. Formerly CRYSTALS-Kyber. Three parameter sets: ML-KEM-512 (Level 1), ML-KEM-768 (Level 3, recommended), ML-KEM-1024 (Level 5). Used in TLS as X25519MLKEM768 (hybrid) or MLKEM768 (pure).</div></div>
+    <div class="term-row"><div class="term-name">ML-DSA (FIPS 204)</div><div class="term-def">Module-Lattice-based Digital Signature Algorithm. The NIST PQC standard for signatures. Formerly CRYSTALS-Dilithium. Three parameter sets: ML-DSA-44 (Level 2), ML-DSA-65 (Level 3, recommended), ML-DSA-87 (Level 5). Used in TLS for server/client authentication certificates.</div></div>
+    <div class="term-row"><div class="term-name">SLH-DSA (FIPS 205)</div><div class="term-def">Stateless Hash-based Digital Signature Algorithm. The NIST PQC conservative backup signature standard. Formerly SPHINCS+. Security relies only on hash functions — not lattices. Slower and larger signatures than ML-DSA. Used for long-lived signing keys (root CAs, firmware signing).</div></div>
+    <div class="term-row"><div class="term-name">Hybrid PQC</div><div class="term-def">A scheme that combines a classical algorithm and a PQC algorithm in parallel — the connection is secure if either holds. In TLS: X25519MLKEM768 = X25519 (classical ECDH) + ML-KEM-768 (PQC KEM). The session key is derived from both. The recommended transitional state for TLS key exchange.</div></div>
+    <div class="term-row"><div class="term-name">IANA named group code</div><div class="term-def">The numeric identifier for a TLS key exchange algorithm registered with IANA and used in the ClientHello/ServerHello key_share extension. X25519MLKEM768 = 0x639A. X25519 = 0x001D. P-256 = 0x0017. The scanner reads these codes directly from the TLS handshake bytes.</div></div>
+    <div class="term-row"><div class="term-name">OID (Object Identifier)</div><div class="term-def">A globally unique dotted-number identifier for a cryptographic algorithm, embedded in X.509 certificates. sha256WithRSAEncryption = 1.2.840.113549.1.1.11. ML-DSA-65 = 2.16.840.1.101.3.4.3.18. The scanner reads OIDs from certificates and looks them up in its algorithm registry to classify PQC status.</div></div>
+  </div>
+
+  <div class="content-h2">Attack &amp; Threat Model Terms</div>
+
+  <div class="terms-grid">
+    <div class="term-row"><div class="term-name">HNDL</div><div class="term-def">Harvest Now, Decrypt Later. The threat model where adversaries record today's encrypted TLS traffic and store it to decrypt later when a quantum computer is available. The reason PQC migration cannot wait — data being transmitted today under RSA/ECDH key exchange is potentially already compromised.</div></div>
+    <div class="term-row"><div class="term-name">CRQC</div><div class="term-def">Cryptographically Relevant Quantum Computer. The type of quantum computer powerful enough to run Shor's algorithm at scale and break RSA/ECDH. Does not exist as of 2026. Expert estimates for when it might exist range from 5 to 15 years. The HNDL attack works against future CRQCs using data collected today.</div></div>
+    <div class="term-row"><div class="term-name">BEAST</div><div class="term-def">Browser Exploit Against SSL/TLS (2011). Exploited predictable IVs in TLS 1.0's CBC-mode encryption to decrypt session data. Fixed by TLS 1.2's changes to CBC record processing and by the move to AEAD ciphers in TLS 1.3.</div></div>
+    <div class="term-row"><div class="term-name">POODLE</div><div class="term-def">Padding Oracle On Downgraded Legacy Encryption (2014). Forced downgrade to SSL 3.0 and exploited its CBC padding handling. Killed SSL 3.0. POODLE v2 found similar issues in some TLS 1.x implementations.</div></div>
+    <div class="term-row"><div class="term-name">CRIME</div><div class="term-def">Compression Ratio Info-leak Made Easy (2012). Exploited TLS compression — by observing how ciphertext size changed as an attacker injected data, they could recover plaintext. Fixed by disabling TLS compression entirely, which TLS 1.3 mandates.</div></div>
+    <div class="term-row"><div class="term-name">ROBOT</div><div class="term-def">Return Of Bleichenbacher's Oracle Threat (2017). Exploited RSA PKCS#1 v1.5 padding in TLS 1.2 implementations — a category of timing-based oracle attack that allows RSA decryption. Affects TLS 1.2 implementations using RSA key transport. Another reason to deprecate RSA key transport.</div></div>
+  </div>
+
+  <div class="content-h2">Scanner &amp; Inventory Terms</div>
+
+  <div class="terms-grid">
+    <div class="term-row"><div class="term-name">CBOM</div><div class="term-def">Cryptographic Bill of Materials. A machine-readable inventory of all cryptographic assets found during scanning — algorithms, keys, certificates, protocols. Standardised in CycloneDX format (ECMA-424). The primary output format of the PQC scanner. NIST SP 1800-38B endorses it.</div></div>
+    <div class="term-row"><div class="term-name">SBOM</div><div class="term-def">Software Bill of Materials. A machine-readable list of all software components and dependencies in an application. CycloneDX or SPDX format. Used by the scanner to identify which TLS library version an application uses — without active network scanning.</div></div>
+    <div class="term-row"><div class="term-name">SARIF</div><div class="term-def">Static Analysis Results Interchange Format. The output format for SAST (code scanning) findings. Integrates natively with GitHub Advanced Security, GitLab SAST, and Azure DevOps as pull request annotations.</div></div>
+    <div class="term-row"><div class="term-name">CycloneDX</div><div class="term-def">An OWASP standard for BOM (Bill of Materials) documents — both SBOM and CBOM use this format. Ratified as ECMA-424. The scanner outputs CycloneDX CBOM JSON as its primary machine-readable format.</div></div>
+    <div class="term-row"><div class="term-name">Active scanning</div><div class="term-def">The scanner initiates connections to targets — sends TLS ClientHello, reads ServerHello, closes connection. No credentials needed for TLS/SSH. Zero production impact. Tells you what the server is configured to support.</div></div>
+    <div class="term-row"><div class="term-name">Passive scanning</div><div class="term-def">The scanner observes traffic on a SPAN/mirror port without sending any packets. Tells you what is actually being negotiated in production. Catches legacy clients that downgrade to weaker ciphers — something active scanning may miss.</div></div>
+  </div>
+
+  <div class="content-h2">References</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Reference</th><th>What it defines</th></tr></thead>
+      <tbody>
+        <tr><td><strong>RFC 8446</strong></td><td>TLS 1.3 protocol specification (2018)</td></tr>
+        <tr><td><strong>RFC 8996</strong></td><td>Formal deprecation of TLS 1.0 and TLS 1.1 (2021)</td></tr>
+        <tr><td><strong>FIPS 203</strong></td><td>ML-KEM — Module-Lattice-based Key Encapsulation Mechanism (August 2024)</td></tr>
+        <tr><td><strong>FIPS 204</strong></td><td>ML-DSA — Module-Lattice-based Digital Signature Algorithm (August 2024)</td></tr>
+        <tr><td><strong>FIPS 205</strong></td><td>SLH-DSA — Stateless Hash-Based Digital Signature Algorithm (August 2024)</td></tr>
+        <tr><td><strong>NIST SP 800-227</strong></td><td>Recommendations for using ML-KEM in TLS and related protocols</td></tr>
+        <tr><td><strong>NIST IR 8547</strong></td><td>Transition timeline — RSA/ECDSA disallowed after 2030 (112-bit) / 2035 (all)</td></tr>
+        <tr><td><strong>Cloudflare Radar</strong></td><td>Real-time public data on TLS version and PQC adoption across Cloudflare's network</td></tr>
+        <tr><td><strong>Chrome Transparency Report</strong></td><td>HTTPS encryption and PQC deployment statistics from Google's Chrome browser</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /t8 -->
+
+</main>
+
+<footer class="site-footer">
+  <span>TLS — Complete Reference · PQC Scanner Project · May 2026</span>
+  <span>RFC 8446 · RFC 8996 · FIPS 203/204/205 · NIST IR 8547</span>
+</footer>
+
+<script>
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,119 @@
+name: Security Gates
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  # ── Gate 1: Dependency audit ──────────────────────────────────────
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Install pip-audit
+        run: pip install pip-audit
+      - name: Audit Python dependencies
+        run: |
+          if [ -f backend/requirements.txt ]; then
+            pip install -r backend/requirements.txt
+            pip-audit --strict
+          fi
+
+  # ── Gate 2: SAST ──────────────────────────────────────────────────
+  sast-bandit:
+    name: Bandit SAST (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run bandit
+        run: |
+          pip install bandit[toml]
+          bandit -r backend/app -ll -f json -o bandit-report.json || true
+          bandit -r backend/app -ll  # exits non-zero on HIGH/CRITICAL
+
+  # ── Gate 3: Crypto policy check ──────────────────────────────────
+  crypto-policy:
+    name: Crypto Policy Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for forbidden crypto imports
+        run: |
+          FORBIDDEN="pycrypto|from Crypto|import Crypto|from random import|import random"
+          MATCHES=$(grep -rnE "^import ($FORBIDDEN)|^from ($FORBIDDEN)" backend/ || true)
+          if [ -n "$MATCHES" ]; then
+            echo "::error::FORBIDDEN CRYPTO IMPORT FOUND"
+            echo "$MATCHES"
+            exit 1
+          fi
+          echo "Crypto policy check passed."
+
+  # ── Gate 4: Secrets scan ──────────────────────────────────────────
+  secrets-scan:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect secrets
+        run: |
+          pip install detect-secrets
+          detect-secrets scan --baseline .secrets.baseline --exclude-files '\.lock$|\.svg$|\.png$'
+
+  # ── Gate 5: Docker image security scan ────────────────────────────
+  docker-security:
+    name: Trivy Image Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with: {tags: pqcrypt-api:ci, load: true, context: ./docker, file: ./docker/Dockerfile.api}
+      - uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "pqcrypt-api:ci"
+          format: "sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+        env:
+          TRIVY_SKIP_DB_UPDATE: "true"
+
+  # ── Gate 6: Test suite ────────────────────────────────────────────
+  test-suite:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: pqcrypt_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: actions/setup-node@v4
+        with: {node-version: "20"}
+      - name: Install Python deps
+        run: |
+          pip install -r backend/requirements.txt
+          pip install -r backend/requirements-dev.txt
+      - name: Run backend tests
+        run: |
+          export DATABASE_URL=postgresql+asyncpg://postgres:testpass@localhost:5432/pqcrypt_test
+          pytest backend/tests/ --cov=backend/app --cov-fail-under=80
+      - name: Lint frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+          npx tsc --noEmit

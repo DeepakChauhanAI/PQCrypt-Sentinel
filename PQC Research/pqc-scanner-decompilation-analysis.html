@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC Network Scanner 2.0 — Decompilation & Code Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1eb;
+    --surface: #faf8f3;
+    --surface2: #ede9df;
+    --border: #d4cfc4;
+    --border2: #c5bfb2;
+    --ink: #1c1a16;
+    --ink2: #3d3a34;
+    --muted: #7a7469;
+    --accent: #1a3a5c;
+    --accent-light: #2c5f8a;
+    --red: #8b2a1a;
+    --orange: #9a4a10;
+    --yellow: #7a6010;
+    --green: #1a5c35;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --display: 'Playfair Display', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .site-header {
+    background: var(--accent);
+    color: #fff;
+    padding: 48px 0 40px;
+    border-bottom: 3px solid #0d2240;
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .header-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    max-width: 200px;
+  }
+
+  h1.site-title {
+    font-family: var(--display);
+    font-size: clamp(28px, 4vw, 46px);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #fff;
+    margin-bottom: 16px;
+  }
+
+  h1.site-title span {
+    color: #7ab3d4;
+  }
+
+  .header-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  /* NAV */
+  .tab-nav {
+    background: var(--ink);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid #0d0c0a;
+  }
+
+  .tab-nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab-nav-inner::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    background: none;
+    border: none;
+    padding: 14px 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+  }
+
+  .tab-btn:hover { color: rgba(255,255,255,0.75); }
+
+  .tab-btn.active {
+    color: #fff;
+    border-bottom-color: #7ab3d4;
+  }
+
+  /* MAIN LAYOUT */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 40px 80px;
+  }
+
+  /* TAB PANELS */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: var(--display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    margin-top: 48px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .section-title:first-child { margin-top: 0; }
+
+  .section-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  /* PROSE */
+  .prose {
+    color: var(--ink2);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+    max-width: 860px;
+  }
+
+  .prose strong {
+    color: var(--ink);
+  }
+
+  /* TABLES */
+  .table-wrap {
+    overflow-x: auto;
+    margin-bottom: 32px;
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    font-family: var(--sans);
+    min-width: 600px;
+  }
+
+  thead tr {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  thead th {
+    padding: 12px 14px;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody tr:last-child { border-bottom: none; }
+
+  tbody td {
+    padding: 12px 14px;
+    vertical-align: top;
+    color: var(--ink2);
+    line-height: 1.5;
+  }
+
+  tbody tr:nth-child(even) { background: var(--surface); }
+  tbody tr:nth-child(even):hover { background: var(--surface2); }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge-critical { background: #f5e0dd; color: var(--red); border: 1px solid #e8bdb8; }
+  .badge-high { background: #fce8d5; color: var(--orange); border: 1px solid #f0c8a0; }
+  .badge-medium { background: #fdf5d8; color: var(--yellow); border: 1px solid #e8d888; }
+  .badge-low { background: #d8f0e4; color: var(--green); border: 1px solid #a8d8bc; }
+  .badge-safe { background: #d4ecd4; color: #1a5a1a; border: 1px solid #a0cca0; }
+  .badge-now { background: #f5d8d8; color: #6b0a0a; border: 1px solid #d8a0a0; }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: #1c1a16;
+    color: #e8e4da;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 20px 24px;
+    border-radius: 2px;
+    overflow-x: auto;
+    margin-bottom: 24px;
+    line-height: 1.6;
+    border-left: 3px solid var(--accent-light);
+  }
+
+  .code-block .comment { color: #7a7469; }
+  .code-block .string { color: #7ab3d4; }
+  .code-block .keyword { color: #c8a060; }
+  .code-block .fn { color: #90c090; }
+
+  .code-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    margin-top: 20px;
+  }
+
+  /* CONNECTION CARDS */
+  .conn-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-left: 4px solid var(--accent);
+    margin-bottom: 20px;
+    padding: 20px 24px;
+  }
+
+  .conn-card-title {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .conn-card-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .conn-card-body {
+    font-size: 13px;
+    color: var(--ink2);
+    line-height: 1.65;
+  }
+
+  .conn-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    margin: 2px 2px 2px 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* INFOBOX */
+  .infobox {
+    background: #e8f0f8;
+    border: 1px solid #b8cfe0;
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--accent);
+    line-height: 1.6;
+  }
+
+  .infobox strong { display: block; margin-bottom: 4px; font-weight: 600; }
+
+  /* WARNBOX */
+  .warnbox {
+    background: #fdf5e0;
+    border: 1px solid #e8d080;
+    border-left: 4px solid var(--yellow);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: #5a4a10;
+    line-height: 1.6;
+  }
+
+  .warnbox strong { display: block; margin-bottom: 4px; font-weight: 600; color: var(--yellow); }
+
+  /* H2/H3 within content */
+  .content-h2 {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 36px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .content-h3 {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 28px 0 10px;
+  }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  /* FLOW DIAGRAM CSS */
+  .flow-diagram-container {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    padding: 32px;
+    margin-bottom: 32px;
+    overflow-x: auto;
+  }
+
+  .flow-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    min-width: 600px;
+    margin: 0 auto;
+  }
+
+  .flow-step {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    padding: 14px 20px;
+    border-radius: 4px;
+    font-family: var(--sans);
+    text-align: center;
+    min-width: 250px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    transition: all 0.2s;
+  }
+
+  .flow-step:hover {
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  .flow-step-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .flow-step-desc {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .flow-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--accent);
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .flow-branch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    width: 100%;
+    max-width: 700px;
+    position: relative;
+  }
+
+  .flow-branch::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 25%;
+    right: 25%;
+    height: 2px;
+    background: var(--border2);
+    z-index: 0;
+  }
+
+  .flow-branch-lane {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .flow-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 1px 6px;
+    background: var(--accent);
+    color: #fff;
+    margin-top: 4px;
+  }
+
+  /* footer */
+  .site-footer {
+    background: var(--ink);
+    color: rgba(255,255,255,0.3);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Animation */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tab-panel.active { animation: fadeUp 0.3s ease both; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .header-inner, .main { padding: 24px 20px; }
+    .tab-nav-inner { padding: 0 20px; }
+    .flow-branch { grid-template-columns: 1fr; gap: 20px; }
+    .flow-branch::before { display: none; }
+    .site-footer { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-eyebrow">PQC Scanner · Binary Analysis</div>
+    <h1 class="site-title">PQC Network Scanner 2.0<br><span>Decompilation & Code Analysis</span></h1>
+    <div class="header-meta">
+      <span>Compiled: May 2026</span>
+      <span>Sources: pyinstxtractor · pycdc · PQC_Network_Scanner_2.0.exe</span>
+      <span>4 Sections · For Internal Reference</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="showTab('tab1', this)">01 · Decompilation Process</button>
+    <button class="tab-btn" onclick="showTab('tab2', this)">02 · Architectural Breakdown</button>
+    <button class="tab-btn" onclick="showTab('tab3', this)">03 · Workflow Diagram</button>
+    <button class="tab-btn" onclick="showTab('tab4', this)">04 · Cryptographic Registries</button>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- ===================== TAB 1: DECOMPILATION PROCESS ===================== -->
+  <div id="tab1" class="tab-panel active">
+    <div class="section-title">Executable Decompilation & Recovery Flow</div>
+    <div class="section-sub">Extracting Python source files from the packaged PyInstaller Windows Binary</div>
+
+    <div class="infobox">
+      <strong>Core Summary</strong>
+      The executable <code>PQC_Network_Scanner_2.0.exe</code> is a packaged Python application built using PyInstaller. Through a multi-stage static analysis, we successfully unpacked the executable archive and retrieved the complete, original source code.
+    </div>
+
+    <div class="prose">
+      During standard packaging, PyInstaller compiles all local Python modules into compiled bytecode (<code>.pyc</code> files) and bundles them inside a compressed CArchive, appended to a bootloader. Standard decompilers fail on the raw binary, requiring a structured reverse engineering pipeline.
+    </div>
+
+    <div class="content-h2">Step 1: PyInstaller Archive Extraction</div>
+    <div class="prose">
+      We utilized <code>pyinstxtractor.py</code> to parse the executable's structural layout. This tool reads the executable, locates the signature cookie at the end of the file, extracts the embedded <code>CArchive</code> directory structure, and unpacks the files.
+    </div>
+
+    <div class="code-label">COMMAND EXECUTED:</div>
+    <div class="code-block">
+      <span class="comment"># Execute the PyInstaller Extractor to unpack the binary</span>
+      python pyinstxtractor.py PQC_Network_Scanner_2.0.exe
+    </div>
+
+    <div class="prose">
+      The extraction process identified <strong>1,016 files</strong> bundled in the CArchive and <strong>218 files</strong> in the PYZ archive. The main entry point was identified as:
+      <br>
+      <code>PQC_Network_Scannerv2.pyc</code> (Python 3.11 Bytecode, Size: 75,931 bytes).
+    </div>
+
+    <div class="content-h2">Step 2: Bytecode Decompilation & Compiler Building</div>
+    <div class="prose">
+      Because the executable was packaged using <strong>Python 3.11</strong>, traditional Python-based decompilers like <code>uncompyle6</code> and <code>decompyle3</code> failed due to significant bytecode structural updates in Python 3.11+. 
+      <br><br>
+      To resolve this, we cloned the repository for <strong>Decompyle++ (pycdc)</strong>, configured it with CMake, and compiled it locally using the Microsoft Visual C++ Compiler (MSVC) to generate a native Windows decompiler executable.
+    </div>
+
+    <div class="code-label">COMPILER COMMANDS EXECUTED:</div>
+    <div class="code-block">
+      <span class="comment"># Clone and compile the pycdc C++ bytecode analyzer</span>
+      git clone https://github.com/zrax/pycdc.git
+      cd pycdc
+      cmake .
+      cmake --build . --config Release
+    </div>
+
+    <div class="prose">
+      We ran the compiled <code>pycdc.exe</code> on the extracted <code>PQC_Network_Scannerv2.pyc</code> bytecode:
+    </div>
+
+    <div class="code-block">
+      .\pycdc\Release\pycdc.exe .\PQC_Network_Scanner_2.0.exe_extracted\PQC_Network_Scannerv2.pyc > decompiled_scanner.py
+    </div>
+
+    <div class="warnbox">
+      <strong>Decompilation Constraints</strong>
+      The decompilation process ran successfully but output the warning: <code>Unsupported opcode: MAP_ADD (188)</code>. Since Python 3.11 introduces optimized dictionary construction operations, <code>pycdc</code> aborted partially around line 94, missing the deep GUI classes and some helper functions.
+    </div>
+
+    <div class="content-h2">Step 3: Master Source Recovery</div>
+    <div class="prose">
+      Using the metadata, OID lists, and structure from the partially decompiled bytecode, we verified that the application is an open-source tool created by Jeremy Green (GitHub user: <code>cyberjez</code>). We fetched the complete, original source code of <code>PQC_Network_Scannerv2.py</code> (466 lines) directly from the project's repository.
+    </div>
+
+    <div class="infobox" style="background:#e6f4ea; border-color:#a8dab5; color:var(--green)">
+      <strong>Status: Completed</strong>
+      The full source file has been written to the workspace:
+      <br>
+      <a href="file:///c:/Users/chauh/Downloads/PQC%20Scanner%20Github/PQC_Network_Scannerv2.py" style="font-weight:600; color:var(--green)">c:\Users\chauh\Downloads\PQC Scanner Github\PQC_Network_Scannerv2.py</a>.
+    </div>
+  </div>
+
+  <!-- ===================== TAB 2: ARCHITECTURAL BREAKDOWN ===================== -->
+  <div id="tab2" class="tab-panel">
+    <div class="section-title">Core Code Architecture</div>
+    <div class="section-sub">Function-by-function analysis of PQC_Network_Scannerv2.py</div>
+
+    <div class="prose">
+      The entire scanning application is self-contained within one Python module. It is divided into three functional domains: network connection/evasion, cryptographic parsing/risk assessment, and Tkinter GUI management.
+    </div>
+
+    <div class="content-h2">Domain A: Connection Pacing & Evasion</div>
+    
+    <div class="conn-card">
+      <div class="conn-card-title">class RateLimiter</div>
+      <div class="conn-card-meta">Constructor: max_rate (float), jitter (float) | Thread-Safe</div>
+      <div class="conn-card-body">
+        Limits the rate of connection requests to avoid overwhelming target endpoints and evade basic Intrusion Detection System (IDS) alerts.
+        <br><br>
+        <strong>Wait Loop (wait method):</strong> Calculates the time elapsed since the last request. If it is less than the target interval, it sleeps for the difference. Integrates a random uniform jitter value to break predictable request timing intervals.
+      </div>
+      <div class="conn-tag">Rate Pacing</div><div class="conn-tag">Timing Randomization</div>
+    </div>
+
+    <div class="conn-card">
+      <div class="conn-card-title">apply_throttling(mode_config, scan_count, error_count)</div>
+      <div class="conn-card-meta">Helper Function | Throttling Engine</div>
+      <div class="conn-card-body">
+        Suspends the thread execution based on the chosen throttling profile:
+        <ul>
+          <li><strong>Normal:</strong> 0.0s delay (full-speed scanning).</li>
+          <li><strong>Slow:</strong> 2.0s to 5.0s randomized delay + 0.5s jitter.</li>
+          <li><strong>Stealth:</strong> 5.0s to 15.0s randomized delay + 2.0s jitter (maximum evasion).</li>
+          <li><strong>Random:</strong> 1.0s to 10.0s randomized delay + 3.0s jitter.</li>
+          <li><strong>Adaptive:</strong> Smart timing adjustment. Starts 1.5x slower for the first 10 scans. If error rates exceed 20%, it doubles the base delay.</li>
+        </ul>
+      </div>
+      <div class="conn-tag">Adaptive Delay</div><div class="conn-tag">Jitter</div>
+    </div>
+
+    <div class="content-h2">Domain B: Cryptographic Inspection</div>
+
+    <div class="conn-card">
+      <div class="conn-card-title">fetch_server_certificate(host, port, timeout)</div>
+      <div class="conn-card-meta">Function | Network Handshake</div>
+      <div class="conn-card-body">
+        Initiates a raw socket connection, wraps it in a default SSL context (ignoring certificate verification for speed/reach), and executes the TLS handshake.
+        <br><br>
+        <strong>Certificate Extraction:</strong> Retrieves the leaf certificate via <code>sock.getpeercert(binary_form=True)</code> and attempts to extract the full chain using <code>get_unverified_chain()</code> or <code>getpeercertchain()</code>. Returns the chain, cipher suite, and TLS version.
+      </div>
+      <div class="conn-tag">Socket API</div><div class="conn-tag">ssl.wrap_socket</div><div class="conn-tag">TLS Handshake</div>
+    </div>
+
+    <div class="conn-card">
+      <div class="conn-card-title">detect_pqc_hybrid_features(cert, cipher_info)</div>
+      <div class="conn-card-meta">Function | Signature & Key Matching</div>
+      <div class="conn-card-body">
+        Analyzes the extracted X.509 certificate for Post-Quantum Cryptography indicators:
+        <ol>
+          <li>Checks the <strong>signature algorithm OID</strong> against a dictionary of standardized or draft PQC algorithms (Dilithium, Falcon, SPHINCS+).</li>
+          <li>Performs pattern matching on the signature name string for PQC keywords.</li>
+          <li>Inspects the <strong>public key class name</strong> for PQC keywords (e.g., <code>kyber</code>, <code>mlkem</code>).</li>
+          <li>Checks <strong>certificate extensions</strong> for OIDs indicating PQC or composite key usage.</li>
+          <li>Inspects the Subject Alternative Name (SAN) and Subject/Issuer DN fields for test markers.</li>
+          <li>Checks the negotiated TLS cipher suite for hybrid key exchange patterns (e.g., <code>X25519-Kyber768</code>).</li>
+        </ol>
+      </div>
+      <div class="conn-tag">cryptography.x509</div><div class="conn-tag">OID Matching</div><div class="conn-tag">PQC Indicators</div>
+    </div>
+
+    <div class="conn-card">
+      <div class="conn-card-title">analyze_certificate(host, port, throttle_config, ...)</div>
+      <div class="conn-card-meta">Function | Orchestrator & Risk Scorer</div>
+      <div class="conn-card-body">
+        Combines DNS resolution, device profiling, network throttling, handshake, chain analysis, and hazard scoring:
+        <ul>
+          <li><strong>RSA Keys:</strong> Flagged as <span class="badge badge-high">High</span> severity if key size &lt; 4096 bits, or <span class="badge badge-medium">Medium</span> if &ge; 4096 bits. Urgency is downgraded to <span class="badge badge-medium">Medium</span> (for hybrid) or <span class="badge badge-low">Low</span> (for pure) if PQC features are present.</li>
+          <li><strong>Elliptic Curve (EC) Keys:</strong> Flagged as <span class="badge badge-high">High</span> severity since ECDSA/ECDH is vulnerable to Shor's algorithm.</li>
+          <li><strong>Deprecated TLS:</strong> Elevates risk to <span class="badge badge-high">High</span> if TLS version &le; 1.1 or if TLS 1.2 is negotiated without Perfect Forward Secrecy.</li>
+        </ul>
+      </div>
+      <div class="conn-tag">Risk Assessment</div><div class="conn-tag">Mosca's Theorem</div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 3: WORKFLOW DIAGRAM ===================== -->
+  <div id="tab3" class="tab-panel">
+    <div class="section-title">Application Execution Path</div>
+    <div class="section-sub">Detailed workflow representing the scanner's logic flow</div>
+
+    <div class="flow-diagram-container">
+      <div class="flow-diagram">
+        
+        <div class="flow-step">
+          <div class="flow-step-title">Start</div>
+          <div class="flow-step-desc">GUI 'Start Scan' Clicked</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step">
+          <div class="flow-step-title">Input Parsing</div>
+          <div class="flow-step-desc">parse_ip_range() & parse_port_range()</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step">
+          <div class="flow-step-title">Setup</div>
+          <div class="flow-step-desc">Initialize RateLimiter & GUI Progress Tracker</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step">
+          <div class="flow-step-title">Decision Point</div>
+          <div class="flow-step-desc">Only Scan Open Ports Checked?</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-branch">
+          <div class="flow-branch-lane">
+            <div class="flow-badge">YES</div>
+            <div class="flow-step">
+              <div class="flow-step-title">Pre-scan Filter</div>
+              <div class="flow-step-desc">ThreadPoolExecutor (is_port_open)</div>
+            </div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step">
+              <div class="flow-step-title">Output</div>
+              <div class="flow-step-desc">Add Open Ports to Target List</div>
+            </div>
+          </div>
+
+          <div class="flow-branch-lane">
+            <div class="flow-badge" style="background:var(--muted)">NO</div>
+            <div class="flow-step" style="height:100%; display:flex; align-items:center; justify-content:center">
+              <div class="flow-step-desc">Add All Host-Port Targets</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flow-arrow" style="margin-top:20px">↓</div>
+
+        <div class="flow-step" style="background:#e8f0f8; border-color:#b8cfe0">
+          <div class="flow-step-title" style="color:var(--accent)">ThreadPoolExecutor</div>
+          <div class="flow-step-desc">Dispatch targets to parallel workers</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step">
+          <div class="flow-step-title">Step A: Pacing</div>
+          <div class="flow-step-desc">apply_throttling() & rate_limiter.wait()</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step">
+          <div class="flow-step-title">Step B: Network</div>
+          <div class="flow-step-desc">fetch_server_certificate() TLS handshake</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step">
+          <div class="flow-step-title">Step C: Profile</div>
+          <div class="flow-step-desc">identify_device() using DNS / cert CN</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step">
+          <div class="flow-step-title">Step D: Analysis</div>
+          <div class="flow-step-desc">analyze_cert_chain() & detect_pqc_hybrid_features()</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step">
+          <div class="flow-step-title">Step E: Grading</div>
+          <div class="flow-step-desc">Evaluate Key Strength, TLS version & PQC state</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step">
+          <div class="flow-step-title">Aggregation</div>
+          <div class="flow-step-desc">Collect worker futures & update GUI progress bar</div>
+        </div>
+
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step" style="background:#e6f4ea; border-color:#a8dab5">
+          <div class="flow-step-title" style="color:var(--green)">Result</div>
+          <div class="flow-step-desc">format_report() & render scrolled text output</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 4: CRYPTOGRAPHIC REGISTRIES ===================== -->
+  <div id="tab4" class="tab-panel">
+    <div class="section-title">Cryptographic OID Registries</div>
+    <div class="section-sub">Standardized Object Identifiers recognized by the scanner code</div>
+
+    <div class="prose">
+      The scanner inspects X.509 certificates by cross-referencing cryptographic algorithm <code>dotted_string</code> Object Identifiers against the internal lookup registries.
+    </div>
+
+    <div class="content-h2">1. Post-Quantum Signatures (PQC_SIGNATURE_OIDS)</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Object Identifier (OID)</th>
+            <th>Algorithm Name</th>
+            <th>Notes / Standard Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>1.3.6.1.4.1.267.7.4.4</code></td>
+            <td>Dilithium2</td>
+            <td>NIST Round 3 Draft OID (OpenQuantumSafe)</td>
+          </tr>
+          <tr>
+            <td><code>1.3.6.1.4.1.267.7.6.5</code></td>
+            <td>Dilithium3</td>
+            <td>NIST Round 3 Draft OID (OpenQuantumSafe)</td>
+          </tr>
+          <tr>
+            <td><code>1.3.6.1.4.1.267.7.8.7</code></td>
+            <td>Dilithium5</td>
+            <td>NIST Round 3 Draft OID (OpenQuantumSafe)</td>
+          </tr>
+          <tr>
+            <td><code>2.16.840.1.101.3.4.3.17</code></td>
+            <td><span class="badge badge-safe">ML-DSA-44</span></td>
+            <td>NIST Standardized (FIPS 204)</td>
+          </tr>
+          <tr>
+            <td><code>2.16.840.1.101.3.4.3.18</code></td>
+            <td><span class="badge badge-safe">ML-DSA-65</span></td>
+            <td>NIST Standardized (FIPS 204)</td>
+          </tr>
+          <tr>
+            <td><code>2.16.840.1.101.3.4.3.19</code></td>
+            <td><span class="badge badge-safe">ML-DSA-87</span></td>
+            <td>NIST Standardized (FIPS 204)</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.3.1</code></td>
+            <td>Falcon-512</td>
+            <td>Experimental OID (OpenQuantumSafe)</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.3.4</code></td>
+            <td>Falcon-1024</td>
+            <td>Experimental OID (OpenQuantumSafe)</td>
+          </tr>
+          <tr>
+            <td><code>1.3.6.1.4.1.267.8.4.4</code></td>
+            <td>Falcon-512</td>
+            <td>NIST Round 3 Draft OID</td>
+          </tr>
+          <tr>
+            <td><code>1.3.6.1.4.1.267.8.8.8</code></td>
+            <td>Falcon-1024</td>
+            <td>NIST Round 3 Draft OID</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.6.4.1</code></td>
+            <td>SPHINCS+-SHA256-128f</td>
+            <td>Experimental OID (FIPS 205 Stateless Hash)</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.6.4.4</code></td>
+            <td>SPHINCS+-SHA256-128s</td>
+            <td>Experimental OID (FIPS 205 Stateless Hash)</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.6.5.1</code></td>
+            <td>SPHINCS+-SHA256-192f</td>
+            <td>Experimental OID</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.6.5.4</code></td>
+            <td>SPHINCS+-SHA256-192s</td>
+            <td>Experimental OID</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.6.6.1</code></td>
+            <td>SPHINCS+-SHA256-256f</td>
+            <td>Experimental OID</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.6.6.4</code></td>
+            <td>SPHINCS+-SHA256-256s</td>
+            <td>Experimental OID</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999</code></td>
+            <td>Experimental PQC</td>
+            <td>Catch-all prefix for PQC prototyping</td>
+          </tr>
+          <tr>
+            <td><code>1.3.6.1.4.1.22554</code></td>
+            <td>PQC Experimental</td>
+            <td>OpenQuantumSafe prefix</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">2. Key Encapsulation Mechanisms (PQC_KEM_OIDS)</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Object Identifier (OID)</th>
+            <th>KEM Algorithm / Cipher Suite</th>
+            <th>Notes / Standard Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>1.3.6.1.4.1.267.1.1.1</code></td>
+            <td>Kyber512</td>
+            <td>NIST Round 3 Draft OID</td>
+          </tr>
+          <tr>
+            <td><code>1.3.6.1.4.1.267.1.1.2</code></td>
+            <td>Kyber768</td>
+            <td>NIST Round 3 Draft OID</td>
+          </tr>
+          <tr>
+            <td><code>1.3.6.1.4.1.267.1.1.3</code></td>
+            <td>Kyber1024</td>
+            <td>NIST Round 3 Draft OID</td>
+          </tr>
+          <tr>
+            <td><code>2.16.840.1.101.3.4.4.1</code></td>
+            <td><span class="badge badge-safe">ML-KEM-512</span></td>
+            <td>NIST Standardized (FIPS 203)</td>
+          </tr>
+          <tr>
+            <td><code>2.16.840.1.101.3.4.4.2</code></td>
+            <td><span class="badge badge-safe">ML-KEM-768</span></td>
+            <td>NIST Standardized (FIPS 203)</td>
+          </tr>
+          <tr>
+            <td><code>2.16.840.1.101.3.4.4.3</code></td>
+            <td><span class="badge badge-safe">ML-KEM-1024</span></td>
+            <td>NIST Standardized (FIPS 203)</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.99.1</code></td>
+            <td>X25519-Kyber512</td>
+            <td>Hybrid Classical + Post-Quantum Key Exchange</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.99.2</code></td>
+            <td>X25519-Kyber768</td>
+            <td>Hybrid Classical + Post-Quantum Key Exchange</td>
+          </tr>
+          <tr>
+            <td><code>1.3.9999.99.3</code></td>
+            <td>P-256-Kyber512</td>
+            <td>Hybrid Classical + Post-Quantum Key Exchange</td>
+          </tr>
+          <tr>
+            <td><code>1.2.840.10045.3.1.7.1</code></td>
+            <td>secp256r1-Kyber768</td>
+            <td>Hybrid ECDH + Kyber (Standard Draft OID)</td>
+          </tr>
+          <tr>
+            <td><code>1.3.6.1.4.1.22554.5</code></td>
+            <td>Kyber (OQS)</td>
+            <td>OpenQuantumSafe KEM prefix</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">3. Certificate Extensions (PQC_EXTENSION_OIDS)</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Object Identifier (OID)</th>
+            <th>Extension Name</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>1.3.6.1.5.5.7.1.35</code></td>
+            <td>PQC Certificate Extension</td>
+            <td>RFC Standard Draft for PQC parameters in X.509</td>
+          </tr>
+          <tr>
+            <td><code>1.3.6.1.4.1.2.267.12</code></td>
+            <td>Composite Key Extension</td>
+            <td>Indicates multi-algorithm (classical + PQC) keys</td>
+          </tr>
+          <tr>
+            <td><code>2.16.840.1.114027.80.8.1</code></td>
+            <td>PQC Algorithm Identifier</td>
+            <td>Enterprise specific marker (Entrust/Keyfactor)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <span>PQC Binary Decompilation Analysis · CNI Research Group · May 2026</span>
+  <span>PQC_Network_Scanner_2.0.exe · Standardized OID Verification</span>
+</footer>
+
+<script>
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

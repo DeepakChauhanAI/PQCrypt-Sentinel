@@ -1,0 +1,1073 @@
+{
+  "nodes": [
+    {
+      "id": "pqcrypt_sentinel",
+      "label": "PQCrypt Sentinel",
+      "type": "product",
+      "attrs": {
+        "version": "1.0",
+        "status": "Draft",
+        "description": "PQC Discovery Platform for post-quantum cryptography readiness assessment",
+        "confidence": 1.0
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "fastapi",
+      "label": "FastAPI",
+      "type": "framework",
+      "attrs": {
+        "version": ">=0.111,<0.112",
+        "language": "Python 3.12+",
+        "purpose": "Async REST API framework with auto-generated OpenAPI docs"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "react",
+      "label": "React 18+",
+      "type": "framework",
+      "attrs": {
+        "language": "TypeScript",
+        "build_tool": "Vite",
+        "ui_lib": "shadcn/ui + Tailwind CSS v3",
+        "state_management": "TanStack Query v5",
+        "routing": "React Router v6"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "postgresql",
+      "label": "PostgreSQL 16+",
+      "type": "database",
+      "attrs": {
+        "driver": "asyncpg",
+        "features": "JSONB, full-text search, pg_trgm",
+        "tables_count": 11,
+        "purpose": "Primary data store for assets, certificates, findings, scans"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "redis",
+      "label": "Redis 7+",
+      "type": "database",
+      "attrs": {
+        "version": ">=5.0,<6",
+        "purpose": "Celery broker, cache, rate limiter state"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "celery",
+      "label": "Celery 5",
+      "type": "framework",
+      "attrs": {
+        "version": ">=5.4,<5.5",
+        "broker": "Redis",
+        "purpose": "Distributed task queue for scan jobs",
+        "features": "Celery Beat for scheduled tasks, Flower for monitoring"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "sqlalchemy",
+      "label": "SQLAlchemy 2.0",
+      "type": "library",
+      "attrs": {
+        "version": ">=2.0,<2.1",
+        "mode": "async (asyncpg)",
+        "purpose": "ORM with Alembic migrations"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "pydantic",
+      "label": "Pydantic v2",
+      "type": "library",
+      "attrs": {
+        "version": ">=2.7,<2.8",
+        "purpose": "Input validation, OpenAPI schema generation, Settings management"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "jwt_auth",
+      "label": "JWT Authentication",
+      "type": "component",
+      "attrs": {
+        "library": "python-jose[cryptography] >=3.3,<3.4",
+        "algorithm": "HS256",
+        "access_token_ttl": "60 minutes",
+        "refresh_token_ttl": "7 days",
+        "secret_key_length": "32+ bytes (256 bits)"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "rbac",
+      "label": "RBAC System",
+      "type": "component",
+      "attrs": {
+        "roles": ["admin", "analyst", "viewer", "api"],
+        "enforcement": "FastAPI dependency injection",
+        "principle": "Least privilege"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "scan_orchestrator",
+      "label": "Scan Orchestrator",
+      "type": "service",
+      "attrs": {
+        "file": "backend/app/services/scan_orchestrator.py",
+        "coverage": "10%",
+        "lifecycle": "queued -> running -> completed/failed/cancelled"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "tls_scanner",
+      "label": "TLS Scanner",
+      "type": "scanner",
+      "attrs": {
+        "file": "backend/app/scanners/tls_scanner.py",
+        "coverage": "67%",
+        "tools": ["sslyze", "cryptography", "ssl/socket"],
+        "purpose": "Active TLS endpoint scanning with PQC OID classification"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "ssh_scanner",
+      "label": "SSH Scanner",
+      "type": "scanner",
+      "attrs": {
+        "file": "backend/app/scanners/ssh_scanner.py",
+        "coverage": "75%",
+        "tools": ["paramiko", "ssh-audit CLI"],
+        "purpose": "SSH algorithm enumeration and PQC KEX detection"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "cert_parser",
+      "label": "Certificate Parser",
+      "type": "scanner",
+      "attrs": {
+        "file": "backend/app/scanners/cert_parser.py",
+        "coverage": "27%",
+        "library": "cryptography (pyca)",
+        "purpose": "X.509 cert parsing with PQC/hybrid OID classification"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "algo_classifier",
+      "label": "Algorithm Classifier",
+      "type": "analysis",
+      "attrs": {
+        "file": "backend/app/analysis/algo_classifier.py",
+        "coverage": "44%",
+        "purpose": "Maps algorithms to PQC status: vulnerable/transitioning/hybrid/pqc_ready/safe"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "risk_scorer",
+      "label": "Risk Scoring Engine",
+      "type": "analysis",
+      "attrs": {
+        "file": "backend/app/services/risk_service.py",
+        "coverage": "80%",
+        "factors": ["HNDL sensitivity (30%)", "system exposure (20%)", "business criticality (20%)", "algorithm vulnerability (15%)", "regulatory deadline (15%)"],
+        "score_range": "0-100"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "mosca_model",
+      "label": "Mosca's Theorem / HNDL Model",
+      "type": "analysis",
+      "attrs": {
+        "file": "backend/app/analysis/mosca_model.py",
+        "coverage": "82%",
+        "parameters": ["data_longevity_years", "quantum_timeline_year (default 2035)"],
+        "outputs": ["high", "medium", "low", "none"]
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "finding_service",
+      "label": "Finding Service",
+      "type": "service",
+      "attrs": {
+        "file": "backend/app/services/finding_service.py",
+        "coverage": "100%",
+        "finding_types": ["weak_algorithm", "weak_key_size", "cert_expiring", "cert_expired", "self_signed", "pqc_downgrade", "ssh_weak_kex"],
+        "lifecycle": "open -> in_progress -> resolved/accepted/false_positive"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "report_service",
+      "label": "Report Service",
+      "type": "service",
+      "attrs": {
+        "file": "backend/app/services/report_service.py",
+        "coverage": "43%",
+        "formats": ["CBOM (CycloneDX JSON)", "PDF (WeasyPrint)", "CSV"],
+        "report_types": ["cbom", "executive", "compliance_nist", "compliance_cisa", "migration_progress"]
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "pyshark",
+      "label": "pyshark",
+      "type": "library",
+      "attrs": {
+        "version": ">=0.6,<0.7",
+        "dependency": "tshark (Wireshark CLI)",
+        "purpose": "Passive TLS/SSH capture via tshark, PCAP analysis"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "sslyze",
+      "label": "SSLyze",
+      "type": "library",
+      "attrs": {
+        "version": ">=5.2",
+        "purpose": "Deep TLS analysis (cipher suites, protocols, cert validation) via Python API"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "paramiko",
+      "label": "paramiko",
+      "type": "library",
+      "attrs": {
+        "version": ">=3.4,<3.5",
+        "purpose": "SSH transport analysis, KEX/cipher enumeration"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "scapy",
+      "label": "scapy",
+      "type": "library",
+      "attrs": {
+        "version": ">=2.5,<2.6",
+        "purpose": "Packet crafting for custom TLS probes with PQC groups"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "cryptography_lib",
+      "label": "cryptography (pyca)",
+      "type": "library",
+      "attrs": {
+        "min_version": ">=42.0.0",
+        "purpose": "X.509 cert parsing, signature verification, PQC OID classification"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "pqcscan",
+      "label": "pqcscan",
+      "type": "cli_tool",
+      "attrs": {
+        "language": "Rust",
+        "output_format": "JSON (--output-format json)",
+        "purpose": "ML-KEM/ML-DSA handshake detection"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "testssl_sh",
+      "label": "testssl.sh",
+      "type": "cli_tool",
+      "attrs": {
+        "language": "Bash",
+        "output_format": "JSON (--jsonfile)",
+        "purpose": "Comprehensive TLS grading"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "ssh_audit",
+      "label": "ssh-audit",
+      "type": "cli_tool",
+      "attrs": {
+        "language": "Python/Bash",
+        "output_format": "JSON (-j)",
+        "purpose": "SSH algorithm audit"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "docker_compose",
+      "label": "Docker Compose",
+      "type": "infrastructure",
+      "attrs": {
+        "services": ["nginx", "postgres", "redis", "api", "worker", "frontend"],
+        "purpose": "Single-command deployment for MVP"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "kubernetes",
+      "label": "Kubernetes + Helm",
+      "type": "infrastructure",
+      "attrs": {
+        "phase": "Phase 3",
+        "purpose": "Scaling for large enterprise (10K+ endpoints)"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "nginx",
+      "label": "Nginx",
+      "type": "infrastructure",
+      "attrs": {
+        "purpose": "Reverse proxy, static file serving, TLS termination"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "implementation_plan",
+      "label": "Implementation Plan",
+      "type": "document",
+      "attrs": {
+        "phases": 10,
+        "duration": "20-24 weeks",
+        "mvp_weeks": "8-12",
+        "team_size": "4-6 people"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "security_baseline",
+      "label": "Secure Development Baseline",
+      "type": "document",
+      "attrs": {
+        "ci_gates": 7,
+        "pre_commit_hooks": ["bandit", "ruff", "detect-private-key", "detect-secrets", "mypy", "hadolint"],
+        "coverage_target": "80%+"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "security_access_doc",
+      "label": "Security & Access Document",
+      "type": "document",
+      "attrs": {
+        "credential_tiers": 5,
+        "auth_methods": ["local_password_JWT", "OIDC_SSO_Phase2", "API_keys"],
+        "principles": ["least_privilege", "credentials_never_in_db", "append_only_evidence", "defense_in_depth", "fail_closed"]
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "pqc_oid_map",
+      "label": "PQC OID Classification Map",
+      "type": "data",
+      "attrs": {
+        "ml_dsa_oids": ["2.16.840.1.101.3.4.3.17", "2.16.840.1.101.3.4.3.18", "2.16.840.1.101.3.4.3.19"],
+        "slh_dsa_oids": ["2.16.840.1.101.3.4.3.20-23"],
+        "falcon_oids": ["1.3.6.1.4.1.62253.25642", "1.3.6.1.4.1.62253.25643"],
+        "hybrid_kex_groups": ["0x2B92 (SecP256r1MLKEM768)", "0x2B93 (X25519MLKEM768)", "0x2B94 (SecP384r1MLKEM1024)"]
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "vendor_pqc_db",
+      "label": "Vendor PQC Readiness Database",
+      "type": "data",
+      "attrs": {
+        "vendors": ["openssl", "boringssl", "nss", "libressl", "mbedtls", "thales_luna", "aws_kms", "aws_cloudhsm", "azure_keyvault", "windows", "openssh"],
+        "purpose": "Maps software versions to PQC support status"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "credential_tier_model",
+      "label": "Scanner Credential Tier Model",
+      "type": "component",
+      "attrs": {
+        "tiers": ["Tier 0: Unauthenticated", "Tier 1: Read-only service", "Tier 2: Local admin", "Tier 3: HSM hardware", "Tier 4: Cloud control plane"],
+        "enforcement": "BaseScanner.access_tier property"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "append_only_evidence",
+      "label": "Append-Only Evidence Store",
+      "type": "pattern",
+      "attrs": {
+        "applies_to": ["scan_logs", "algorithms", "migration_progress", "scans.results"],
+        "enforcement": "DB role separation (scanner_writer: INSERT+SELECT only)",
+        "benefits": ["audit_trail", "scan_diff", "no_write_conflicts"]
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "network_isolation",
+      "label": "Scanner Network Isolation",
+      "type": "component",
+      "attrs": {
+        "networks": ["frontend_network", "api_network", "data_network", "scanner_network"],
+        "ssrf_blocks": ["169.254.169.254 (AWS)", "metadata.google.internal (GCP)", "100.100.100.200 (Azure)"]
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "cyclonedx",
+      "label": "CycloneDX CBOM",
+      "type": "standard",
+      "attrs": {
+        "library": "cyclonedx-python-lib >=7.6,<7.7",
+        "version": "CycloneDX 1.6",
+        "purpose": "CBOM export for cryptographic bill of materials"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "weasyprint",
+      "label": "WeasyPrint",
+      "type": "library",
+      "attrs": {
+        "version": ">=62,<63",
+        "purpose": "PDF report generation"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "coverage_report",
+      "label": "Code Coverage Report",
+      "type": "metric",
+      "attrs": {
+        "overall_coverage": "49%",
+        "tool": "coverage.py v7.13.4",
+        "date": "2026-06-05",
+        "total_statements": 5891,
+        "total_missing": 2988
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "boto3",
+      "label": "boto3",
+      "type": "library",
+      "attrs": {
+        "version": ">=1.38",
+        "purpose": "AWS KMS/ACM/Config resource inventory"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "connector_framework",
+      "label": "Connector Framework",
+      "type": "service",
+      "attrs": {
+        "file": "backend/app/connectors/base.py",
+        "coverage": "88%",
+        "types": ["csv", "servicenow", "aws", "azure", "gcp", "k8s", "pkcs11", "ssh", "winrm", "tde", "sast", "jwt"],
+        "lifecycle": "pending -> connected -> error/disabled"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "diff_engine",
+      "label": "Scan Diff Engine",
+      "type": "analysis",
+      "attrs": {
+        "file": "backend/app/analysis/diff_engine.py",
+        "purpose": "Scan-over-scan comparison for drift detection",
+        "outputs": ["new_assets", "removed_assets", "algo_changes", "new_findings", "resolved_findings", "regressions"]
+      },
+      "source": "INFERRED",
+      "confidence_score": 0.8
+    },
+    {
+      "id": "ct_log_monitor",
+      "label": "CT Log Monitor",
+      "type": "scanner",
+      "attrs": {
+        "file": "backend/app/scanners/ct_log_scanner.py",
+        "coverage": "42%",
+        "endpoint": "https://crt.sh",
+        "schedule": "Every 6 hours via Celery Beat"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "scapy_probe",
+      "label": "Scapy PQC Probe",
+      "type": "scanner",
+      "attrs": {
+        "file": "backend/app/scanners/scapy_probe.py",
+        "coverage": "51%",
+        "purpose": "Crafted TLS ClientHello with PQC groups to test server support"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "feature_tickets",
+      "label": "Feature Ticket List",
+      "type": "document",
+      "attrs": {
+        "total_tickets": 55,
+        "must_have": 42,
+        "should_have": 10,
+        "nice_to_have": 0,
+        "phases_covered": "0-9"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "network_discovery",
+      "label": "Network Discovery",
+      "type": "scanner",
+      "attrs": {
+        "file": "backend/app/scanners/network_discovery.py",
+        "coverage": "74%",
+        "tools": ["python-nmap", "dnspython"]
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "boringssl_ref",
+      "label": "BoringSSL",
+      "type": "vendor",
+      "attrs": {
+        "pqc_support_since": "2024-09",
+        "ml_kem": true,
+        "feature": "X25519MLKEM768 enabled by default"
+      },
+      "source": "EXTRACTED",
+      "confidence_score": 1.0
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_pqcrypt_uses_fastapi",
+      "source": "pqcrypt_sentinel",
+      "target": "fastapi",
+      "label": "uses_as_backend_framework",
+      "type": "uses",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_pqcrypt_uses_react",
+      "source": "pqcrypt_sentinel",
+      "target": "react",
+      "label": "uses_as_frontend_framework",
+      "type": "uses",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_fastapi_uses_sqlalchemy",
+      "source": "fastapi",
+      "target": "sqlalchemy",
+      "label": "uses_orm",
+      "type": "uses",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_fastapi_uses_pydantic",
+      "source": "fastapi",
+      "target": "pydantic",
+      "label": "uses_for_validation",
+      "type": "uses",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_fastapi_uses_jwt",
+      "source": "fastapi",
+      "target": "jwt_auth",
+      "label": "uses_for_authentication",
+      "type": "uses",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_fastapi_enforces_rbac",
+      "source": "fastapi",
+      "target": "rbac",
+      "label": "enforces_via_dependency_injection",
+      "type": "uses",
+      "source_doc": "Security-and-Access-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_sqlalchemy_uses_postgresql",
+      "source": "sqlalchemy",
+      "target": "postgresql",
+      "label": "connects_to_via_asyncpg",
+      "type": "uses",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_celery_uses_redis",
+      "source": "celery",
+      "target": "redis",
+      "label": "uses_as_broker",
+      "type": "uses",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_orchestrator_dispatches_tls",
+      "source": "scan_orchestrator",
+      "target": "tls_scanner",
+      "label": "dispatches",
+      "type": "dispatches",
+      "source_doc": "06-Implementation-Plan.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_orchestrator_dispatches_ssh",
+      "source": "scan_orchestrator",
+      "target": "ssh_scanner",
+      "label": "dispatches",
+      "type": "dispatches",
+      "source_doc": "06-Implementation-Plan.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_tls_scanner_uses_sslyze",
+      "source": "tls_scanner",
+      "target": "sslyze",
+      "label": "uses_for_tls_analysis",
+      "type": "uses",
+      "source_doc": "07-Open-Source-Integration-Guide.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_tls_scanner_uses_cryptography",
+      "source": "tls_scanner",
+      "target": "cryptography_lib",
+      "label": "uses_for_cert_parsing",
+      "type": "uses",
+      "source_doc": "07-Open-Source-Integration-Guide.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_ssh_scanner_uses_paramiko",
+      "source": "ssh_scanner",
+      "target": "paramiko",
+      "label": "uses_for_ssh_transport",
+      "type": "uses",
+      "source_doc": "07-Open-Source-Integration-Guide.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_ssh_scanner_uses_ssh_audit",
+      "source": "ssh_scanner",
+      "target": "ssh_audit",
+      "label": "wraps_cli",
+      "type": "uses",
+      "source_doc": "06-Implementation-Plan.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_cert_parser_classifies_oids",
+      "source": "cert_parser",
+      "target": "pqc_oid_map",
+      "label": "classifies_against",
+      "type": "uses",
+      "source_doc": "07-Open-Source-Integration-Guide.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_algo_classifier_uses_oid_map",
+      "source": "algo_classifier",
+      "target": "pqc_oid_map",
+      "label": "maps_algorithms_against",
+      "type": "uses",
+      "source_doc": "Feature-Ticket-List.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_risk_scorer_uses_algo_classifier",
+      "source": "risk_scorer",
+      "target": "algo_classifier",
+      "label": "depends_on_for_scoring",
+      "type": "depends_on",
+      "source_doc": "Feature-Ticket-List.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_finding_service_uses_risk_scorer",
+      "source": "finding_service",
+      "target": "risk_scorer",
+      "label": "uses_for_risk_scores",
+      "type": "uses",
+      "source_doc": "Feature-Ticket-List.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_report_service_uses_cyclonedx",
+      "source": "report_service",
+      "target": "cyclonedx",
+      "label": "generates_cbom_via",
+      "type": "uses",
+      "source_doc": "06-Implementation-Plan.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_report_service_uses_weasyprint",
+      "source": "report_service",
+      "target": "weasyprint",
+      "label": "generates_pdf_via",
+      "type": "uses",
+      "source_doc": "06-Implementation-Plan.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_ct_monitor_uses_cryptography",
+      "source": "ct_log_monitor",
+      "target": "cryptography_lib",
+      "label": "parses_certs_with",
+      "type": "uses",
+      "source_doc": "Open-Source-Feature-Implementation-Plan.md",
+      "confidence_score": 0.8
+    },
+    {
+      "id": "e_scapy_probe_uses_scapy",
+      "source": "scapy_probe",
+      "target": "scapy",
+      "label": "crafts_packets_with",
+      "type": "uses",
+      "source_doc": "07-Open-Source-Integration-Guide.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_deploy_uses_docker",
+      "source": "pqcrypt_sentinel",
+      "target": "docker_compose",
+      "label": "deploys_via_mvp",
+      "type": "deployed_on",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_docker_uses_nginx",
+      "source": "docker_compose",
+      "target": "nginx",
+      "label": "includes_reverse_proxy",
+      "type": "contains",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_nginx_serves_react",
+      "source": "nginx",
+      "target": "react",
+      "label": "serves_static_files",
+      "type": "serves",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_pqcrypt_has_implementation_plan",
+      "source": "pqcrypt_sentinel",
+      "target": "implementation_plan",
+      "label": "governed_by",
+      "type": "documented_by",
+      "source_doc": "06-Implementation-Plan.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_pqcrypt_has_security_baseline",
+      "source": "pqcrypt_sentinel",
+      "target": "security_baseline",
+      "label": "secured_by",
+      "type": "documented_by",
+      "source_doc": "Secure-Development-Baseline.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_orchestrator_stores_in_postgresql",
+      "source": "scan_orchestrator",
+      "target": "postgresql",
+      "label": "persists_results_to",
+      "type": "writes_to",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_diff_engine_detects_drift",
+      "source": "diff_engine",
+      "target": "finding_service",
+      "label": "creates_regression_findings_via",
+      "type": "uses",
+      "source_doc": "Feature-Ticket-List.md",
+      "confidence_score": 0.8
+    },
+    {
+      "id": "e_pyshark_requires_tshark",
+      "source": "pyshark",
+      "target": "pqcrypt_sentinel",
+      "label": "requires_tshark_host_binary",
+      "type": "requires",
+      "source_doc": "requirements.txt",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_vendor_db_enriches_scan",
+      "source": "vendor_pqc_db",
+      "target": "scan_orchestrator",
+      "label": "enriches_scan_results",
+      "type": "enriches",
+      "source_doc": "Open-Source-Feature-Implementation-Plan.md",
+      "confidence_score": 0.8
+    },
+    {
+      "id": "e_connector_framework_manages_connectors",
+      "source": "connector_framework",
+      "target": "fastapi",
+      "label": "exposed_via_api",
+      "type": "uses",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_k8s_replaces_docker_for_scale",
+      "source": "kubernetes",
+      "target": "docker_compose",
+      "label": "replaces_for_large_deployments",
+      "type": "evolves_to",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_credential_tier_enforces_security",
+      "source": "credential_tier_model",
+      "target": "scan_orchestrator",
+      "label": "enforced_by",
+      "type": "enforced_by",
+      "source_doc": "Security-and-Access-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_append_only_applies_to_postgresql",
+      "source": "append_only_evidence",
+      "target": "postgresql",
+      "label": "enforced_via_db_roles",
+      "type": "enforced_on",
+      "source_doc": "Secure-Development-Baseline.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_network_isolation_protects_deploy",
+      "source": "network_isolation",
+      "target": "docker_compose",
+      "label": "implemented_in",
+      "type": "implemented_in",
+      "source_doc": "Security-and-Access-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_security_access_governs_rbac",
+      "source": "security_access_doc",
+      "target": "rbac",
+      "label": "defines_roles_for",
+      "type": "defines",
+      "source_doc": "Security-and-Access-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_boto3_used_by_connector",
+      "source": "connector_framework",
+      "target": "boto3",
+      "label": "uses_for_aws_connectors",
+      "type": "uses",
+      "source_doc": "requirements.txt",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_celery_runs_orchestrator",
+      "source": "celery",
+      "target": "scan_orchestrator",
+      "label": "executes_scan_tasks",
+      "type": "executes",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_coverage_measures_codebase",
+      "source": "coverage_report",
+      "target": "pqcrypt_sentinel",
+      "label": "measures_backend_code",
+      "type": "measures",
+      "source_doc": "htmlcov/index.html",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_feature_tickets_define_work",
+      "source": "feature_tickets",
+      "target": "implementation_plan",
+      "label": "details_tickets_for",
+      "type": "details",
+      "source_doc": "Feature-Ticket-List.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_security_baseline_uses_ci_gates",
+      "source": "security_baseline",
+      "target": "docker_compose",
+      "label": "scans_docker_images_via_trivy",
+      "type": "validates",
+      "source_doc": "Secure-Development-Baseline.md",
+      "confidence_score": 0.9
+    },
+    {
+      "id": "e_network_discovery_uses_nmap",
+      "source": "network_discovery",
+      "target": "pqcrypt_sentinel",
+      "label": "uses_python_nmap_library",
+      "type": "uses",
+      "source_doc": "requirements.txt",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_pqcscan_wrapped_as_cli",
+      "source": "pqcscan",
+      "target": "scan_orchestrator",
+      "label": "integrated_via_subprocess",
+      "type": "integrated_by",
+      "source_doc": "07-Open-Source-Integration-Guide.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_testssl_wrapped_as_cli",
+      "source": "testssl_sh",
+      "target": "scan_orchestrator",
+      "label": "integrated_via_subprocess",
+      "type": "integrated_by",
+      "source_doc": "07-Open-Source-Integration-Guide.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_mosca_uses_risk_scorer",
+      "source": "mosca_model",
+      "target": "risk_scorer",
+      "label": "feeds_hndl_into",
+      "type": "feeds_into",
+      "source_doc": "Feature-Ticket-List.md",
+      "confidence_score": 0.9
+    },
+    {
+      "id": "e_vendor_db_references_boringssl",
+      "source": "vendor_pqc_db",
+      "target": "boringssl_ref",
+      "label": "tracks_pqc_readiness_for",
+      "type": "tracks",
+      "source_doc": "07-Open-Source-Integration-Guide.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_rbac_defined_by_security_doc",
+      "source": "rbac",
+      "target": "security_access_doc",
+      "label": "specified_in",
+      "type": "specified_in",
+      "source_doc": "Security-and-Access-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "e_pqc_oid_map_classified_by_classifier",
+      "source": "pqc_oid_map",
+      "target": "algo_classifier",
+      "label": "consumed_by",
+      "type": "consumed_by",
+      "source_doc": "Feature-Ticket-List.md",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "he_scan_pipeline",
+      "label": "End-to-End Scan Pipeline",
+      "description": "Celery worker receives scan task -> orchestrator dispatches to TLS/SSH scanners -> scanners use sslyze/paramiko/cryptography -> results parsed by cert_parser -> classified by algo_classifier -> scored by risk_scorer -> findings generated -> stored in PostgreSQL",
+      "nodes": ["celery", "scan_orchestrator", "tls_scanner", "ssh_scanner", "cert_parser", "algo_classifier", "risk_scorer", "finding_service", "postgresql"],
+      "type": "workflow",
+      "source_doc": "Technical-Architecture-Document.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "he_pqc_detection_stack",
+      "label": "PQC Detection Technology Stack",
+      "description": "PQC algorithms detected via: OID matching in cert_parser + cipher suite enumeration in sslyze + KEX group probing in scapy + handshake detection in pqcscan CLI + SSH KEX enumeration in paramiko",
+      "nodes": ["pqc_oid_map", "cert_parser", "sslyze", "scapy_probe", "pqcscan", "paramiko", "algo_classifier"],
+      "type": "technology_stack",
+      "source_doc": "07-Open-Source-Integration-Guide.md",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "he_security_defense_layers",
+      "label": "Defense-in-Depth Security Layers",
+      "description": "JWT auth -> RBAC enforcement -> credential tier model -> network isolation (4 segments) -> SSRF blocking -> append-only evidence -> scan output sanitization -> pre-commit security gates -> CI/CD security gates (7 gates)",
+      "nodes": ["jwt_auth", "rbac", "credential_tier_model", "network_isolation", "append_only_evidence", "security_baseline", "security_access_doc"],
+      "type": "security_architecture",
+      "source_doc": "Secure-Development-Baseline.md",
+      "confidence_score": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

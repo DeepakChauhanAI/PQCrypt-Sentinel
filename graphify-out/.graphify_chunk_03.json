@@ -1,0 +1,457 @@
+{
+  "nodes": [
+    {
+      "id": "pqc_scanner_workflow",
+      "label": "PQC Scanner Workflow Diagram",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "user_initiates_scan",
+      "label": "User Initiates Scan",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "fastapi_backend",
+      "label": "FastAPI Backend",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "scan_orchestrator",
+      "label": "Scan Orchestrator",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "celery_task_queue",
+      "label": "Celery Task Queue",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "tls_scanner",
+      "label": "TLS Scanner",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "ssh_scanner",
+      "label": "SSH Scanner",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "ike_scanner",
+      "label": "IKEv2 Scanner",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "network_discovery",
+      "label": "Network Discovery (Nmap)",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "cert_parser",
+      "label": "Certificate Parser",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "algo_classifier",
+      "label": "Algorithm Classifier",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "risk_scorer",
+      "label": "Risk Scoring Engine",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "finding_service",
+      "label": "Finding Service",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "report_service",
+      "label": "Report Service (CBOM/SARIF/CSV/PDF)",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "dashboard",
+      "label": "Dashboard (React Frontend)",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "postgresql",
+      "label": "PostgreSQL Database",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "redis",
+      "label": "Redis Cache/Broker",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "connectors",
+      "label": "External Connectors (CMDB/Cloud/HSM)",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "layer_mapper",
+      "label": "7-Layer Infrastructure Mapper",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "mosca_model",
+      "label": "MOSCA HNDL Timeline Model",
+      "file_type": "image",
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "user_initiates_scan",
+      "target": "fastapi_backend",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "fastapi_backend",
+      "target": "scan_orchestrator",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scan_orchestrator",
+      "target": "celery_task_queue",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "celery_task_queue",
+      "target": "tls_scanner",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "celery_task_queue",
+      "target": "ssh_scanner",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "celery_task_queue",
+      "target": "ike_scanner",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "celery_task_queue",
+      "target": "network_discovery",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tls_scanner",
+      "target": "cert_parser",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "ssh_scanner",
+      "target": "algo_classifier",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "cert_parser",
+      "target": "algo_classifier",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "algo_classifier",
+      "target": "risk_scorer",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "risk_scorer",
+      "target": "finding_service",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "finding_service",
+      "target": "layer_mapper",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "finding_service",
+      "target": "report_service",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "finding_service",
+      "target": "postgresql",
+      "relation": "shares_data_with",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "report_service",
+      "target": "dashboard",
+      "relation": "shares_data_with",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "dashboard",
+      "target": "fastapi_backend",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "scan_orchestrator",
+      "target": "connectors",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "celery_task_queue",
+      "target": "redis",
+      "relation": "shares_data_with",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "risk_scorer",
+      "target": "mosca_model",
+      "relation": "calls",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "scan_pipeline",
+      "label": "Scan Execution Pipeline",
+      "nodes": ["scan_orchestrator", "celery_task_queue", "tls_scanner", "ssh_scanner", "ike_scanner", "network_discovery"],
+      "relation": "participate_in",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png"
+    },
+    {
+      "id": "analysis_pipeline",
+      "label": "Analysis and Classification Pipeline",
+      "nodes": ["cert_parser", "algo_classifier", "risk_scorer", "mosca_model", "layer_mapper"],
+      "relation": "participate_in",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png"
+    },
+    {
+      "id": "output_pipeline",
+      "label": "Results and Reporting Pipeline",
+      "nodes": ["finding_service", "report_service", "dashboard", "postgresql"],
+      "relation": "participate_in",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.2,
+      "source_file": "PQC Research/pqc-scanner-workflow.png"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

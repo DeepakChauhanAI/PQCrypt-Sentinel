@@ -1,0 +1,1217 @@
+{
+  "_schema_version": "1.0.0",
+  "_last_updated": "2026-06-17",
+  "_description": "Post-Quantum Cryptography Algorithm Registry - Source of Truth for PQC Scanner. This file is the authoritative classification source for all cryptographic algorithms scanned by the PQC Scanner project. It synthesizes NIST FIPS 203/204/205, NIST IR 8547 (draft), NSA CNSA 2.0, ENISA PQC guidance, and IETF standards.",
+  "_sources": [
+    "NIST FIPS 203 (ML-KEM, Aug 2024)",
+    "NIST FIPS 204 (ML-DSA, Aug 2024)",
+    "NIST FIPS 205 (SLH-DSA, Aug 2024)",
+    "NIST IR 8547 (Transition to PQC, Nov 2024)",
+    "NSA CNSA 2.0 (Commercial National Security Algorithm Suite)",
+    "ENISA Post-Quantum Cryptography Report (2021, updated)",
+    "IETF TLS 1.3 RFC 8446",
+    "IETF draft-ietf-tls-hybrid-design",
+    "IANA TLS Supported Groups Registry",
+    "IANA IKEv2 Transform Attribute Types Registry",
+    "ISO/IEC 14888-4 (Ed25519/Ed448)",
+    "PQClean / liboqs algorithm portfolios"
+  ],
+
+  "status_definitions": {
+    "pqc_ready": {
+      "description": "NIST-standardized or widely-accepted post-quantum algorithm. Safe against known quantum attacks (Shor's, Grover's within parameter bounds).",
+      "migration_priority": "none",
+      "deadline_year": 2099
+    },
+    "pqc_candidate": {
+      "description": "Algorithm selected by NIST for standardization but not yet finalized as FIPS. Acceptable for early adopters and pilot deployments.",
+      "migration_priority": "low",
+      "deadline_year": 2099
+    },
+    "hybrid": {
+      "description": "Combination of a classical and a post-quantum algorithm (e.g., X25519+ML-KEM). Provides PQ security if the PQ component holds, AND classical security if the classical component holds.",
+      "migration_priority": "none",
+      "deadline_year": 2099
+    },
+    "safe": {
+      "description": "Algorithm is safe against both classical and quantum attacks at current parameter sizes. Examples: AES-256 (128-bit effective against Grover's), SHA-384/512 (192/256-bit preimage effective against Grover's), ChaCha20-Poly1305.",
+      "migration_priority": "none",
+      "deadline_year": 2099
+    },
+    "safe_until_2030": {
+      "description": "NIST SP 800-131A Rev.2 and IR 8547 allow use until 2030. After 2030, these algorithms should be phased out. Examples: AES-128/192, SHA-256. Does NOT apply to quantum-vulnerable public-key algorithms, which use 'vulnerable'.",
+      "migration_priority": "medium",
+      "deadline_year": 2030
+    },
+    "safe_until_2035": {
+      "description": "UNUSED / INTERNAL PLACEHOLDER ONLY. Not a category defined by NIST IR 8547 or the finalized FIPS standards. No algorithm in this registry currently carries this status; quantum-vulnerable public-key algorithms use 'vulnerable' with deadline 2035 instead. Retained only as a reserved bucket in case a future house policy needs it.",
+      "migration_priority": "low",
+      "deadline_year": 2035
+    },
+    "vulnerable": {
+      "description": "Algorithm is vulnerable to quantum attacks but may still be used under NIST transition timelines. Must be inventoried and have a migration plan. Deadline is 2030 for ~112-bit security (RSA-2048, P-256) and 2035 for ≥128-bit security (RSA-3072+, P-384+, Ed25519, etc.) per NIST IR 8547.",
+      "migration_priority": "high",
+      "deadline_year": 2030
+    },
+    "deprecated_now": {
+      "description": "Algorithm is deprecated by NIST today (2026) and should not be used for new deployments. Existing deployments need migration plans.",
+      "migration_priority": "high",
+      "deadline_year": 2026
+    },
+    "disallowed_now": {
+      "description": "Algorithm is cryptographically broken (classically or quantum-wise) and must NOT be used. Examples: MD5, SHA-1 for signatures, RSA < 2048, DSA, 3DES/TripleDES.",
+      "migration_priority": "critical",
+      "deadline_year": 2026
+    },
+    "unknown": {
+      "description": "Algorithm cannot be classified. Manual review required.",
+      "migration_priority": "unknown",
+      "deadline_year": null
+    }
+  },
+
+  "nist_ir_8547_timeline": {
+    "_note": "Per NIST IR 8547 (Nov 2024 Initial Public Draft), which uses 'deprecated after 2030' and 'disallowed after 2035' as its own table terms for the 112-bit and 128-bit+ security tiers respectively. These are NIST's stated targets, not informal estimates, though IR 8547 notes organizations may continue using 112-bit key-establishment schemes (e.g. RSA-2048, ECDH P-256) during migration even after 2030, given added harvest-now-decrypt-later mitigations; signature algorithms at that tier and everything at 128-bit+ follow the stricter deprecate/disallow schedule. High-risk systems must transition earlier.",
+    "2026": "RSA < 2048, ECC < 256 bits, SHA-1, DSA, 3DES must not be used. Transition begins for all quantum-vulnerable algorithms.",
+    "2030": "~112-bit security: RSA-2048, ECC P-256, AES-128/192, SHA-256. Deprecated by 2030, disallowed by 2035. Does NOT apply to RSA-3072+, P-384, P-521, or Ed25519/Ed448/X25519/X448.",
+    "2035": "All quantum-vulnerable public-key algorithms disallowed, including RSA-3072+, ECC P-384/P-521, Ed25519/Ed448, X25519/X448, DH-3072+, and all remaining classical public-key cryptography. Full PQC transition target.",
+    "_caveat": "NSA CNSA 2.0 has stricter timelines: software/firmware signing should use PQC by 2025 (past). National security systems may have earlier deadlines."
+  },
+
+  "algorithms": {
+    "post_quantum_key_encapsulation": {
+      "category": "key_encapsulation",
+      "description": "Key encapsulation mechanisms (KEMs) that are resistant to quantum attacks.",
+      "algorithms": [
+        {
+          "name": "ML-KEM-512",
+          "standard_name": "Module-Lattice-Based Key-Encapsulation Mechanism",
+          "nist_standard": "FIPS 203",
+          "status": "pqc_ready",
+          "oid": null,
+          "tls_kex_group_id": 511,
+          "notes": "NIST primary KEM standard, Aug 2024. Based on CRYSTALS-Kyber. Security Level 1 (AES-128 equivalent).",
+          "sources": ["NIST FIPS 203", "NIST PQC Project"]
+        },
+        {
+          "name": "ML-KEM-768",
+          "standard_name": "Module-Lattice-Based Key-Encapsulation Mechanism",
+          "nist_standard": "FIPS 203",
+          "status": "pqc_ready",
+          "oid": null,
+          "tls_kex_group_id": 512,
+          "notes": "NIST primary KEM standard, Aug 2024. Based on CRYSTALS-Kyber. Security Level 3 (AES-192 equivalent). Recommended default parameter set.",
+          "sources": ["NIST FIPS 203", "NIST PQC Project"]
+        },
+        {
+          "name": "ML-KEM-1024",
+          "standard_name": "Module-Lattice-Based Key-Encapsulation Mechanism",
+          "nist_standard": "FIPS 203",
+          "status": "pqc_ready",
+          "oid": null,
+          "tls_kex_group_id": 513,
+          "notes": "NIST primary KEM standard, Aug 2024. Based on CRYSTALS-Kyber. Security Level 5 (AES-256 equivalent).",
+          "sources": ["NIST FIPS 203", "NIST PQC Project"]
+        },
+        {
+          "name": "HQC",
+          "standard_name": "Hamming Quasi-Cyclic Key Encapsulation",
+          "nist_standard": "Candidate (4th Round)",
+          "status": "pqc_candidate",
+          "oid": null,
+          "tls_kex_group_id": null,
+          "notes": "NIST 4th round selection (Mar 2025). Code-based KEM. Alternative to ML-KEM. Not yet standardized but selected for standardization track.",
+          "sources": ["NIST PQC 4th Round", "NIST News 2025"]
+        },
+        {
+          "name": "BIKE",
+          "standard_name": "Bit Flipping Key Encapsulation",
+          "nist_standard": "Alternate Round 4",
+          "status": "pqc_candidate",
+          "oid": null,
+          "tls_kex_group_id": null,
+          "notes": "Code-based KEM. NIST alternate candidate. Not selected for primary standardization but available as backup.",
+          "sources": ["NIST PQC Round 4"]
+        },
+        {
+          "name": "Classic McEliece",
+          "standard_name": "Classic McEliece",
+          "nist_standard": "Alternate Round 4",
+          "status": "pqc_candidate",
+          "oid": null,
+          "tls_kex_group_id": null,
+          "notes": "Code-based KEM. Very large public keys (261KB+). Conservative security assumptions. NIST alternate candidate.",
+          "sources": ["NIST PQC Round 4"]
+        },
+        {
+          "name": "FrodoKEM",
+          "standard_name": "Frodo Key Encapsulation",
+          "nist_standard": "Alternate (Round 3)",
+          "status": "pqc_candidate",
+          "oid": null,
+          "tls_kex_group_id": null,
+          "notes": "Lattice-based KEM based on plain LWE (no ring structure). Conservative but slower and larger than ML-KEM. NIST alternate.",
+          "sources": ["NIST PQC Round 3"]
+        },
+        {
+          "name": "NTRU",
+          "standard_name": "NTRU",
+          "nist_standard": "Finalist (Round 3)",
+          "status": "pqc_candidate",
+          "oid": null,
+          "tls_kex_group_id": null,
+          "notes": "Lattice-based KEM. One of the original NIST finalists. Still considered secure but not selected for standardization (superseded by ML-KEM).",
+          "sources": ["NIST PQC Round 3"]
+        },
+        {
+          "name": "NTRU Prime",
+          "standard_name": "NTRU Prime",
+          "nist_standard": "Alternate (Round 3)",
+          "status": "pqc_candidate",
+          "oid": null,
+          "tls_kex_group_id": null,
+          "notes": "Lattice-based KEM. Variant of NTRU designed to avoid rings. NIST alternate candidate.",
+          "sources": ["NIST PQC Round 3"]
+        },
+        {
+          "name": "sntrup761",
+          "standard_name": "Streamlined NTRU Prime",
+          "nist_standard": "Non-standard",
+          "status": "pqc_candidate",
+          "oid": null,
+          "tls_kex_group_id": null,
+          "notes": "Used experimentally in OpenSSH 8.9+. Part of NTRU Prime family.",
+          "sources": ["OpenSSH", "NTRU Prime"]
+        }
+      ]
+    },
+
+    "post_quantum_signatures": {
+      "category": "digital_signature",
+      "description": "Digital signature algorithms that are resistant to quantum attacks.",
+      "algorithms": [
+        {
+          "name": "ML-DSA-44",
+          "standard_name": "Module-Lattice-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 204",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.17",
+          "notes": "NIST primary signature standard, Aug 2024. Based on CRYSTALS-Dilithium. Security Level 2.",
+          "sources": ["NIST FIPS 204"]
+        },
+        {
+          "name": "ML-DSA-65",
+          "standard_name": "Module-Lattice-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 204",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.18",
+          "notes": "NIST primary signature standard, Aug 2024. Based on CRYSTALS-Dilithium. Security Level 3. Recommended default.",
+          "sources": ["NIST FIPS 204"]
+        },
+        {
+          "name": "ML-DSA-87",
+          "standard_name": "Module-Lattice-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 204",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.19",
+          "notes": "NIST primary signature standard, Aug 2024. Based on CRYSTALS-Dilithium. Security Level 5.",
+          "sources": ["NIST FIPS 204"]
+        },
+        {
+          "name": "SLH-DSA-SHA2-128s",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.20",
+          "notes": "NIST backup signature standard, Aug 2024. Based on SPHINCS+. Stateless hash-based. Small public key, large signature.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHA2-128f",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.21",
+          "notes": "NIST backup signature standard. Faster but larger signatures than 128s.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHA2-192s",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.22",
+          "notes": "NIST backup signature standard. Security Level 3.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHA2-192f",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.23",
+          "notes": "NIST backup signature standard. Security Level 3.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHA2-256s",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.24",
+          "notes": "NIST backup signature standard. Security Level 5.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHA2-256f",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.25",
+          "notes": "NIST backup signature standard. Security Level 5.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHAKE-128s",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.26",
+          "notes": "SHAKE-based variant of SLH-DSA.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHAKE-128f",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.27",
+          "notes": "SHAKE-based variant of SLH-DSA.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHAKE-192s",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.28",
+          "notes": "SHAKE-based variant of SLH-DSA.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHAKE-192f",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.29",
+          "notes": "SHAKE-based variant of SLH-DSA.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHAKE-256s",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.30",
+          "notes": "SHAKE-based variant of SLH-DSA.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "SLH-DSA-SHAKE-256f",
+          "standard_name": "Stateless Hash-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 205",
+          "status": "pqc_ready",
+          "oid": "2.16.840.1.101.3.4.3.31",
+          "notes": "SHAKE-based variant of SLH-DSA.",
+          "sources": ["NIST FIPS 205"]
+        },
+        {
+          "name": "FN-DSA-512",
+          "standard_name": "FFT-over-NTRU-Lattice-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 206 (Planned)",
+          "status": "pqc_candidate",
+          "oid": null,
+          "notes": "Formerly known as Falcon. NIST selected for standardization (2022). FIPS 206 draft expected. Fast signing+verification, small signatures, critical NTRU lattice structure.",
+          "sources": ["NIST PQC 2022 Selection", "NIST FIPS 206 (planned)"]
+        },
+        {
+          "name": "FN-DSA-1024",
+          "standard_name": "FFT-over-NTRU-Lattice-Based Digital Signature Algorithm",
+          "nist_standard": "FIPS 206 (Planned)",
+          "status": "pqc_candidate",
+          "oid": null,
+          "notes": "Formerly known as Falcon-1024. Higher security level variant.",
+          "sources": ["NIST PQC 2022 Selection", "NIST FIPS 206 (planned)"]
+        },
+        {
+          "name": "LMS",
+          "standard_name": "Leighton-Micali Hash-Based Signature",
+          "nist_standard": "NIST SP 800-208",
+          "status": "pqc_ready",
+          "oid": null,
+          "notes": "Stateful hash-based signature. Already standardized (SP 800-208). Suitable for code signing where state management is feasible.",
+          "sources": ["NIST SP 800-208"]
+        },
+        {
+          "name": "XMSS",
+          "standard_name": "eXtended Merkle Signature Scheme",
+          "nist_standard": "NIST SP 800-208",
+          "status": "pqc_ready",
+          "oid": null,
+          "notes": "Stateful hash-based signature. Already standardized (SP 800-208). Suitable for code signing where state management is feasible.",
+          "sources": ["NIST SP 800-208"]
+        }
+      ]
+    },
+
+    "hybrids": {
+      "category": "hybrid",
+      "description": "Hybrid algorithms combining classical and post-quantum components.",
+      "algorithms": [
+        {
+          "name": "X25519MLKEM768",
+          "status": "hybrid",
+          "oid": null,
+          "tls_kex_group_id": "0x2B93",
+          "ike_group_id": null,
+          "notes": "Hybrid: X25519 (classical ECDH) + ML-KEM-768 (PQC KEM). Defined in an IETF draft (draft-ietf-tls-hybrid-design) and assigned a code point in the IANA TLS Supported Groups registry; not yet a final RFC. Provides classical + PQ security.",
+          "sources": ["IETF draft-ietf-tls-kyber", "IANA TLS Supported Groups"]
+        },
+        {
+          "name": "SecP256r1MLKEM768",
+          "status": "hybrid",
+          "oid": null,
+          "tls_kex_group_id": "0x2B92",
+          "ike_group_id": null,
+          "notes": "Hybrid: secp256r1 (NIST P-256 ECDH) + ML-KEM-768. Defined in an IETF draft and assigned in the IANA TLS Supported Groups registry, not yet a final RFC.",
+          "sources": ["IETF draft-ietf-tls-kyber", "IANA TLS Supported Groups"]
+        },
+        {
+          "name": "SecP384r1MLKEM1024",
+          "status": "hybrid",
+          "oid": null,
+          "tls_kex_group_id": "0x2B94",
+          "ike_group_id": null,
+          "notes": "Hybrid: secp384r1 (NIST P-384 ECDH) + ML-KEM-1024. Defined in an IETF draft and assigned in the IANA TLS Supported Groups registry, not yet a final RFC.",
+          "sources": ["IETF draft-ietf-tls-kyber", "IANA TLS Supported Groups"]
+        },
+        {
+          "name": "X25519Kyber768Draft00",
+          "status": "hybrid",
+          "oid": null,
+          "tls_kex_group_id": "0xFE30",
+          "ike_group_id": null,
+          "notes": "DEPRECATED DRAFT CODE POINT. Early Google Chrome experiment. Superseded by 0x2B93 (X25519MLKEM768). Should be treated as hybrid for compatibility but noted as draft.",
+          "sources": ["Google CECPQ2 Experiment"]
+        },
+        {
+          "name": "RSA-3072 + ML-DSA-65",
+          "status": "hybrid",
+          "oid": "2.16.840.1.114027.80.4.1",
+          "notes": "Composite signature: classical RSA-3072 + ML-DSA-65. Defined by Open Quantum Safe.",
+          "sources": ["OQS Composite Signatures"]
+        },
+        {
+          "name": "P-384 + ML-DSA-65",
+          "status": "hybrid",
+          "oid": "2.16.840.1.114027.80.4.2",
+          "notes": "Composite signature: classical ECDSA P-384 + ML-DSA-65.",
+          "sources": ["OQS Composite Signatures"]
+        },
+        {
+          "name": "P-521 + ML-DSA-87",
+          "status": "hybrid",
+          "oid": "2.16.840.1.114027.80.4.3",
+          "notes": "Composite signature: classical ECDSA P-521 + ML-DSA-87.",
+          "sources": ["OQS Composite Signatures"]
+        }
+      ]
+    },
+
+    "symmetric_encryption_safe": {
+      "category": "symmetric_encryption",
+      "description": "Symmetric encryption algorithms that are safe against quantum attacks at stated parameters.",
+      "algorithms": [
+        {
+          "name": "AES-256-GCM",
+          "status": "safe",
+          "notes": "Grover's algorithm reduces effective key to 128 bits. 128-bit effective security is considered quantum-safe for practical purposes. Safe for long-term confidentiality.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "AES-256-CCM",
+          "status": "safe",
+          "notes": "Same security analysis as AES-256-GCM.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "AES-256-CBC",
+          "status": "safe",
+          "notes": "Same security level as AES-256-GCM, but vulnerable to padding oracle attacks classically. From PQC perspective, key size is what matters.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "AES-256-CTR",
+          "status": "safe",
+          "notes": "Same key size analysis as AES-256.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "ChaCha20-Poly1305",
+          "status": "safe",
+          "notes": "256-bit key. Grover's reduces to 128-bit effective. Considered quantum-safe. Modern AEAD cipher widely used in TLS 1.3.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "AES-192-GCM",
+          "status": "safe_until_2030",
+          "notes": "Grover's reduces effective key to 96 bits. Borderline. NIST guidance treats as acceptable until 2030. NOT recommended for long-term quantum protection.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "AES-192-CCM",
+          "status": "safe_until_2030",
+          "notes": "Same as AES-192-GCM.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "AES-192-CBC",
+          "status": "safe_until_2030",
+          "notes": "Same key security as AES-192-GCM.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "AES-128-GCM",
+          "status": "safe_until_2030",
+          "notes": "Grover's reduces effective key to 64 bits. NOT quantum-safe for high-security applications. NIST allows until 2030. MUST NOT be used for long-term confidentiality against quantum adversaries.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "AES-128-CCM",
+          "status": "safe_until_2030",
+          "notes": "Same as AES-128-GCM.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "AES-128-CBC",
+          "status": "safe_until_2030",
+          "notes": "Same key security as AES-128-GCM.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "AES-128-CTR",
+          "status": "safe_until_2030",
+          "notes": "Same key security as AES-128-GCM.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "AES-256-XTS",
+          "status": "safe",
+          "notes": "XTS mode for disk encryption. Uses two AES-128 keys or one AES-256 key. When configured with AES-256 key, safe against quantum.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "AES-128-XTS",
+          "status": "safe_until_2030",
+          "notes": "XTS with AES-128. Same quantum analysis as AES-128.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "Camellia-256",
+          "status": "safe",
+          "notes": "Japanese block cipher. 256-bit key. Same Grover analysis as AES-256. Not widely used outside Japan.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "Camellia-192",
+          "status": "safe_until_2030",
+          "notes": "Same analysis as AES-192.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "Camellia-128",
+          "status": "safe_until_2030",
+          "notes": "Same analysis as AES-128.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "ARIA-256",
+          "status": "safe",
+          "notes": "Korean block cipher. 256-bit key. Same Grover analysis as AES-256.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "ARIA-192",
+          "status": "safe_until_2030",
+          "notes": "Same analysis as AES-192.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "ARIA-128",
+          "status": "safe_until_2030",
+          "notes": "Same analysis as AES-128.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "SM4",
+          "status": "safe_until_2030",
+          "notes": "Chinese national block cipher. 128-bit key. Same Grover analysis as AES-128. Classically considered secure but less studied than AES.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "SEED",
+          "status": "safe_until_2030",
+          "notes": "Korean block cipher. 128-bit key. Same Grover analysis as AES-128.",
+          "deadline_year": 2030
+        }
+      ]
+    },
+
+    "symmetric_encryption_disallowed": {
+      "category": "symmetric_encryption",
+      "description": "Symmetric encryption algorithms that are broken or deprecated.",
+      "algorithms": [
+        {
+          "name": "3DES",
+          "also_known_as": ["TripleDES", "Triple-DES", "DES-EDE", "DES_EDE", "TDEA", "3TDEA"],
+          "status": "disallowed_now",
+          "notes": "64-bit block size (NOT key length; effective key length is 112 bits). Vulnerable to meet-in-the-middle and Sweet32 birthday attacks classically. Per NIST SP 800-131A Rev.2 / SP 800-67 withdrawal, TDEA is disallowed for applying cryptographic protection (encryption, key wrapping, MAC generation) but may still be used to decrypt, unwrap, or verify MACs on already-protected legacy data. This registry's disallowed_now status reflects a conservative scanner policy against any new use, consistent with that guidance.",
+          "deadline_year": 2026,
+          "sources": ["NIST SP 800-131A Rev.2"]
+        },
+        {
+          "name": "DES",
+          "status": "disallowed_now",
+          "notes": "56-bit key. Completely broken classically (brute force in hours). MUST NOT be used.",
+          "deadline_year": 2026,
+          "sources": ["NIST SP 800-131A Rev.2"]
+        },
+        {
+          "name": "RC2",
+          "status": "disallowed_now",
+          "notes": "64-bit block, variable key size. Deprecated and broken.",
+          "deadline_year": 2026
+        },
+        {
+          "name": "RC4",
+          "status": "disallowed_now",
+          "notes": "Stream cipher with statistical biases. Prohibited in TLS by RFC 7465. Completely broken for many applications.",
+          "deadline_year": 2026,
+          "sources": ["RFC 7465"]
+        },
+        {
+          "name": "Blowfish",
+          "status": "disallowed_now",
+          "notes": "64-bit block size. Vulnerable to birthday attacks on large data volumes. Superseded by Twofish.",
+          "deadline_year": 2026
+        },
+        {
+          "name": "CAST5",
+          "status": "disallowed_now",
+          "notes": "64-bit block size. Deprecated.",
+          "deadline_year": 2026
+        },
+        {
+          "name": "IDEA",
+          "status": "disallowed_now",
+          "notes": "64-bit block size. Deprecated.",
+          "deadline_year": 2026
+        }
+      ]
+    },
+
+    "hash_functions_safe": {
+      "category": "hash_function",
+      "description": "Hash functions considered safe against quantum attacks for their primary use cases.",
+      "algorithms": [
+        {
+          "name": "SHA-384",
+          "status": "safe",
+          "notes": "Preimage: 192-bit effective against Grover's. Collision: 192-bit (BHT quantum collision attack is 2^(n/3) = ~128 bits, but this is still high). Safe for all standard uses.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "SHA-512",
+          "status": "safe",
+          "notes": "Preimage: 256-bit effective against Grover's. Collision: 256-bit (BHT attack ~171 bits). Safe for all standard uses.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "SHA-512/256",
+          "status": "safe",
+          "notes": "Truncated SHA-512. Designed to have 256-bit collision and preimage resistance.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "SHA-512/224",
+          "status": "safe_until_2030",
+          "notes": "Truncated SHA-512. Lower security margin. Use SHA-512/256 or SHA-384 instead.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "SHA3-256",
+          "status": "safe",
+          "notes": "Keccak-based. Same security margin as SHA-256 against classical attacks. Quantum preimage: 128-bit effective. Quantum collision: still 128-bit classically. However, SHA-3 is structurally different from SHA-2 and may have different quantum security properties. Generally considered safe.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "SHA3-384",
+          "status": "safe",
+          "notes": "Keccak-based. Higher security margin than SHA3-256.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "SHA3-512",
+          "status": "safe",
+          "notes": "Keccak-based. Highest security margin.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "SHAKE128",
+          "status": "safe_until_2030",
+          "notes": "Extendable-output function (XOF). Security depends on output length. As a general-purpose hash, treat conservatively. NOTE: Classification as safe_until_2030 is a house convention based on shorter XOF output = thinner margin; not a directly NIST-stated position.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "SHAKE256",
+          "status": "safe",
+          "notes": "Extendable-output function (XOF). Higher security margin than SHAKE128.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "BLAKE2b",
+          "status": "safe",
+          "notes": "Modern hash function. Up to 512-bit output. Considered quantum-resistant with sufficient output length.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "BLAKE2s",
+          "status": "safe_until_2030",
+          "notes": "Modern hash function. Up to 256-bit output. When used with 256-bit output, same analysis as SHA-256.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "BLAKE3",
+          "status": "safe",
+          "notes": "Modern parallel hash. 256-bit output by default. Highly efficient. Considered quantum-resistant.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "SM3",
+          "status": "safe_until_2030",
+          "notes": "Chinese national hash function. 256-bit output. Same security analysis as SHA-256. Classically no known weaknesses but less cryptanalytic attention than SHA-2.",
+          "deadline_year": 2030
+        }
+      ]
+    },
+
+    "hash_functions_vulnerable": {
+      "category": "hash_function",
+      "description": "Hash functions that are vulnerable to quantum attacks or already cryptographically broken.",
+      "algorithms": [
+        {
+          "name": "SHA-256",
+          "status": "safe_until_2030",
+          "notes": "Preimage: 128-bit effective against Grover's (borderline). Collision: 128-bit classically. NIST allows until 2030. For PQ-secure hashing, prefer SHA-384 or SHA-512.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "SHA-224",
+          "status": "safe_until_2030",
+          "notes": "Lower security margin than SHA-256. Preimage: 112-bit effective against Grover's.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "SHA-1",
+          "status": "disallowed_now",
+          "notes": "COLLISIONS ARE PRACTICAL (SHAttered, 2017). Preimage: 80-bit effective against Grover's. Prohibited for digital signatures by NIST since 2011. MUST NOT be used for signatures or certificates.",
+          "deadline_year": 2026,
+          "sources": ["NIST SP 800-131A Rev.2", "SHAttered"]
+        },
+        {
+          "name": "MD5",
+          "status": "disallowed_now",
+          "notes": "COLLISIONS ARE TRIVIAL. Preimage: 64-bit effective against Grover's (broken). MUST NOT be used under any circumstances.",
+          "deadline_year": 2026,
+          "sources": ["Wang et al. 2004", "NIST SP 800-131A Rev.2"]
+        },
+        {
+          "name": "MD2",
+          "status": "disallowed_now",
+          "notes": "Completely broken. MUST NOT be used.",
+          "deadline_year": 2026
+        },
+        {
+          "name": "MD4",
+          "status": "disallowed_now",
+          "notes": "Completely broken. MUST NOT be used.",
+          "deadline_year": 2026
+        },
+        {
+          "name": "RIPEMD-160",
+          "status": "disallowed_now",
+          "notes": "Weak collision resistance. Not widely recommended. Preimage: 80-bit effective against Grover's.",
+          "deadline_year": 2026
+        }
+      ]
+    },
+
+    "public_key_encryption_vulnerable": {
+      "category": "public_key_encryption",
+      "description": "Public-key encryption and key exchange algorithms vulnerable to Shor's algorithm.",
+      "algorithms": [
+        {
+          "name": "RSA",
+          "key_sizes": {
+            "<2048": { "status": "disallowed_now", "deadline_year": 2026, "notes": "RSA < 2048 is below NIST-approved security strength and disallowed for new use per SP 800-131A Rev.2. Also quantum-vulnerable like all RSA sizes. MUST NOT be used." },
+            "2048": { "status": "vulnerable", "deadline_year": 2030, "notes": "RSA 2048 provides ~112-bit security. Deprecated by 2030, disallowed by 2035 per NIST IR 8547. Vulnerable to Shor's algorithm regardless of key size." },
+            "3072-4095": { "status": "vulnerable", "deadline_year": 2035, "notes": "RSA 3072+ provides ≥128-bit classical security but is STILL quantum-vulnerable. Disallowed by 2035 per NIST IR 8547." },
+            "4096+": { "status": "vulnerable", "deadline_year": 2035, "notes": "RSA 4096+ provides higher classical security but is STILL quantum-vulnerable. Disallowed by 2035 per NIST IR 8547." }
+          },
+          "notes": "ALL RSA key sizes are vulnerable to Shor's algorithm on a sufficiently powerful quantum computer. Larger keys only buy time, not quantum resistance.",
+          "sources": ["NIST IR 8547", "NIST SP 800-131A Rev.2"]
+        },
+        {
+          "name": "RSA-PSS",
+          "key_sizes": {
+            "<2048": { "status": "disallowed_now", "deadline_year": 2026 },
+            "2048": { "status": "vulnerable", "deadline_year": 2030 },
+            "3072-4095": { "status": "vulnerable", "deadline_year": 2035, "notes": "RSA 3072+ disallowed by 2035 per NIST IR 8547." },
+            "4096+": { "status": "vulnerable", "deadline_year": 2035, "notes": "RSA 4096+ disallowed by 2035 per NIST IR 8547." }
+          },
+          "notes": "Probabilistic Signature Scheme (PSS) variant of RSA. Same quantum vulnerability as PKCS#1 v1.5 RSA.",
+          "sources": ["RFC 8017"]
+        },
+        {
+          "name": "RSA-OAEP",
+          "key_sizes": {
+            "<2048": { "status": "disallowed_now", "deadline_year": 2026 },
+            "2048": { "status": "vulnerable", "deadline_year": 2030 },
+            "3072-4095": { "status": "vulnerable", "deadline_year": 2035, "notes": "RSA 3072+ disallowed by 2035 per NIST IR 8547." },
+            "4096+": { "status": "vulnerable", "deadline_year": 2035, "notes": "RSA 4096+ disallowed by 2035 per NIST IR 8547." }
+          },
+          "notes": "Optimal Asymmetric Encryption Padding. Same quantum vulnerability as raw RSA.",
+          "sources": ["RFC 8017"]
+        },
+        {
+          "name": "DSA",
+          "status": "disallowed_now",
+          "deadline_year": 2026,
+          "notes": "Digital Signature Algorithm. Deprecated by NIST SP 800-131A Rev.2. All key sizes disallowed. Vulnerable to Shor's algorithm.",
+          "sources": ["NIST SP 800-131A Rev.2"]
+        },
+        {
+          "name": "ECDSA",
+          "curves": {
+            "P-192": { "status": "disallowed_now", "deadline_year": 2026, "notes": "P-192 is too small even classically. Disallowed by NIST." },
+            "P-224": { "status": "disallowed_now", "deadline_year": 2026, "notes": "P-224 deprecated. Not widely used." },
+            "P-256": { "status": "vulnerable", "deadline_year": 2030, "notes": "secp256r1 / NIST P-256. Most widely used ECDSA curve. Quantum-vulnerable. Allowed until 2030." },
+            "P-384": { "status": "vulnerable", "deadline_year": 2035, "notes": "secp384r1 / NIST P-384. Higher classical security but still quantum-vulnerable. Disallowed by 2035 per NIST IR 8547." },
+            "P-521": { "status": "vulnerable", "deadline_year": 2035, "notes": "secp521r1. Largest NIST curve. Quantum-vulnerable. Disallowed by 2035 per NIST IR 8547." }
+          },
+          "notes": "ALL elliptic curve cryptography (ECC) is vulnerable to Shor's algorithm. Curve size only affects classical security and transition timelines.",
+          "sources": ["NIST SP 800-131A Rev.2", "NIST IR 8547"]
+        },
+        {
+          "name": "ECDH",
+          "curves": {
+            "P-192": { "status": "disallowed_now", "deadline_year": 2026 },
+            "P-224": { "status": "disallowed_now", "deadline_year": 2026 },
+            "P-256": { "status": "vulnerable", "deadline_year": 2030 },
+            "P-384": { "status": "vulnerable", "deadline_year": 2035, "notes": "secp384r1. Disallowed by 2035 per NIST IR 8547." },
+            "P-521": { "status": "vulnerable", "deadline_year": 2035, "notes": "secp521r1. Disallowed by 2035 per NIST IR 8547." }
+          },
+          "notes": "Elliptic Curve Diffie-Hellman. Same quantum vulnerability as ECDSA. All curves vulnerable to Shor's algorithm.",
+          "sources": ["NIST SP 800-131A Rev.2"]
+        },
+        {
+          "name": "Ed25519",
+          "status": "vulnerable",
+          "deadline_year": 2035,
+          "oid": "1.3.101.112",
+          "notes": "Edwards-curve Digital Signature Algorithm (Curve25519). Fast and secure classically (side-channel resistant). HOWEVER, it is still an elliptic curve and is VULNERABLE TO SHOR'S ALGORITHM. NIST IR 8547 disallows after 2035 (no 2030 deprecation step). It is NOT post-quantum safe.",
+          "sources": ["RFC 8032", "NIST IR 8547", "NIST SP 800-131A Rev.2"]
+        },
+        {
+          "name": "Ed448",
+          "status": "vulnerable",
+          "deadline_year": 2035,
+          "oid": "1.3.101.113",
+          "notes": "Edwards-curve Digital Signature Algorithm (Curve448). Larger security margin than Ed25519 classically, but STILL QUANTUM-VULNERABLE as an ECC scheme. NIST IR 8547 disallows after 2035.",
+          "sources": ["RFC 8032", "NIST IR 8547"]
+        },
+        {
+          "name": "X25519",
+          "status": "vulnerable",
+          "deadline_year": 2035,
+          "oid": "1.3.101.110",
+          "notes": "Elliptic Curve Diffie-Hellman on Curve25519. Classically excellent (side-channel resistant). QUANTUM-VULNERABLE (Shor's algorithm applies). NIST IR 8547 disallows after 2035.",
+          "sources": ["RFC 7748", "NIST IR 8547"]
+        },
+        {
+          "name": "X448",
+          "status": "vulnerable",
+          "deadline_year": 2035,
+          "oid": "1.3.101.111",
+          "notes": "Elliptic Curve Diffie-Hellman on Curve448. Classically excellent. QUANTUM-VULNERABLE. NIST IR 8547 disallows after 2035.",
+          "sources": ["RFC 7748", "NIST IR 8547"]
+        },
+        {
+          "name": "brainpoolP256r1",
+          "status": "vulnerable",
+          "deadline_year": 2030,
+          "notes": "Brainpool curve. Quantum-vulnerable ECC. Allowed until 2030.",
+          "sources": ["RFC 5639"]
+        },
+        {
+          "name": "brainpoolP384r1",
+          "status": "vulnerable",
+          "deadline_year": 2035,
+          "notes": "Brainpool curve. Quantum-vulnerable ECC. Disallowed by 2035 per NIST IR 8547.",
+          "sources": ["RFC 5639"]
+        },
+        {
+          "name": "brainpoolP512r1",
+          "status": "vulnerable",
+          "deadline_year": 2035,
+          "notes": "Brainpool curve. Quantum-vulnerable ECC. Disallowed by 2035 per NIST IR 8547.",
+          "sources": ["RFC 5639"]
+        },
+        {
+          "name": "DH",
+          "also_known_as": ["Diffie-Hellman", "FFDH", "Finite Field Diffie-Hellman"],
+          "key_sizes": {
+            "<2048": { "status": "disallowed_now", "deadline_year": 2026, "notes": "DH groups < 2048 bits are broken classically." },
+            "2048": { "status": "vulnerable", "deadline_year": 2030, "notes": "DH 2048 (e.g., ffdhe2048) allowed until 2030. Quantum-vulnerable." },
+            "3072": { "status": "vulnerable", "deadline_year": 2035, "notes": "DH 3072 (ffdhe3072) provides ~128-bit classical security. Disallowed by 2035 per NIST IR 8547." },
+            "4096": { "status": "vulnerable", "deadline_year": 2035, "notes": "DH 4096 (ffdhe4096) disallowed by 2035 per NIST IR 8547." },
+            "8192": { "status": "vulnerable", "deadline_year": 2035, "notes": "DH 8192 disallowed by 2035 per NIST IR 8547." }
+          },
+          "notes": "Finite-field Diffie-Hellman. Vulnerable to Shor's algorithm. Key size affects classical security and transition timeline only.",
+          "sources": ["RFC 7919", "NIST SP 800-131A Rev.2"]
+        },
+        {
+          "name": "ElGamal",
+          "status": "vulnerable",
+          "deadline_year": 2030,
+          "notes": "Classical public-key encryption scheme. Based on discrete logarithm. Quantum-vulnerable via Shor's algorithm.",
+          "sources": ["NIST IR 8547"]
+        },
+        {
+          "name": "GOST R 34.10",
+          "status": "vulnerable",
+          "deadline_year": 2030,
+          "notes": "Russian digital signature standard. Uses elliptic curves or finite fields. Quantum-vulnerable.",
+          "sources": ["RFC 5832"]
+        },
+        {
+          "name": "SM2",
+          "status": "vulnerable",
+          "deadline_year": 2030,
+          "notes": "Chinese national public-key algorithm (signature, encryption, key exchange). ECC-based. Quantum-vulnerable.",
+          "sources": ["GB/T 32918"]
+        },
+        {
+          "name": "SRP",
+          "status": "vulnerable",
+          "deadline_year": 2030,
+          "notes": "Secure Remote Password protocol. Password-authenticated key exchange. Based on discrete log/finite fields. Quantum-vulnerable.",
+          "sources": ["RFC 5054"]
+        }
+      ]
+    },
+
+    "mac_and_authentication": {
+      "category": "mac",
+      "description": "Message Authentication Codes and authenticated encryption.",
+      "algorithms": [
+        {
+          "name": "HMAC-SHA256",
+          "status": "safe_until_2030",
+          "notes": "HMAC with SHA-256. Collision resistance is what matters for HMAC security. Quantum collision attacks on SHA-256 (BHT) are ~2^85, which is still hard. However, for long-term post-quantum MAC security, HMAC-SHA384 or HMAC-SHA512 are preferred.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "HMAC-SHA384",
+          "status": "safe",
+          "notes": "HMAC with SHA-384. Higher security margin than HMAC-SHA256. Quantum collision ~2^128. Considered safe.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "HMAC-SHA512",
+          "status": "safe",
+          "notes": "HMAC with SHA-512. Highest security margin. Quantum collision ~2^171. Safe.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "HMAC-SHA1",
+          "status": "disallowed_now",
+          "notes": "SHA-1 is broken for collisions. While HMAC-SHA1 is NOT broken for its MAC purpose (no collision attack applies directly), NIST disallows SHA-1 for all purposes. Do not use in new systems.",
+          "deadline_year": 2026
+        },
+        {
+          "name": "HMAC-MD5",
+          "status": "disallowed_now",
+          "notes": "MD5 is completely broken. HMAC-MD5 has theoretical weaknesses. Do not use.",
+          "deadline_year": 2026
+        },
+        {
+          "name": "Poly1305",
+          "status": "safe",
+          "notes": "One-time authenticator used with ChaCha20. 128-bit tag. Information-theoretically secure for single-use keys. Quantum-safe when used correctly.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "GMAC",
+          "status": "safe_until_2030",
+          "notes": "Galois Message Authentication Code (AES-GMAC). Security depends on AES block size and key. With AES-128: safe_until_2030. With AES-256: safe.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "CMAC",
+          "status": "safe_until_2030",
+          "notes": "Cipher-based MAC (AES-CMAC). Same analysis as AES.",
+          "deadline_year": 2030
+        },
+        {
+          "name": "KMAC128",
+          "status": "safe",
+          "notes": "Keccak Message Authentication Code. Based on SHA-3/Keccak. Strong security bounds.",
+          "deadline_year": 2099
+        },
+        {
+          "name": "KMAC256",
+          "status": "safe",
+          "notes": "Keccak Message Authentication Code. Higher security variant.",
+          "deadline_year": 2099
+        }
+      ]
+    }
+  },
+
+  "tls_iana_groups": {
+    "_source": "IANA TLS Supported Groups Registry",
+    "groups": {
+      "0x0017": { "name": "secp256r1", "type": "classical_ecdh", "status": "vulnerable", "deadline_year": 2030 },
+      "0x0018": { "name": "secp384r1", "type": "classical_ecdh", "status": "vulnerable", "deadline_year": 2035 },
+      "0x0019": { "name": "secp521r1", "type": "classical_ecdh", "status": "vulnerable", "deadline_year": 2035 },
+      "0x001D": { "name": "x25519", "type": "classical_ecdh", "status": "vulnerable", "deadline_year": 2035 },
+      "0x001E": { "name": "x448", "type": "classical_ecdh", "status": "vulnerable", "deadline_year": 2035 },
+      "0x0100": { "name": "ffdhe2048", "type": "classical_dh", "status": "vulnerable", "deadline_year": 2030 },
+      "0x0101": { "name": "ffdhe3072", "type": "classical_dh", "status": "vulnerable", "deadline_year": 2035 },
+      "0x0102": { "name": "ffdhe4096", "type": "classical_dh", "status": "vulnerable", "deadline_year": 2035 },
+      "0x0103": { "name": "ffdhe6144", "type": "classical_dh", "status": "vulnerable", "deadline_year": 2035 },
+      "0x0104": { "name": "ffdhe8192", "type": "classical_dh", "status": "vulnerable", "deadline_year": 2035 },
+      "0x2B92": { "name": "SecP256r1MLKEM768", "type": "hybrid", "status": "hybrid" },
+      "0x2B93": { "name": "X25519MLKEM768", "type": "hybrid", "status": "hybrid" },
+      "0x2B94": { "name": "SecP384r1MLKEM1024", "type": "hybrid", "status": "hybrid" },
+      "0xFE30": { "name": "X25519Kyber768Draft00", "type": "hybrid", "status": "hybrid", "notes": "DEPRECATED draft code point. Use 0x2B93 instead." },
+      "0x639A": { "name": "X25519Kyber768Draft00 (AWS private use)", "type": "hybrid", "status": "hybrid", "notes": "AWS private use code point. Non-standard IANA. Superseded by 0x2B93." }
+    }
+  },
+
+  "ikev2_groups": {
+    "_source": "IANA IKEv2 Transform Attribute Types Registry",
+    "groups": {
+      "1": { "name": "768-bit MODP", "status": "disallowed_now" },
+      "2": { "name": "1024-bit MODP", "status": "disallowed_now" },
+      "5": { "name": "1536-bit MODP", "status": "disallowed_now" },
+      "14": { "name": "2048-bit MODP", "status": "vulnerable" },
+      "15": { "name": "3072-bit MODP", "status": "vulnerable", "deadline_year": 2035 },
+      "16": { "name": "4096-bit MODP", "status": "vulnerable", "deadline_year": 2035 },
+      "17": { "name": "6144-bit MODP", "status": "vulnerable", "deadline_year": 2035 },
+      "18": { "name": "8192-bit MODP", "status": "vulnerable", "deadline_year": 2035 },
+      "19": { "name": "256-bit random ECP (secp256r1)", "status": "vulnerable" },
+      "20": { "name": "384-bit random ECP (secp384r1)", "status": "vulnerable", "deadline_year": 2035 },
+      "21": { "name": "521-bit random ECP (secp521r1)", "status": "vulnerable", "deadline_year": 2035 },
+      "22": { "name": "1024-bit MODP with 160-bit POS", "status": "disallowed_now" },
+      "23": { "name": "2048-bit MODP with 224-bit POS", "status": "vulnerable" },
+      "24": { "name": "2048-bit MODP with 256-bit POS", "status": "vulnerable" },
+      "25": { "name": "192-bit random ECP", "status": "disallowed_now" },
+      "26": { "name": "224-bit random ECP", "status": "disallowed_now" },
+      "27": { "name": "224-bit random ECP (secp224r1)", "status": "disallowed_now" },
+      "28": { "name": "256-bit random ECP (secp256r1)", "status": "vulnerable" },
+      "29": { "name": "384-bit random ECP (secp384r1)", "status": "vulnerable", "deadline_year": 2035 },
+      "30": { "name": "521-bit random ECP (secp521r1)", "status": "vulnerable", "deadline_year": 2035 },
+      "31": { "name": "256-bit random ECP (brainpoolP256r1)", "status": "vulnerable" },
+      "32": { "name": "384-bit random ECP (brainpoolP384r1)", "status": "vulnerable", "deadline_year": 2035 },
+      "33": { "name": "521-bit random ECP (brainpoolP512r1)", "status": "vulnerable", "deadline_year": 2035 },
+      "34": { "name": "256-bit random ECP (curve25519)", "status": "vulnerable", "deadline_year": 2035 },
+      "35": { "name": "448-bit random ECP (curve448)", "status": "vulnerable", "deadline_year": 2035 },
+      "36": { "name": "curve25519 (IKE-specific private use)", "status": "vulnerable", "deadline_year": 2035, "notes": "NOT a standard IANA group. Private use by some implementations. Classified as vulnerable with deadline 2035 (same as group 34). NOT a hybrid group." },
+      "37": { "name": "curve448 (IKE-specific private use)", "status": "vulnerable", "deadline_year": 2035, "notes": "NOT a standard IANA group. Private use by some implementations. Classified as vulnerable with deadline 2035 (same as group 35). NOT a hybrid group." },
+      "38": { "name": "ML-KEM-768", "status": "pqc_ready" },
+      "39": { "name": "ML-KEM-1024", "status": "pqc_ready" },
+      "40": { "name": "ML-KEM-512", "status": "pqc_ready" }
+    }
+  },
+
+  "signature_oids": {
+    "1.2.840.113549.1.1.4": { "name": "md5WithRSAEncryption", "status": "disallowed_now", "notes": "MD5 is completely broken." },
+    "1.2.840.113549.1.1.5": { "name": "sha1WithRSAEncryption", "status": "disallowed_now", "notes": "SHA-1 signatures are prohibited." },
+    "1.2.840.113549.1.1.11": { "name": "sha256WithRSAEncryption", "status": "vulnerable", "deadline_year": 2030, "notes": "RSA signature. Quantum-vulnerable. Deadline depends on RSA key size (2048=2030, 3072+=2035)." },
+    "1.2.840.113549.1.1.12": { "name": "sha384WithRSAEncryption", "status": "vulnerable", "deadline_year": 2030, "notes": "RSA signature. Quantum-vulnerable. Deadline depends on RSA key size (2048=2030, 3072+=2035)." },
+    "1.2.840.113549.1.1.13": { "name": "sha512WithRSAEncryption", "status": "vulnerable", "deadline_year": 2030, "notes": "RSA signature. Quantum-vulnerable. Deadline depends on RSA key size (2048=2030, 3072+=2035)." },
+    "1.2.840.10045.4.1": { "name": "ecdsa-with-SHA1", "status": "disallowed_now", "notes": "SHA-1 + ECDSA. Double broken." },
+    "1.2.840.10045.4.3.1": { "name": "ecdsa-with-SHA224", "status": "vulnerable", "deadline_year": 2030, "notes": "Low security margin. Deadline depends on curve (P-256=2030, P-384/P-521=2035)." },
+    "1.2.840.10045.4.3.2": { "name": "ecdsa-with-SHA256", "status": "vulnerable", "deadline_year": 2030, "notes": "Most common ECDSA signature. Quantum-vulnerable. Deadline depends on curve (P-256=2030, P-384/P-521=2035)." },
+    "1.2.840.10045.4.3.3": { "name": "ecdsa-with-SHA384", "status": "vulnerable", "deadline_year": 2030, "notes": "ECDSA signature. Quantum-vulnerable. Deadline depends on curve (P-256=2030, P-384/P-521=2035)." },
+    "1.2.840.10045.4.3.4": { "name": "ecdsa-with-SHA512", "status": "vulnerable", "deadline_year": 2030, "notes": "ECDSA signature. Quantum-vulnerable. Deadline depends on curve (P-256=2030, P-384/P-521=2035)." },
+    "1.3.101.112": { "name": "Ed25519", "status": "vulnerable", "deadline_year": 2035, "notes": "EdDSA signature on Curve25519. Quantum-vulnerable ECC. Disallowed by 2035 per NIST IR 8547." },
+    "1.3.101.113": { "name": "Ed448", "status": "vulnerable", "deadline_year": 2035, "notes": "EdDSA signature on Curve448. Quantum-vulnerable ECC. Disallowed by 2035 per NIST IR 8547." },
+    "2.16.840.1.101.3.4.3.17": { "name": "ML-DSA-44", "status": "pqc_ready", "notes": "NIST FIPS 204." },
+    "2.16.840.1.101.3.4.3.18": { "name": "ML-DSA-65", "status": "pqc_ready", "notes": "NIST FIPS 204. Recommended default." },
+    "2.16.840.1.101.3.4.3.19": { "name": "ML-DSA-87", "status": "pqc_ready", "notes": "NIST FIPS 204." },
+    "2.16.840.1.101.3.4.3.20": { "name": "SLH-DSA-SHA2-128s", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.21": { "name": "SLH-DSA-SHA2-128f", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.22": { "name": "SLH-DSA-SHA2-192s", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.23": { "name": "SLH-DSA-SHA2-192f", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.24": { "name": "SLH-DSA-SHA2-256s", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.25": { "name": "SLH-DSA-SHA2-256f", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.26": { "name": "SLH-DSA-SHAKE-128s", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.27": { "name": "SLH-DSA-SHAKE-128f", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.28": { "name": "SLH-DSA-SHAKE-192s", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.29": { "name": "SLH-DSA-SHAKE-192f", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.30": { "name": "SLH-DSA-SHAKE-256s", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "2.16.840.1.101.3.4.3.31": { "name": "SLH-DSA-SHAKE-256f", "status": "pqc_ready", "notes": "NIST FIPS 205." },
+    "1.3.6.1.4.1.62253.25642": { "name": "Falcon-512", "status": "pqc_candidate", "notes": "Pre-FN-DSA. Widely deployed in experimental systems. On standardization track." },
+    "1.3.6.1.4.1.62253.25643": { "name": "Falcon-1024", "status": "pqc_candidate", "notes": "Pre-FN-DSA. On standardization track." },
+    "2.16.840.1.114027.80.4.1": { "name": "RSA-3072 + ML-DSA-65 (composite)", "status": "hybrid", "notes": "Composite signature." },
+    "2.16.840.1.114027.80.4.2": { "name": "P-384 + ML-DSA-65 (composite)", "status": "hybrid", "notes": "Composite signature." },
+    "2.16.840.1.114027.80.4.3": { "name": "P-521 + ML-DSA-87 (composite)", "status": "hybrid", "notes": "Composite signature." }
+  },
+
+  "kex_oids": {
+    "1.2.840.113549.1.3.1": { "name": "dhKeyAgreement", "status": "vulnerable", "deadline_year": 2030, "notes": "Classical DH key agreement. Deadline depends on group size (2048=2030, 3072+=2035)." },
+    "1.3.132.1.12": { "name": "dhpublicnumber", "status": "vulnerable", "deadline_year": 2030, "notes": "DH public number. Deadline depends on group size (2048=2030, 3072+=2035)." },
+    "1.3.101.110": { "name": "X25519", "status": "vulnerable", "deadline_year": 2035, "notes": "Curve25519 ECDH. Quantum-vulnerable. Disallowed by 2035 per NIST IR 8547." },
+    "1.3.101.111": { "name": "X448", "status": "vulnerable", "deadline_year": 2035, "notes": "Curve448 ECDH. Quantum-vulnerable. Disallowed by 2035 per NIST IR 8547." }
+  },
+
+  "common_misclassifications": {
+    "_description": "This section documents algorithms that are FREQUENTLY misclassified in tools, libraries, and databases. Each entry explains the CORRECT classification and why common tools get it wrong.",
+    "entries": [
+      {
+        "algorithm": "Ed25519",
+        "common_wrong_classification": "safe",
+        "correct_classification": "vulnerable",
+        "why_wrong": "Many tools classify Ed25519 as 'safe' or 'quantum-safe' because it is side-channel resistant and secure against classical attacks. However, it is STILL an elliptic curve and is vulnerable to Shor's algorithm. The correct status is vulnerable with deadline 2035 per NIST IR 8547.",
+        "sources": ["NIST IR 8547", "RFC 8032"]
+      },
+      {
+        "algorithm": "Ed448",
+        "common_wrong_classification": "safe",
+        "correct_classification": "vulnerable",
+        "why_wrong": "Same as Ed25519. Larger classical security margin does NOT confer quantum resistance. The correct status is vulnerable with deadline 2035 per NIST IR 8547.",
+        "sources": ["NIST IR 8547", "RFC 8032"]
+      },
+      {
+        "algorithm": "X25519",
+        "common_wrong_classification": "safe",
+        "correct_classification": "vulnerable",
+        "why_wrong": "Often called a 'safe curve' in literature (meaning safe from implementation attacks). Vulnerable to Shor's algorithm. Status should be vulnerable with deadline 2035 per NIST IR 8547, not 'safe'.",
+        "sources": ["NIST IR 8547", "RFC 7748"]
+      },
+      {
+        "algorithm": "X448",
+        "common_wrong_classification": "safe",
+        "correct_classification": "vulnerable",
+        "why_wrong": "Same as X25519. Status should be vulnerable with deadline 2035 per NIST IR 8547, not 'safe'.",
+        "sources": ["NIST IR 8547", "RFC 7748"]
+      },
+      {
+        "algorithm": "RSA-4096",
+        "common_wrong_classification": "safe",
+        "correct_classification": "vulnerable",
+        "why_wrong": "Large RSA keys provide better classical security but do NOT provide quantum resistance. Shor's algorithm breaks RSA regardless of key size (though with more qubits/gates for larger keys). The correct status is vulnerable with deadline 2035 per NIST IR 8547, same bucket as RSA-3072.",
+        "sources": ["NIST IR 8547", "NIST SP 800-131A Rev.2"]
+      },
+      {
+        "algorithm": "AES-128",
+        "common_wrong_classification": "safe",
+        "correct_classification": "safe_until_2030",
+        "why_wrong": "Some tools classify AES-128 as 'safe' because it is secure classically. Against quantum computers, Grover's algorithm reduces the effective key to 64 bits, which is NOT secure for high-assurance applications. Correct status: safe_until_2030 with a note about Grover's.",
+        "sources": ["NIST IR 8547", "Grover's Algorithm"]
+      },
+      {
+        "algorithm": "AES-192",
+        "common_wrong_classification": "safe",
+        "correct_classification": "safe_until_2030",
+        "why_wrong": "Grover's reduces effective key to 96 bits. Better than AES-128 but still borderline for long-term quantum security.",
+        "sources": ["NIST IR 8547", "Grover's Algorithm"]
+      },
+      {
+        "algorithm": "SHA-256",
+        "common_wrong_classification": "safe",
+        "correct_classification": "safe_until_2030",
+        "why_wrong": "SHA-256 has 128-bit collision resistance classically. Quantum collision attacks (BHT) reduce this to ~85 bits. Preimage is 128-bit effective against Grover's. For long-term quantum-resistant hashing, SHA-384 or SHA-512 should be used.",
+        "sources": ["NIST IR 8547", "Brassard-Hoyer-Tapp Algorithm"]
+      },
+      {
+        "algorithm": "HMAC-SHA256",
+        "common_wrong_classification": "unknown / not classified",
+        "correct_classification": "safe_until_2030",
+        "why_wrong": "HMAC security depends on the underlying hash. HMAC-SHA256 is not broken, but for post-quantum MAC security, HMAC-SHA384/512 are preferred. Should not return 'unknown'.",
+        "sources": ["RFC 2104", "NIST SP 800-131A"]
+      },
+      {
+        "algorithm": "Falcon",
+        "common_wrong_classification": "pqc_ready / pqc_safe",
+        "correct_classification": "pqc_candidate",
+        "why_wrong": "Falcon is a NIST selection for standardization and is widely trusted, but it has NOT yet been published as a final FIPS standard (FIPS 206 is planned). The correct status is 'pqc_candidate' until FIPS 206 is finalized. Once FIPS 206 is released, upgrade to 'pqc_ready'.",
+        "sources": ["NIST PQC 2022 Selection", "NIST FIPS 206 (planned)"]
+      },
+      {
+        "algorithm": "IKE Group 36",
+        "common_wrong_classification": "hybrid",
+        "correct_classification": "vulnerable",
+        "why_wrong": "Group 36 in IKEv2 is sometimes labeled as 'hybrid' by tools. As of 2026, IANA does not define an IKE group 36 as a hybrid PQC group. Groups 34/35 are curve25519/curve448. Group 36, if used, is a private extension and should NOT be assumed to be PQC-hybrid unless explicitly documented by the vendor. Classified as vulnerable with deadline 2035 per NIST IR 8547.",
+        "sources": ["IANA IKEv2 Registry"]
+      },
+      {
+        "algorithm": "IKE Group 37",
+        "common_wrong_classification": "hybrid",
+        "correct_classification": "vulnerable",
+        "why_wrong": "Same as Group 36. Not an IANA-standardized hybrid group. Classified as vulnerable with deadline 2035 per NIST IR 8547.",
+        "sources": ["IANA IKEv2 Registry"]
+      },
+      {
+        "algorithm": "X25519Kyber768Draft00 (0xFE30)",
+        "common_wrong_classification": "pqc_ready",
+        "correct_classification": "hybrid",
+        "why_wrong": "The old 0xFE30 code point is a DRAFT experimental point from Google Chrome's CECPQ2 experiment. It is a HYBRID, not pure PQC. Furthermore, it has been superseded by the IANA-standardized 0x2B93 (X25519MLKEM768).",
+        "sources": ["Google CECPQ2", "IANA TLS Supported Groups", "IETF draft-ietf-tls-hybrid-design"]
+      }
+    ]
+  },
+
+  "_changelog": [
+    {
+      "date": "2026-06-16",
+      "version": "1.0.0",
+      "changes": [
+        "Initial creation of comprehensive PQC algorithm registry.",
+        "Based on NIST FIPS 203, 204, 205 (Aug 2024).",
+        "Based on NIST IR 8547 Initial Public Draft (Nov 2024).",
+        "Based on NSA CNSA 2.0 timeline.",
+        "Based on ENISA PQC guidance.",
+        "Based on IETF TLS/IKE standards and IANA registries.",
+        "Documented 13 common misclassifications found in tools and scanners.",
+        "Mapped all standardized OIDs and IANA code points.",
+        "Defined 10 status categories with clear semantics."
+      ]
+    },
+    {
+      "date": "2026-06-17",
+      "version": "1.0.2",
+      "changes": [
+        "Verified external fact-check report against primary NIST IR 8547 sources. REJECTED the report's main recommendation: IR 8547 itself uses 'deprecated after 2030' / 'disallowed after 2035' as its own table terminology (confirmed via NIST IR 8547 ipd text and NIST CTG presentations), so the registry's 'disallowed by 2035' wording was already accurate and was NOT softened.",
+        "Added nuance to top-level IR 8547 timeline note: the 112-bit key-establishment tier (e.g. RSA-2048, ECDH P-256) has a softer 'continue with HNDL mitigations' allowance past 2030 per IR 8547 text, distinct from the stricter signature/128-bit+ schedule.",
+        "Marked safe_until_2035 explicitly as an unused internal placeholder, not a NIST-defined category (report was correct on this point).",
+        "Softened RSA <2048 notes from 'broken classically and quantumly' to 'below NIST-approved security strength... disallowed for new use' (report was correct on this point).",
+        "Changed 'Standardized by IETF' to 'Defined in an IETF draft... not yet a final RFC' for X25519MLKEM768, SecP256r1MLKEM768, SecP384r1MLKEM1024 (report was correct on this point).",
+        "Rewrote 3DES/TDEA note to reflect the actual NIST SP 800-131A/SP 800-67 distinction: disallowed for applying protection, still allowed for decrypting/verifying legacy data (report was correct on this point)."
+      ]
+    }
+  ]
+}

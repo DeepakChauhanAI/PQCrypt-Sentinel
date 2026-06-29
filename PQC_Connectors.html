@@ -1,0 +1,649 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PQC Scanner - All Connectors Detailed Technical Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+    :root {
+      --primary: #2563EB;
+      --primary-light: #DBEAFE;
+      --secondary: #10B981;
+      --bg: #F8FAFC;
+      --bg-dark: #0F172A;
+      --surface: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --warning: #F59E0B;
+      --warning-bg: #FEF3C7;
+      --danger: #F43F5E;
+      --danger-bg: #FFE4E6;
+      --success-bg: #ECFDF5;
+      --success-text: #065F46;
+      --radius: 10px;
+      --shadow: 0 1px 4px rgba(15, 23, 42, 0.07);
+      --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.10);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    #sidebar {
+      position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+      background: var(--bg-dark); padding: 28px 0 24px;
+      overflow-y: auto; z-index: 100;
+    }
+    #sidebar .logo {
+      font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.2rem;
+      color: #fff; padding: 0 22px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex; align-items: center; gap: 8px;
+    }
+    #sidebar .logo span {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--primary); box-shadow: 0 0 8px var(--primary);
+    }
+    #sidebar nav { padding-top: 16px; }
+    #sidebar nav a {
+      display: block; font-size: 0.8rem; font-weight: 500;
+      color: rgba(255, 255, 255, 0.5); text-decoration: none;
+      padding: 7px 22px; letter-spacing: 0.02em;
+      transition: color 0.15s, background 0.15s;
+      border-left: 3px solid transparent;
+      cursor: pointer;
+    }
+    #sidebar nav a:hover, #sidebar nav a.active {
+      color: #fff; background: rgba(37, 99, 235, 0.12); border-left-color: var(--primary);
+    }
+    #sidebar nav .nav-section {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em;
+      color: rgba(255, 255, 255, 0.25); padding: 18px 22px 6px; text-transform: uppercase;
+    }
+    #main { margin-left: 240px; padding: 40px 48px 80px; max-width: 1100px; }
+    .hero {
+      background: var(--bg-dark); border-radius: 14px;
+      padding: 44px 48px; margin-bottom: 40px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -60px; right: -60px;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-block; font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; color: #60A5FA;
+      background: rgba(37, 99, 235, 0.15); border: 1px solid rgba(37, 99, 235, 0.3);
+      border-radius: 99px; padding: 4px 12px; margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 2.4rem;
+      color: #fff; line-height: 1.15; margin-bottom: 12px;
+    }
+    .hero p {
+      color: rgba(255, 255, 255, 0.55); font-size: 0.95rem;
+      max-width: 720px; margin-bottom: 28px;
+    }
+    .hero-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+    .hero-meta-item { display: flex; flex-direction: column; }
+    .hero-meta-item .label {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: rgba(255, 255, 255, 0.3);
+    }
+    .hero-meta-item .value {
+      font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.3rem; color: #fff;
+    }
+    .section { margin-bottom: 52px; display: none; }
+    .section.active { display: block; }
+    .section-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+      padding-bottom: 14px; border-bottom: 1.5px solid var(--border);
+    }
+    .section-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--primary-light); display: flex; align-items: center;
+      justify-content: center; font-size: 1rem; flex-shrink: 0;
+      color: var(--primary);
+    }
+    .section-header h2 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.35rem; }
+    .section-header .badge {
+      margin-left: auto; font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.07em; color: var(--primary); background: var(--primary-light);
+      border-radius: 99px; padding: 3px 10px;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow);
+    }
+    .card+.card { margin-top: 16px; }
+    .card h3 {
+      font-family: 'Outfit', sans-serif; font-weight: 700;
+      font-size: 1rem; margin-bottom: 10px; color: var(--text);
+    }
+    .card p { color: var(--text-muted); font-size: 0.9rem; }
+    .card ul { padding-left: 20px; margin-top: 8px; }
+    .card ul li {
+      font-size: 0.88rem; color: var(--text-muted); margin-bottom: 6px; line-height: 1.55;
+    }
+    .card ul li strong { color: var(--text); font-weight: 600; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow);
+    }
+    .stat-card .stat-label {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+    }
+    .stat-card .stat-value {
+      font-family: 'Outfit', sans-serif; font-weight: 800;
+      font-size: 1.7rem; color: var(--text); line-height: 1;
+    }
+    .stat-card .stat-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+    .badge {
+      display: inline-block; font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.05em; border-radius: 99px; padding: 2px 9px;
+    }
+    .badge-green { background: var(--success-bg); color: var(--success-text); }
+    .badge-amber { background: var(--warning-bg); color: #92400E; }
+    .badge-red { background: var(--danger-bg); color: #9F1239; }
+    .badge-blue { background: #EFF6FF; color: #1D4ED8; }
+    .badge-gray { background: #F1F5F9; color: #475569; }
+    .badge-teal { background: var(--primary-light); color: #1E40AF; }
+    .badge-purple { background: #F3E8FF; color: #6B21A8; }
+    pre {
+      background: var(--bg-dark); color: #94A3B8; border-radius: 8px;
+      padding: 18px 20px; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem; line-height: 1.6; overflow-x: auto; margin-top: 12px;
+    }
+    .callout {
+      border-radius: 8px; padding: 14px 18px; font-size: 0.875rem;
+      margin-top: 12px; display: flex; gap: 10px; align-items: flex-start;
+    }
+    .callout-icon { flex-shrink: 0; font-size: 1rem; margin-top: 1px; }
+    .callout-teal {
+      background: var(--primary-light); color: #1E40AF;
+      border-left: 3px solid var(--primary);
+    }
+    .callout-amber {
+      background: var(--warning-bg); color: #92400E;
+      border-left: 3px solid var(--warning);
+    }
+    .callout-red {
+      background: var(--danger-bg); color: #9F1239;
+      border-left: 3px solid var(--danger);
+    }
+    .callout-green {
+      background: var(--success-bg); color: var(--success-text);
+      border-left: 3px solid var(--secondary);
+    }
+    .table-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #F1F5F9; }
+    thead th {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--text-muted); padding: 11px 16px; text-align: left;
+    }
+    tbody td {
+      padding: 11px 16px; font-size: 0.88rem; border-top: 1px solid var(--border);
+      color: var(--text); vertical-align: top;
+    }
+    tbody tr:hover { background: #FAFBFC; }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--primary); }
+    .priority-list { counter-reset: priority; list-style: none; padding: 0; }
+    .priority-list li {
+      counter-increment: priority; display: flex; gap: 14px;
+      padding: 14px 0; border-bottom: 1px solid var(--border); align-items: flex-start;
+    }
+    .priority-list li:last-child { border-bottom: none; }
+    .priority-list li::before {
+      content: counter(priority); flex-shrink: 0; width: 28px; height: 28px;
+      border-radius: 50%; background: var(--primary); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.85rem;
+    }
+    .priority-list .content { flex: 1; }
+    .priority-list .content h4 {
+      font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; color: var(--text);
+    }
+    .priority-list .content p {
+      font-size: 0.85rem; color: var(--text-muted); line-height: 1.55;
+    }
+    .stack-row {
+      display: flex; align-items: center; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid var(--border); font-size: 0.87rem;
+    }
+    .stack-row:last-child { border-bottom: none; }
+    .stack-layer {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em;
+      color: var(--text-muted); min-width: 130px; text-transform: uppercase;
+    }
+    .stack-tech { font-weight: 500; color: var(--text); }
+    .stack-reason {
+      font-size: 0.8rem; color: var(--text-muted); margin-left: auto;
+      text-align: right; max-width: 320px;
+    }
+    .verdict-banner {
+      background: linear-gradient(135deg, var(--primary-light) 0%, #ECFDF5 100%);
+      border: 1px solid var(--primary); border-radius: var(--radius);
+      padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow);
+    }
+    .verdict-banner h3 {
+      font-family: 'Outfit', sans-serif; font-weight: 700;
+      font-size: 1.1rem; color: #1E40AF; margin-bottom: 8px;
+    }
+    .verdict-banner p {
+      color: var(--text); font-size: 0.92rem; line-height: 1.6;
+    }
+    .formula-block {
+      background: #F1F5F9; border-left: 3px solid var(--primary);
+      border-radius: 0 6px 6px 0; padding: 10px 16px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
+      color: var(--text); margin: 8px 0;
+    }
+    .timeline { list-style: none; }
+    .timeline li { display: flex; gap: 16px; position: relative; padding-bottom: 24px; }
+    .timeline li:last-child { padding-bottom: 0; }
+    .timeline li:not(:last-child)::before {
+      content: ''; position: absolute; left: 16px; top: 32px;
+      width: 1px; bottom: 0; background: var(--border);
+    }
+    .tl-dot {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--primary); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+    }
+    .tl-content { flex: 1; }
+    .tl-content h4 { font-weight: 600; font-size: 0.92rem; margin-bottom: 4px; }
+    .tl-content p { font-size: 0.85rem; color: var(--text-muted); }
+    .tl-content ul { margin-top: 8px; padding-left: 18px; font-size: 0.83rem; color: var(--text-muted); }
+    .tl-content ul li { margin-bottom: 3px; }
+    #sidebar::-webkit-scrollbar { width: 4px; }
+    #sidebar::-webkit-scrollbar-track { background: transparent; }
+    #sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+    #mobile-header {
+      display: none; position: fixed; top: 0; left: 0; right: 0; height: 60px;
+      background: var(--bg-dark); color: #fff; align-items: center;
+      justify-content: space-between; padding: 0 20px; z-index: 110;
+      box-shadow: var(--shadow); border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    #mobile-header .logo {
+      font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.2rem;
+      color: #fff; display: flex; align-items: center; gap: 8px;
+    }
+    #mobile-header .logo span {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--primary); box-shadow: 0 0 8px var(--primary);
+    }
+    #menu-toggle {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff; cursor: pointer; padding: 8px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+    }
+    #menu-toggle:hover { background: rgba(255, 255, 255, 0.1); }
+    .sidebar-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+      z-index: 95; opacity: 0; transition: opacity 0.25s ease; pointer-events: none;
+    }
+    .sidebar-overlay.active { display: block; opacity: 1; pointer-events: auto; }
+    @media (max-width: 768px) {
+      #mobile-header { display: flex; }
+      #sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100; box-shadow: var(--shadow-md);
+      }
+      #sidebar.active { transform: translateX(0); }
+      #main { margin-left: 0; padding: 84px 20px 60px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap: 16px; }
+      .hero { padding: 28px 24px; margin-bottom: 28px; }
+      .hero h1 { font-size: 1.8rem; }
+      .hero p { font-size: 0.88rem; margin-bottom: 20px; }
+      .hero-meta { gap: 16px; }
+      .section { margin-bottom: 36px; }
+      .section-header { margin-bottom: 16px; }
+      .card { padding: 20px; }
+      .stack-row { flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 0; }
+      .stack-reason { margin-left: 0; text-align: left; max-width: none; }
+      .timeline li { gap: 12px; }
+      .tl-dot { width: 28px; height: 28px; font-size: 0.8rem; }
+      .timeline li:not(:last-child)::before { left: 14px; top: 28px; }
+    }
+    @media print {
+      #sidebar, #mobile-header, .sidebar-overlay { display: none !important; }
+      #main { margin-left: 0; padding: 0; }
+    }
+  
+
+#main{max-width:1600px;padding:40px 56px;}
+.hero{max-width:none;}
+@media(max-width:768px){#main{padding:24px;}}
+</style></head><body>
+<div id="mobile-header"><div class="logo"><span></span>PQC Scanner</div><button id="menu-toggle" aria-label="Toggle menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div id="sidebar">
+  <div class="logo"><span></span>PQC Scanner</div>
+  <nav>
+    <div class="nav-section">Overview</div>
+    <a href="#findings" data-tab="findings" class="active">How Findings Are Created</a>
+    <div class="nav-section">Connectors</div>
+    <a href="#sast" data-tab="sast">SAST Scanner</a>
+    <a href="#aws-pqc" data-tab="aws-pqc">AWS PQC Scanner</a>
+    <a href="#aws-kms" data-tab="aws-kms">AWS KMS</a>
+    <a href="#csv" data-tab="csv">CSV CMDB</a>
+    <a href="#jwt" data-tab="jwt">JWT</a>
+    <a href="#k8s" data-tab="k8s">Kubernetes</a>
+    <a href="#pkcs11" data-tab="pkcs11">PKCS#11 HSM</a>
+    <a href="#saml" data-tab="saml">SAML Metadata</a>
+    <a href="#ssh" data-tab="ssh">SSH Agentless</a>
+    <a href="#tde" data-tab="tde">Oracle TDE</a>
+    <a href="#winrm" data-tab="winrm">WinRM Agentless</a>
+    <a href="#winstore" data-tab="winstore">Windows Cert Store</a>
+  </nav>
+</div>
+
+<div id="main">
+
+<!-- ====================== SAST ====================== -->
+<div id="sast" class="section">
+
+<div class="section-header"><div class="section-icon">🔍</div><h2>SAST Scanner</h2><span class="badge">Static Analysis Connector</span></div>
+<div class="card"><h3>Overview</h3><p>The SAST scanner is a native static-analysis connector that walks a local source tree and flags cryptographic usage with regex. It lives in <span class="mono">backend/app/connectors/sast_connector.py</span> and is invoked through the <span class="mono">/api/connectors/sync/sast</span> endpoint or the SAST card on the Connectors page.</p></div>
+<div class="card"><h3>How it Works</h3><ol class="priority-list">
+<li><div class="content"><h4>Discovery</h4><p>The target directory is walked with os.walk while pruning excluded directories such as node_modules, .git, __pycache__, .venv, target, build and dist.</p></div></li>
+<li><div class="content"><h4>Phased Scanning</h4><p>Files are scanned in eight phases: Python, Java, Go, JavaScript/TypeScript, dependency manifests, Semgrep (crypto + secrets), container files and Kerberos configuration files.</p></div></li>
+<li><div class="content"><h4>Findings</h4><p>Every regex match becomes a finding containing file, line, category, pattern, code snippet and language.</p></div></li>
+<li><div class="content"><h4>Persistence</h4><p>Creates/updates an Asset, deletes old findings and inserts new findings with risk scores and PQC metadata.</p></div></li>
+<li><div class="content"><h4>Logging</h4><p>A ScanLog entry is written for each phase so progress appears in the Live Execution Console.</p></div></li>
+</ol></div>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>What It Flags</th></tr></thead><tbody>
+<tr><td>rsa_keygen / ec_keygen / dsa_keygen / dh_keygen</td><td>Classical key generation including RSA, ECC, DSA and DH.</td></tr>
+<tr><td>weak_hash</td><td>MD5 and SHA1 implementations.</td></tr>
+<tr><td>weak_cipher</td><td>DES, DESede, RC4, Blowfish and insecure cipher references.</td></tr>
+<tr><td>hardcoded_key</td><td>Embedded RSA and EC private keys.</td></tr>
+<tr><td>bouncycastle / pqc_libs</td><td>BouncyCastle PQC, Tink, liboqs, PQClean and other PQC libraries.</td></tr>
+<tr><td>pqc_algorithms</td><td>ML‑KEM, ML‑DSA, SLH‑DSA, Kyber, Dilithium, Falcon, SPHINCS+, FrodoKEM, Classic McEliece, NTRU, BIKE and HQC.</td></tr>
+<tr><td>pqc_hybrid</td><td>X25519Kyber, X25519MLKEM and hybrid schemes.</td></tr>
+<tr><td>vulnerable_dependency</td><td>Known vulnerable crypto dependencies.</td></tr>
+<tr><td>weak_base_image / insecure_container_package</td><td>Weak Docker base images and crypto packages.</td></tr>
+<tr><td>weak_kerberos_encryption</td><td>DES-CBC, RC4-HMAC and weak Kerberos policies.</td></tr>
+</tbody></table></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Regex-based only, no AST parsing, 200-file cap per extension and PQC registry isn't consulted while writing pqc_status.</span></div>
+</div>
+
+<!-- ====================== AWS PQC ====================== -->
+<div id="aws-pqc" class="section">
+<div class="section-header"><div class="section-icon">☁️</div><h2>AWS PQC Scanner</h2><span class="badge">Cryptographic Discovery</span></div>
+<div class="card"><h3>Discovery Scope</h3><p>When AWS credentials are entered, the AWSPQCScanner scans six AWS services and inventories cryptographic assets for quantum readiness.</p></div>
+<div class="table-wrap"><table><thead><tr><th>Service</th><th>What It Discovers</th><th>PQC Checks</th></tr></thead><tbody>
+<tr><td>KMS</td><td>Customer managed keys via ListKeys/DescribeKey.</td><td>RSA/ECC flagged quantum-vulnerable; AES‑256 marked safe.</td></tr>
+<tr><td>ACM</td><td>Certificates via ListCertificates/DescribeCertificate.</td><td>Signature algorithm, key size and expiry.</td></tr>
+<tr><td>ELBv2</td><td>Load balancers and listeners.</td><td>TLS policy including PQ-capable policies.</td></tr>
+<tr><td>CloudFront</td><td>Distributions.</td><td>Viewer and origin TLS policies.</td></tr>
+<tr><td>S3</td><td>Buckets.</td><td>SSE-KMS, SSE-S3, SSE-C, DSSE-KMS or no encryption.</td></tr>
+<tr><td>IAM</td><td>Server certificates.</td><td>Algorithms, key sizes and expiry.</td></tr>
+</tbody></table></div>
+<div class="card"><h3>Detailed Service Coverage</h3>
+<ul>
+<li><strong>KMS:</strong> Captures KeySpec, key usage and origin. RSA/ECC keys are flagged as quantum-vulnerable while AES-256 symmetric keys are marked safe.</li>
+<li><strong>ACM:</strong> Captures signature algorithm, key size, subject, issuer, SANs and validity window. Classical RSA/ECDSA certificates are flagged vulnerable and near-expiry certificates create separate findings.</li>
+<li><strong>ELBv2:</strong> Captures TLS policies such as ELBSecurityPolicy-TLS13 and ELBSecurityPolicy-PQ variants. Pre‑TLS 1.2 or non-forward-secret policies are flagged.</li>
+<li><strong>CloudFront:</strong> Captures viewer and origin TLS settings and flags weak configurations.</li>
+<li><strong>S3:</strong> Captures bucket default encryption settings and flags buckets without encryption.</li>
+<li><strong>IAM:</strong> Captures uploaded server certificates using the same logic as ACM.</li>
+</ul></div>
+<div class="callout callout-red"><span class="callout-icon">🚫</span><span><strong>Not Scanned:</strong> Secrets Manager secret values, EBS encryption, RDS/DocumentDB encryption-at-rest, Lambda code/env vars, VPC TLS inspection policies and S3 object-level encryption.</span></div>
+</div>
+
+<!-- ====================== AWS KMS ====================== -->
+<div id="aws-kms" class="section">
+<div class="section-header"><div class="section-icon">🔑</div><h2>AWS KMS Connector</h2><span class="badge">Cloud KMS Discovery</span></div>
+<div class="card"><h3>Overview</h3><p>Enumerates customer-managed AWS KMS keys using boto3. The connector lives in <span class="mono">backend/app/connectors/cloud_kms_connector.py</span>.</p></div>
+<div class="card"><h3>How it Works</h3><ol class="priority-list">
+<li><div class="content"><h4>Authenticate</h4><p>Resolves credentials from Vault (or direct dict) and instantiates a boto3 KMS client in the chosen region.</p></div></li>
+<li><div class="content"><h4>List & Describe</h4><p>Paginates ListKeys, then DescribeKey for each KeyId, and pulls the default key policy.</p></div></li>
+<li><div class="content"><h4>Asset Upsert</h4><p>Creates or updates an Asset named <span class="mono">aws-kms:&lt;key-id&gt;</span> with KeySpec, KeyUsage, Origin and policy stored in metadata.</p></div></li>
+<li><div class="content"><h4>Findings</h4><p>Classifies the key spec (RSA, ECC, HMAC, SM2, AES) and produces PQC findings for quantum-vulnerable keys.</p></div></li>
+</ol></div>
+<div class="table-wrap"><table><thead><tr><th>KeySpec</th><th>Algorithm</th><th>PQC Status</th></tr></thead><tbody>
+<tr><td>SYMMETRIC_DEFAULT</td><td>AES-256</td><td>safe</td></tr>
+<tr><td>RSA_2048 / RSA_3072 / RSA_4096</td><td>RSA-2048/3072/4096</td><td>vulnerable (Shor)</td></tr>
+<tr><td>ECC_NIST_P256 / P384 / P521</td><td>ECDSA P256/P384/P521</td><td>vulnerable (Shor)</td></tr>
+<tr><td>ECC_SECG_P256K1</td><td>ECDSA secp256k1</td><td>vulnerable (Shor)</td></tr>
+<tr><td>HMAC_224 / 256 / 384 / 512</td><td>HMAC-SHA family</td><td>safe (not directly quantum-vulnerable)</td></tr>
+<tr><td>SM2</td><td>SM2 (Chinese ECC)</td><td>vulnerable (Shor)</td></tr>
+</tbody></table></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Requires boto3, AWS credentials in Vault, and network access to KMS. Does not analyze key aliases or key material.</span></div>
+</div>
+
+<!-- ====================== CSV CMDB ====================== -->
+<div id="csv" class="section">
+<div class="section-header"><div class="section-icon">📄</div><h2>CSV CMDB Connector</h2><span class="badge">Bulk CMDB Import</span></div>
+<div class="card"><h3>Overview</h3><p>Parses a CSV string and upserts Asset records. Lives in <span class="mono">backend/app/connectors/csv_connector.py</span>. Useful for seeding the inventory from an existing CMDB export.</p></div>
+<div class="card"><h3>Expected CSV Columns</h3>
+<ul>
+<li><strong>name</strong> (required, unique per batch)</li>
+<li><strong>asset_type</strong> (server, endpoint, network_device, load_balancer, vpn_gateway, database, web_app, api, container, kubernetes_cluster, cloud_resource, hsm, kms, certificate_authority, smart_card, firmware, saas, other)</li>
+<li><strong>environment</strong> (production, staging, development, testing, unknown)</li>
+<li><strong>ip_address</strong>, <strong>fqdn</strong>, <strong>port</strong> (optional)</li>
+</ul></div>
+<div class="card"><h3>How it Works</h3><ol class="priority-list">
+<li><div class="content"><h4>Parse</h4><p>Reads CSV with <span class="mono">csv.DictReader</span>, normalizes headers to lower-case.</p></div></li>
+<li><div class="content"><h4>Validate</h4><p>Validates asset_type and environment enums, skips duplicate names in the same file.</p></div></li>
+<li><div class="content"><h4>Upsert</h4><p>Creates or updates Asset rows keyed on the name column.</p></div></li>
+<li><div class="content"><h4>Report</h4><p>Returns counts of imported, updated, skipped rows and per-row error messages.</p></div></li>
+</ol></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Pure CMDB population; performs no cryptographic analysis. Use SAST or host connectors for crypto detection.</span></div>
+</div>
+
+<!-- ====================== JWT ====================== -->
+<div id="jwt" class="section">
+<div class="section-header"><div class="section-icon">🪪</div><h2>JWT Connector</h2><span class="badge">L4 Application Layer</span></div>
+<div class="card"><h3>Overview</h3><p>Offline + online JWT auditor that decodes header and payload (without signature verification) and classifies the signing algorithm. Lives in <span class="mono">backend/app/connectors/jwt_connector.py</span>.</p></div>
+<div class="card"><h3>How it Works</h3><ol class="priority-list">
+<li><div class="content"><h4>Input</h4><p>Accepts a list of raw JWT strings (offline) or fetches them from an HTTPS endpoint (online) using Vault-resolved credentials.</p></div></li>
+<li><div class="content"><h4>Decode</h4><p>Decodes header and payload (base64url, no signature check). Extracts alg, kty, key modulus/curve, key size, iss, aud, exp.</p></div></li>
+<li><div class="content"><h4>Classify</h4><p>Maps alg to PQC status via risk_service. ES256/384/512, EdDSA and PS256/384/512 tracked; <span class="mono">none</span>, <span class="mono">HS1</span>, <span class="mono">RS1</span> are disallowed.</p></div></li>
+<li><div class="content"><h4>Persist</h4><p>Creates an Asset with <span class="mono">asset_type=jwt</span>, <span class="mono">discovery_source=jwt_audit</span>, and stores the decoded material in metadata. Only the token digest is kept, not the raw token.</p></div></li>
+</ol></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Does not verify signatures. JWKS-based key extraction is not currently implemented.</span></div>
+</div>
+
+<!-- ====================== Kubernetes ====================== -->
+<div id="k8s" class="section">
+<div class="section-header"><div class="section-icon">⎈</div><h2>Kubernetes Connector</h2><span class="badge">Container Orchestrator</span></div>
+<div class="card"><h3>Overview</h3><p>Scans a Kubernetes cluster for cryptographic material. Lives in <span class="mono">backend/app/connectors/k8s_connector.py</span> and uses the official <span class="mono">kubernetes</span> Python client.</p></div>
+<div class="card"><h3>Discovery Scope</h3>
+<ul>
+<li><strong>TLS secrets</strong> across all namespaces</li>
+<li><strong>etcd encryption configuration</strong></li>
+<li><strong>API server certificate</strong></li>
+<li><strong>Kubelet certificates</strong></li>
+<li><strong>Certificate Signing Requests (CSRs)</strong></li>
+</ul></div>
+<div class="card"><h3>Authentication</h3>
+<ul>
+<li>Kubeconfig YAML (inline in Vault credential)</li>
+<li>Bearer token + API server host + optional CA cert</li>
+</ul></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Requires cluster credentials and network access to the API server. RBAC must allow reading secrets, CSRs and configmaps.</span></div>
+</div>
+
+<!-- ====================== PKCS#11 ====================== -->
+<div id="pkcs11" class="section">
+<div class="section-header"><div class="section-icon">🔐</div><h2>PKCS#11 HSM Connector</h2><span class="badge">L3 HSM Enumeration</span></div>
+<div class="card"><h3>Overview</h3><p>Enumerates keys and certificates on a PKCS#11 HSM. Lives in <span class="mono">backend/app/connectors/pkcs11_connector.py</span> and uses the <span class="mono">python-pkcs11</span> library.</p></div>
+<div class="card"><h3>How it Works</h3><ol class="priority-list">
+<li><div class="content"><h4>Load library</h4><p>Loads the vendor PKCS#11 shared library (e.g. <span class="mono">/usr/lib/softhsm/libsofthsm2.so</span>).</p></div></li>
+<li><div class="content"><h4>Authenticate</h4><p>Resolves user PIN and optional SO PIN from Vault. Optionally filters by slot ID and token label.</p></div></li>
+<li><div class="content"><h4>Enumerate</h4><p>Lists slots with tokens present, opens each session, and enumerates private/public keys and certificates.</p></div></li>
+<li><div class="content"><h4>Persist</h4><p>Creates Asset rows (asset_type=hsm) and classifies the underlying algorithm.</p></div></li>
+</ol></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Requires the HSM hardware or SoftHSM, the vendor PKCS#11 library, and a valid user PIN. Does not extract private key material.</span></div>
+</div>
+
+<!-- ====================== SAML ====================== -->
+<div id="saml" class="section">
+<div class="section-header"><div class="section-icon">🔏</div><h2>SAML Metadata Connector</h2><span class="badge">Federation Identity</span></div>
+<div class="card"><h3>Overview</h3><p>Parses SAML metadata to extract public keys and certificates. Lives in <span class="mono">backend/app/connectors/saml_connector.py</span>.</p></div>
+<div class="card"><h3>How it Works</h3><ol class="priority-list">
+<li><div class="content"><h4>Input</h4><p>Accepts a metadata URL (HTTPS) or a raw XML blob. Credentials are resolved from Vault (bearer token) if needed.</p></div></li>
+<li><div class="content"><h4>SSRF guard</h4><p>Validates the URL hostname against the safe-target resolver before fetching.</p></div></li>
+<li><div class="content"><h4>Parse</h4><p>Parses the XML, extracts &lt;ds:X509Certificate&gt; elements and uses the cert_parser to decode them.</p></div></li>
+<li><div class="content"><h4>Persist</h4><p>Creates Assets for the IdP/SP signing certificates and classifies the signature algorithm.</p></div></li>
+</ol></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Requires the metadata URL to be reachable from the backend. Signed metadata signatures are not verified.</span></div>
+</div>
+
+<!-- ====================== SSH ====================== -->
+<div id="ssh" class="section">
+<div class="section-header"><div class="section-icon">🖥️</div><h2>SSH Agentless Connector</h2><span class="badge">L6 Infrastructure</span></div>
+<div class="card"><h3>Overview</h3><p>Agentless SSH scanner for Linux hosts. Lives in <span class="mono">backend/app/connectors/ssh_connector.py</span> and uses <span class="mono">paramiko</span>.</p></div>
+<div class="card"><h3>Discovery Scope</h3>
+<ul>
+<li><strong>Keystores:</strong> JKS, PKCS12, PEM bundles</li>
+<li><strong>Certificate files</strong> on disk</li>
+<li><strong>OpenSSL version and configuration</strong></li>
+<li><strong>SSH server / client configuration</strong> (weak Kex, MAC, cipher detection)</li>
+<li><strong>Kerberos configuration</strong></li>
+</ul></div>
+<div class="card"><h3>Authentication</h3>
+<ul>
+<li>Username + password</li>
+<li>Username + private key</li>
+<li>Optional sudo with separate password (also from Vault)</li>
+</ul></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Requires SSH access (port 22) and a privileged account for full enumeration. sudo is supported but not required.</span></div>
+</div>
+
+<!-- ====================== Oracle TDE ====================== -->
+<div id="tde" class="section">
+<div class="section-header"><div class="section-icon">🗄️</div><h2>Oracle TDE Connector</h2><span class="badge">L5 Data Layer</span></div>
+<div class="card"><h3>Overview</h3><p>Scans Oracle Database Transparent Data Encryption (TDE) configuration. Lives in <span class="mono">backend/app/connectors/tde_connector.py</span> and uses <span class="mono">cx_Oracle</span>.</p></div>
+<div class="card"><h3>Discovery Scope</h3>
+<ul>
+<li><strong>V$ENCRYPTION_WALLET</strong> status and type</li>
+<li><strong>V$ENCRYPTED_TABLESPACES</strong> for tablespace-level encryption</li>
+<li><strong>V$DATABASE_KEY_INFO</strong> for master key algorithm</li>
+<li><strong>TDE wallet location</strong> on disk</li>
+</ul></div>
+<div class="card"><h3>Authentication</h3>
+<ul>
+<li>DB username and password (from Vault)</li>
+<li>Oracle wallet location (from Vault) for SSL/TDE</li>
+</ul></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Requires Oracle Instant Client, DB user with <span class="mono">SELECT_CATALOG_ROLE</span>, and network access to the listener.</span></div>
+</div>
+
+<!-- ====================== WinRM ====================== -->
+<div id="winrm" class="section">
+<div class="section-header"><div class="section-icon">🪟</div><h2>WinRM Agentless Connector</h2><span class="badge">L7 Endpoint Layer</span></div>
+<div class="card"><h3>Overview</h3><p>Agentless WinRM scanner for Windows hosts. Lives in <span class="mono">backend/app/connectors/winrm_connector.py</span> and uses <span class="mono">pywinrm</span>.</p></div>
+<div class="card"><h3>Discovery Scope</h3>
+<ul>
+<li><strong>Windows Certificate Store</strong> (My, Root, CA, TrustedPublisher, etc.)</li>
+<li><strong>CNG / NCrypt</strong> key storage providers</li>
+<li><strong>Schannel / CNG</strong> registry settings</li>
+<li><strong>IIS SSL bindings</strong></li>
+<li><strong>BitLocker status</strong></li>
+<li><strong>Firmware / UEFI signing</strong> information</li>
+</ul></div>
+<div class="card"><h3>Authentication</h3>
+<ul>
+<li>NTLM transport (default) over HTTP (5985) or HTTPS (5986)</li>
+<li>Username + password (from Vault)</li>
+</ul></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Requires WinRM enabled on the target, a privileged domain or local account, and the <span class="mono">pywinrm</span> library on the backend host.</span></div>
+</div>
+
+<!-- ====================== Windows Cert Store ====================== -->
+<div id="winstore" class="section">
+<div class="section-header"><div class="section-icon">📜</div><h2>Windows Cert Store Connector</h2><span class="badge">L7 Passive Inventory</span></div>
+<div class="card"><h3>Overview</h3><p>Parses <span class="mono">certutil -store</span> output to inventory certificates. Lives in <span class="mono">backend/app/connectors/winstore_connector.py</span>. Intentionally library-light (stdlib only) so it can run on Linux build agents.</p></div>
+<div class="card"><h3>How it Works</h3><ol class="priority-list">
+<li><div class="content"><h4>Input</h4><p>Provide either <span class="mono">dump_path</span> (path to a text file) or <span class="mono">dump_text</span> (the raw certutil output).</p></div></li>
+<li><div class="content"><h4>Parse</h4><p>Regex-based parser extracts Serial, Issuer, Subject, NotBefore, NotAfter, Cert Hash, Signature algorithm and Public Key.</p></div></li>
+<li><div class="content"><h4>Persist</h4><p>Creates an Asset with <span class="mono">asset_type=windows_cert_store</span> for each certificate and classifies the signature algorithm.</p></div></li>
+</ol></div>
+<div class="card"><h3>Store Parameters</h3>
+<ul>
+<li><strong>store_name:</strong> "My", "Root", "CA", "TrustedPublisher", etc.</li>
+<li><strong>store_kind:</strong> "user" or "enterprise" (machine-level)</li>
+</ul></div>
+<div class="callout callout-amber"><span class="callout-icon">⚠️</span><span><strong>Limitations:</strong> Requires a separate process to produce the <span class="mono">certutil</span> dump. Does not call Win32 APIs directly.</span></div>
+</div>
+
+<!-- ====================== How Findings Are Created ====================== -->
+<div id="findings" class="section active">
+<div class="hero"><div class="hero-badge">Security Connectors</div>
+<h1>PQC Scanner - All Connectors</h1>
+<p>Comprehensive technical overview of every connector in the PQC Scanner project: source code analysis, cloud discovery, agentless host scanning, HSM enumeration, and CMDB import.</p>
+<div class="hero-meta">
+  <div class="hero-meta-item"><span class="label">Connectors</span><span class="value">12</span></div>
+  <div class="hero-meta-item"><span class="label">Coverage</span><span class="value">Code + Cloud + On-Prem</span></div>
+  <div class="hero-meta-item"><span class="label">Focus</span><span class="value">Crypto Discovery</span></div>
+  <div class="hero-meta-item"><span class="label">Layers</span><span class="value">L1 - L7</span></div>
+</div></div>
+<div class="section-header"><div class="section-icon">📋</div><h2>How Findings Are Created</h2></div>
+<div class="card"><ol class="priority-list">
+<li><div class="content"><h4>Asset Upsert</h4><p>Creates or updates Asset / Certificate records in the database.</p></div></li>
+<li><div class="content"><h4>Algorithm Classification</h4><p>Classifies cryptographic algorithms using the corrected NIST IR 8547 logic and the project PQC algorithm registry.</p></div></li>
+<li><div class="content"><h4>Algorithm Record</h4><p>Creates Algorithm rows and assigns pqc_status (vulnerable, transitioning, hybrid, pqc_ready, safe).</p></div></li>
+<li><div class="content"><h4>Finding Generation</h4><p>Creates findings with severity and risk scores for quantum-vulnerable components.</p></div></li>
+</ol></div>
+</div>
+
+</div>
+
+<script>
+  // Tab switching
+  document.addEventListener('DOMContentLoaded', function() {
+    const links = document.querySelectorAll('#sidebar nav a[data-tab]');
+    const sections = document.querySelectorAll('#main .section');
+    function showTab(tabId) {
+      sections.forEach(s => s.classList.remove('active'));
+      links.forEach(a => a.classList.remove('active'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+      const link = document.querySelector(`#sidebar nav a[data-tab="${tabId}"]`);
+      if (link) link.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    links.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const tabId = this.getAttribute('data-tab');
+        showTab(tabId);
+        // close mobile sidebar
+        document.getElementById('sidebar').classList.remove('active');
+        document.getElementById('sidebar-overlay').classList.remove('active');
+      });
+    });
+    // Mobile menu
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (menuToggle) {
+      menuToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+      });
+    }
+    if (overlay) {
+      overlay.addEventListener('click', function() {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+      });
+    }
+  });
+</script>
+</body></html>

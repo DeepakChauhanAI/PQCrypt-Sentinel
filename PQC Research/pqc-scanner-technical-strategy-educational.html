@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC Scanner Technical Strategy — Educational Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --surface-2: #f0f4f8;
+    --border: #dde3ec;
+    --border-light: #eaf0f7;
+    --text: #0f1923;
+    --text-secondary: #4a5568;
+    --text-muted: #8a95a3;
+    --accent: #0062ff;
+    --accent-light: #e8f0ff;
+    --accent-2: #00b4d8;
+    --green: #00875a;
+    --green-bg: #e6f7f1;
+    --yellow: #b45309;
+    --yellow-bg: #fef3cd;
+    --red: #c0392b;
+    --red-bg: #fdecea;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --radius: 6px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 14px;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .topbar-logo::before {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+
+  .topbar-divider { width: 1px; height: 20px; background: var(--border); }
+  .topbar-title { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+
+  .version-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 2px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .language-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    background: var(--yellow-bg);
+    color: var(--yellow);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+  }
+
+  .layout { display: flex; min-height: calc(100vh - 52px); }
+
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 52px;
+    height: calc(100vh - 52px);
+    overflow-y: auto;
+  }
+
+  .sidebar-section { margin-bottom: 24px; }
+  .sidebar-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0 20px 8px;
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 20px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    line-height: 1.4;
+  }
+
+  .sidebar-link:hover { background: var(--surface-2); color: var(--text); }
+  .sidebar-link.active {
+    color: var(--accent);
+    background: var(--accent-light);
+    border-left-color: var(--accent);
+  }
+
+  .sidebar-link .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .sidebar-link.active .dot { background: var(--accent); }
+
+  .main {
+    flex: 1;
+    padding: 40px 48px;
+    max-width: 1100px;
+    overflow: hidden;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, #0062ff 0%, #0096c7 100%);
+    border-radius: 10px;
+    padding: 36px 40px;
+    color: white;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    right: -40px;
+    top: -40px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    right: 60px;
+    bottom: -60px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 14px;
+  }
+
+  .hero h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    line-height: 1.25;
+  }
+
+  .hero p {
+    font-size: 14px;
+    opacity: 0.85;
+    max-width: 650px;
+    line-height: 1.65;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .hero-stat { display: flex; flex-direction: column; gap: 2px; }
+  .hero-stat-val {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .hero-stat-label { font-size: 11px; opacity: 0.7; }
+
+  .section { margin-bottom: 48px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 28px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h3::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .glossary-banner {
+    background: linear-gradient(135deg, #00b4d8 0%, #0062ff 100%);
+    border-radius: 10px;
+    padding: 28px 32px;
+    color: white;
+    margin-bottom: 32px;
+  }
+
+  .glossary-banner h2 {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+
+  .glossary-banner p {
+    font-size: 13px;
+    opacity: 0.9;
+    line-height: 1.6;
+  }
+
+  .glossary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .glossary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    transition: box-shadow 0.15s;
+  }
+
+  .glossary-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .glossary-term {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .glossary-def {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .layer-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .layer-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .layer-header:hover { background: var(--surface-2); }
+
+  .layer-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .layer-badge.l7 { background: #dbeafe; color: #1d4ed8; }
+  .layer-badge.l6 { background: #ede9fe; color: #6d28d9; }
+  .layer-badge.l5 { background: #fce7f3; color: #be185d; }
+  .layer-badge.l4 { background: #dcfce7; color: #15803d; }
+  .layer-badge.l3 { background: #fef9c3; color: #854d0e; }
+  .layer-badge.l2 { background: #ffedd5; color: #c2410c; }
+  .layer-badge.l1 { background: #fde2e2; color: #b91c1c; }
+  .layer-badge.lx { background: #f0f4f8; color: #475569; }
+
+  .layer-name { font-size: 13.5px; font-weight: 600; flex: 1; }
+  .layer-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .layer-chevron {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+  }
+
+  .layer-block.open .layer-chevron { transform: rotate(180deg); }
+
+  .layer-body {
+    display: none;
+    border-top: 1px solid var(--border-light);
+    padding: 0;
+  }
+
+  .layer-block.open .layer-body { display: block; }
+
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+
+  thead th {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 10px 16px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.12s;
+  }
+
+  tbody tr:hover { background: #f7faff; }
+  tbody tr:last-child { border-bottom: none; }
+
+  td {
+    padding: 10px 16px;
+    vertical-align: top;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  td:first-child { font-weight: 500; }
+
+  .mono-tag {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    display: inline-block;
+    margin: 1px;
+  }
+
+  .text-muted { color: var(--text-muted); font-style: italic; }
+
+  .scan-yes {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--green-bg);
+    color: var(--green);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .scan-no {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: #f1f3f5;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .scan-partial {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--yellow-bg);
+    color: var(--yellow);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .scan-low {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: #f5f0ff;
+    color: #6d28d9;
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .pqc-high {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--red-bg);
+    color: var(--red);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .pqc-medium {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--yellow-bg);
+    color: var(--yellow);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .pqc-low {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: #f0f4f8;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .explanation {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .explanation strong { color: var(--accent); }
+
+  .why-pqc {
+    background: #fff4e5;
+    border: 1px solid #fed7aa;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .why-pqc-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--yellow);
+    margin-bottom: 4px;
+  }
+
+  .analogy {
+    background: var(--green-bg);
+    border: 1px solid #bbf7d0;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .analogy-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--green);
+    margin-bottom: 4px;
+  }
+
+  .insight {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 20px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .insight-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #b45309;
+    margin-bottom: 6px;
+  }
+
+  .flow-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+
+  .flow {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    min-width: 540px;
+  }
+
+  .flow-node {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .flow-node.primary {
+    background: var(--accent-light);
+    border-color: #93c5fd;
+    color: var(--accent);
+  }
+
+  .flow-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 20px;
+    position: relative;
+  }
+
+  .flow-connector::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .flow-step {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    margin: 4px 0 4px 16px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .flow-arrow {
+    font-size: 16px;
+    color: var(--border);
+    text-align: center;
+    padding: 2px 0 2px 20px;
+    line-height: 1;
+  }
+
+  .summary-grid {
+    display: grid;
+    gap: 1px;
+    background: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .summary-row {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    background: var(--surface);
+  }
+
+  .summary-row:first-child .summary-q,
+  .summary-row:first-child .summary-a {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 10px 16px;
+  }
+
+  .summary-q {
+    padding: 12px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+    border-right: 1px solid var(--border-light);
+    background: #fafcff;
+  }
+
+  .summary-a {
+    padding: 12px 16px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  .summary-row:hover .summary-q,
+  .summary-row:hover .summary-a { background: #f7faff; }
+
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .tab-btn {
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 9px 18px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .code-block {
+    background: #0f1923;
+    color: #a8d8f0;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 20px 24px;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    line-height: 1.7;
+    margin: 12px 0;
+    border: 1px solid #1e2d3d;
+  }
+
+  .code-block .c-arrow { color: #3d7ab5; }
+  .code-block .c-node { color: #7ec8e3; font-weight: 600; }
+  .code-block .c-proto { color: #48bb78; }
+  .code-block .c-step { color: #f6ad55; }
+
+  .priority-list { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+  .priority-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    transition: box-shadow 0.15s;
+  }
+
+  .priority-item:hover { box-shadow: var(--shadow); }
+  .priority-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-light);
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .priority-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .priority-text strong { color: var(--text); }
+
+  .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+  .scope-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .scope-box-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  .scope-box-title.defer { color: var(--yellow); }
+  .scope-box-title.oos { color: var(--text-muted); }
+
+  .scope-item {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-light);
+    line-height: 1.4;
+  }
+
+  .scope-item:last-child { border-bottom: none; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { padding: 24px 20px; }
+    .scope-grid { grid-template-columns: 1fr; }
+    .glossary-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">PQC</div>
+    <div class="topbar-divider"></div>
+    <span class="topbar-title">Scanner Technical Strategy</span>
+    <span class="version-badge">v2</span>
+    <span class="language-badge">Educational Edition</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Learn the Basics</div>
+    <a class="sidebar-link active" onclick="scrollToSection('glossary')"><span class="dot"></span>Glossary & Basics</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Section 1</div>
+    <a class="sidebar-link" onclick="scrollToSection('layers')"><span class="dot"></span>OSI Layer Components</a>
+    <a class="sidebar-link" onclick="scrollToSection('webdeepdive')"><span class="dot"></span>Web App Deep Dive</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Section 2</div>
+    <a class="sidebar-link" onclick="scrollToSection('hosting')"><span class="dot"></span>Hosting Model</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Section 3</div>
+    <a class="sidebar-link" onclick="scrollToSection('scanning')"><span class="dot"></span>Scanning Priority</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Summary</div>
+    <a class="sidebar-link" onclick="scrollToSection('summary')"><span class="dot"></span>Summary Table</a>
+  </div>
+</nav>
+
+<main class="main">
+
+<div class="hero">
+  <div class="hero-tag">PQC Scanner · Educational Edition</div>
+  <h1>Post-Quantum Cryptography Scanner<br>Beginner's Guide</h1>
+  <p>This document explains all the technical concepts in simple terms. If you're new to networking, OSI layers, encryption, and cybersecurity, start here. Each section includes explanations, real-world analogies, and clear examples.</p>
+  <div class="hero-meta">
+    <div class="hero-stat"><span class="hero-stat-val">7</span><span class="hero-stat-label">OSI Layers Explained</span></div>
+    <div class="hero-stat"><span class="hero-stat-val">50+</span><span class="hero-stat-label">Terms Defined</span></div>
+    <div class="hero-stat"><span class="hero-stat-val">5</span><span class="hero-stat-label">Key Concepts</span></div>
+  </div>
+</div>
+
+<div class="glossary-banner" id="glossary">
+  <h2>📚 Quick Start: Essential Concepts Explained</h2>
+  <p>If you're unfamiliar with networking and cryptography terms, this section will help you understand the rest of the document. Think of this as your "cheat sheet" before diving into the technical details.</p>
+</div>
+
+<div class="glossary-grid">
+  <div class="glossary-card">
+    <div class="glossary-term">OSI Model</div>
+    <div class="glossary-def"><strong>The OSI (Open Systems Interconnection) model</strong> is like a recipe with 7 layers. Just as you need to understand both ingredients AND cooking steps to make a dish, network communication has 7 layers that work together. Each layer has its own job, from physical cables (Layer 1) to web applications (Layer 7).</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">PQC / Post-Quantum Crypto</div>
+    <div class="glossary-def"><strong>Post-Quantum Cryptography</strong> means encryption that will still be secure even when quantum computers become powerful enough to break today's encryption. Think of it like upgrading from a standard lock to a quantum-proof lock before thieves get quantum lock-picking tools.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">TLS (Transport Layer Security)</div>
+    <div class="glossary-def"><strong>TLS is like an invisible shield</strong> that wraps around data when it travels across the internet. When you see "https://" in your browser, that's TLS working. It ensures that even if someone intercepts your data (like credit card numbers), they can't read it. The lock icon in your browser means TLS is active.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">HTTPS</div>
+    <div class="glossary-def"><strong>HTTPS = HTTP + TLS</strong>. HTTP is the language websites speak (how they send you web pages). TLS encrypts that conversation. Every time you log into a website, HTTPS ensures your password is scrambled during transmission.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">Certificate Authority (CA)</div>
+    <div class="glossary-def"><strong>A Certificate Authority is like a trusted passport office</strong> for the internet. Just as a passport proves your identity to border control, a "digital certificate" proves a website's identity. CAs issue these certificates. Examples: Let's Encrypt, DigiCert, internal company CAs.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">HSM (Hardware Security Module)</div>
+    <div class="glossary-def"><strong>An HSM is a physical vault for encryption keys</strong> - imagine a tamper-proof metal box that stores your house keys. It's hardware (physical device) that securely generates, stores, and uses encryption keys. Banks and big companies use HSMs to protect their most valuable keys.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">KMS (Key Management Service)</div>
+    <div class="glossary-def"><strong>KMS is a cloud-based key vault</strong> - like a digital safety deposit box for encryption keys. AWS KMS, Azure Key Vault, Google KMS are examples. Instead of storing keys on a computer (where hackers might find them), KMS securely manages them in the cloud.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-item">IP Address</div>
+    <div class="glossary-def"><strong>An IP address is like a street address</strong> for computers. Just as mail needs your address to reach you, data needs an IP address (like 192.168.1.1 or 2001:db8::1) to reach a specific computer on the internet or in your network.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">API (Application Programming Interface)</div>
+    <div class="glossary-def"><strong>An API is like a waiter in a restaurant</strong> - it takes your request (food order), communicates it to the kitchen (computer system), and brings back the response (your food). APIs let different software systems talk to each other without you seeing the complexity.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">JWT (JSON Web Token)</div>
+    <div class="glossary-def"><strong>JWT is a secure note passed between systems</strong> saying "this person is authenticated." Imagine a signed wristband at a concert - it proves you paid and can access certain areas. JWT contains user info and is digitally signed to prevent forgery.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">SAML / OIDC</div>
+    <div class="glossary-def"><strong>SAML and OIDC are single sign-on protocols</strong> - they let you log in once and access multiple systems. Like using your Google account to log into YouTube, Gmail, and Drive without separate passwords. SAML is older, OIDC is newer and uses JWT.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">Database TDE (Transparent Data Encryption)</div>
+    <div class="glossary-def"><strong>TDE encrypts data stored on disk automatically</strong> - like having a safe in your file cabinet. Even if someone steals the hard drive, they can't read the data without the decryption key. The encryption/decryption happens transparently (automatically) as data is accessed.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">mTLS (Mutual TLS)</div>
+    <div class="glossary-def"><strong>mTLS is like showing ID to enter both ways</strong> - both the website AND your browser prove their identities. Regular TLS only proves the website's identity. mTLS adds client authentication, making it harder for attackers to impersonate legitimate users.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">CMDB (Configuration Management Database)</div>
+    <div class="glossary-def"><strong>A CMDB is like a company inventory list</strong> but for IT assets. It tracks every server, application, database, and network device in your organization, along with who owns it and what it connects to. Think of it as a "map" of your entire technology infrastructure.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">VPN (Virtual Private Network)</div>
+    <div class="glossary-def"><strong>A VPN creates a secure tunnel through the public internet</strong> - like sending mail through a sealed envelope instead of a postcard. Your data travels encrypted through this tunnel, making it unreadable to anyone intercepting it. Often used for remote work access.</div>
+  </div>
+</div>
+
+<div class="glossary-grid">
+  <div class="glossary-card">
+    <div class="glossary-term">On-Premises</div>
+    <div class="glossary-def"><strong>On-premises means "in your own building"</strong> - your own servers, your own network equipment, your own IT staff. Like owning your own store vs. renting space in a mall. You control everything but bear all the costs and responsibilities.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">IaaS / PaaS / SaaS (Cloud Models)</div>
+    <div class="glossary-def"><strong>Cloud service models differ in what you manage:</strong> IaaS = rent virtual machines (like renting a car). PaaS = rent a platform to deploy apps (like renting a kitchen to cook). SaaS = rent a finished application (like ordering food delivery). Each requires different security approaches.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">Redis / Memcached</div>
+    <div class="glossary-def"><strong>Redis and Memcached are caching systems</strong> - they store frequently-used data in fast memory (RAM) instead of slow disk storage. Like keeping your most-used tools on your desk instead of in a drawer. They speed up websites by avoiding repeated database queries.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">Message Queue (Kafka, RabbitMQ)</div>
+    <div class="glossary-def"><strong>A message queue is like a post office for software</strong> - applications drop messages (data) into a queue, and other applications pick them up later. This decouples systems and handles traffic spikes gracefully. Used for processing orders, notifications, analytics.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">Active Directory (AD)</div>
+    <div class="glossary-def"><strong>Active Directory is Microsoft's user management system</strong> - it's like an employee directory that controls who can access what. When you log into your work computer, AD checks your username/password and tells other systems what you're allowed to access.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">FIDO2 / WebAuthn</div>
+    <div class="glossary-def"><strong>FIDO2/WebAuthn is passwordless authentication</strong> using security keys or biometrics. Like using your fingerprint or a physical key instead of remembering passwords. It's the technology behind "Sign in with your security key" or "Use Windows Hello" buttons.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">OAuth 2.0</div>
+    <div class="glossary-def"><strong>OAuth 2.0 is delegated authorization</strong> - it lets one app access your data in another app without sharing passwords. Like giving a hotel key to a housekeeper instead of your house key. "Login with Google" uses OAuth 2.0.</div>
+  </div>
+  <div class="glossary-card">
+    <div class="glossary-term">DNSSEC</div>
+    <div class="glossary-def"><strong>DNSSEC adds cryptographic signatures to DNS</strong> - DNS is like a phonebook that translates website names to IP addresses. DNSSEC ensures this "phonebook" hasn't been tampered with. Without it, attackers could redirect you to fake websites.</div>
+  </div>
+</div>
+
+<div class="section" id="layers">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2 class="section-title">1. Components at Each OSI Layer — Explained</h2>
+  </div>
+
+  <div class="explanation">
+    <strong>The OSI Model in Simple Terms:</strong> Think of sending a letter through the postal system. Layer 1 = the physical envelope and paper. Layer 2 = the addressing on the envelope. Layer 3 = the postal route. Layer 4 = delivery confirmation. Layer 7 = the actual letter content. In networks, data travels through these 7 layers, and each layer can use encryption.
+  </div>
+
+  <h3>Layer 1 — Physical: The Foundation</h3>
+  <div class="explanation">
+    <strong>Think of it as:</strong> The actual cables, hardware chips, and physical ports that data travels through. This is where encryption sometimes lives in special hardware like HSMs, TPM chips (the secure processor in your laptop), and smart cards.
+  </div>
+  <div class="why-pqc">
+    <div class="why-pqc-label">Why this matters for PQC:</div>
+    These physical devices often store the root encryption keys - the keys that sign other keys. If a quantum computer can crack these, it can forge trust for your entire infrastructure.
+  </div>
+
+  <h3>Layer 2 — Data Link: Local Network Traffic</h3>
+  <div class="explanation">
+    <strong>Think of it as:</strong> The "local neighborhood" level - devices talking on the same network segment. Like devices in your office communicating directly. Includes Wi-Fi security (WPA3) and network switch authentication (802.1X).
+  </div>
+  <div class="why-pqc">
+    <div class="why-pqc-label">Why this matters for PQC:</div>
+    Internal network encryption (like Wi-Fi passwords) protects against local attackers. While lower priority than internet-facing systems, compromised internal access can be a stepping stone to bigger attacks.
+  </div>
+
+  <h3>Layer 3 — Network: Routing & Internet</h3>
+  <div class="explanation">
+    <strong>Think of it as:</strong> The internet's "directions" layer. This is where routers direct traffic across the internet. IPsec VPNs create encrypted "tunnels" here. DNSSEC adds cryptographic signatures to domain lookups.
+  </div>
+  <div class="why-pqc">
+    <div class="why-pqc-label">Why this matters for PQC:</div>
+    IPsec VPNs and DNSSEC are used to secure data in transit across untrusted networks. VPN traffic is often long-lived and sensitive - making it a prime target for "harvest now, decrypt later" attacks.
+  </div>
+
+  <h3>Layer 4 — Transport: Connection Security</h3>
+  <div class="explanation">
+    <strong>Think of it as:</strong> The "envelope sealing" layer. TLS (HTTPS) operates here, creating encrypted connections between any two points. This is the MOST IMPORTANT layer for PQC because it secures the majority of internet traffic.
+  </div>
+  <div class="why-pqc">
+    <div class="why-pqc-label">Why this matters for PQC:</div>
+    <strong>This is where 80% of PQC work happens.</strong> Every website you visit, every API call, every database connection uses TLS. If quantum computers can break TLS, they can read all this traffic. This is why browsers, load balancers, and API gateways are top priority.
+  </div>
+  <div class="analogy">
+    <div class="analogy-label">Real-world analogy:</div>
+    TLS is like sealing your mail in an envelope. If someone can steam open the envelope (break TLS), they can read your private letter (the data). PQC is like upgrading to a quantum-safe envelope that even future supercomputers can't open.
+  </div>
+
+  <h3>Layer 5 — Session: Authentication & Tokens</h3>
+  <div class="explanation">
+    <strong>Think of it as:</strong> The "login session" layer. Once you authenticate (prove who you are), this layer maintains your session - keeping you logged in as you navigate between pages. Also handles single sign-on (SSO) between systems.
+  </div>
+  <div class="why-pqc">
+    <div class="why-pqc-label">Why this matters for PQC:</div>
+    SSO systems sign authentication tokens. If these signatures are broken by quantum computers, attackers could forge their own login tokens - gaining unauthorized access to any system using that SSO.
+  </div>
+
+  <h3>Layer 6 — Presentation: Data Formatting</h3>
+  <div class="explanation">
+    <strong>Think of it as:</strong> The "translation" layer. Converts data between formats (JSON, XML, binary). Can include encryption of specific data fields (like encrypting a credit card number in a form before sending).
+  </div>
+  <div class="why-pqc">
+    <div class="why-pqc-label">Why this matters for PQC:</div>
+    Field-level encryption in forms and documents may use algorithms that need PQC upgrades, especially for long-lived sensitive data.
+  </div>
+
+  <h3>Layer 7 — Application: Where Users Interact</h3>
+  <div class="explanation">
+    <strong>Think of it as:</strong> The "visible stuff" layer - websites, mobile apps, APIs. This is where users directly interact with systems. Most security vulnerabilities and crypto usage happens here.
+  </div>
+  <div class="why-pqc">
+    <div class="why-pqc-label">Why this matters for PQC:</div>
+    <strong>This is where 70-80% of enterprise crypto lives.</strong> Every web application, every API, every SaaS tool uses encryption. This includes the encryption that protects your customer data, financial records, and business secrets.
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+  function scrollToSection(id) {
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+    event.target.closest('.sidebar-link').classList.add('active');
+    setTimeout(() => {
+      document.querySelectorAll('.sidebar-link').forEach(l => {
+        if (l.textContent.includes(id) || l.onclick.toString().includes(id)) {
+          l.classList.add('active');
+        }
+      });
+    }, 100);
+  }
+</script>
+
+</body>
+</html>

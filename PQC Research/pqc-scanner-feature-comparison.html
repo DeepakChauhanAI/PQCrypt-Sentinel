@@ -1,0 +1,363 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PQC Scanner - Feature Comparison and Build Decision Guide</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;background:#f5f7fb;color:#222;max-width:1400px;margin:auto;padding:30px;line-height:1.7}
+h1,h2,h3,h4{color:#163d73}
+.section{background:white;padding:24px;margin:18px 0;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+code,pre{background:#eef3f9;border-radius:6px;padding:10px;display:block;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border:1px solid #d0d7e2;padding:6px 8px;text-align:center;vertical-align:middle}
+th{background:#e8eef8}
+td.feat{text-align:left;background:#f8fafd;font-weight:500}
+.cat-row td{background:#e8eef8;font-weight:600;color:#163d73;text-align:left}
+.toc li{margin:4px 0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0;font-size:13px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.box{display:inline-block;width:14px;height:14px;border-radius:3px}
+.full{background:#2e7d32}
+.partial{background:#f9a825}
+.none{background:#c62828}
+.low{background:#c8e6c9}
+.med{background:#fff3c4}
+.high{background:#ffcdd2}
+</style>
+</head>
+<body>
+
+<h1>PQC Scanner: Feature Comparison and Build Decision Guide</h1>
+<p><strong>Open Source + Commercial Landscape (15 products) - Build-Versus-Skip Analysis</strong></p>
+
+<div class="section">
+<h2>Table of Contents</h2>
+<ol class="toc">
+<li>Purpose and Method</li>
+<li>Products Compared</li>
+<li>Legend</li>
+<li>Feature Matrix: Network and Transport Discovery</li>
+<li>Feature Matrix: PKI and Certificates</li>
+<li>Feature Matrix: Code, SBOM, and Binary</li>
+<li>Feature Matrix: Infrastructure and Hosts</li>
+<li>Feature Matrix: Inventory, CBOM, and Risk</li>
+<li>Feature Matrix: Deployment and Operations</li>
+<li>Coverage Summary (per-product totals)</li>
+<li>Implementation Complexity for Our Tool</li>
+<li>Recommended Build Set (MVP / Phase 2 / Phase 3)</li>
+<li>What to Integrate vs Build vs Skip</li>
+<li>Decision Summary</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>1. Purpose and Method</h2>
+<p>This guide compares the feature set of 15 PQC-relevant products (5 open source, 10 commercial) across 7 functional areas. The goal is to decide which features <em>our</em> tool should build, which to integrate from existing open source, and which to skip entirely. The last columns of each matrix mark implementation complexity for a new build:</p>
+<ul>
+<li><span class="box low"></span><strong>Low</strong> = 1-2 weeks of focused engineering, well-documented techniques, off-the-shelf libraries available.</li>
+<li><span class="box med"></span><strong>Medium</strong> = 1-2 months, requires integration work, multiple data sources, custom engineering.</li>
+<li><span class="box high"></span><strong>High</strong> = 3-12+ months, deep domain expertise, novel research, or significant infra (HSM lab, runtime instrumentation framework, federated graph platform).</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>2. Products Compared</h2>
+
+<h3>Open Source (5)</h3>
+<table>
+<tr><th>Product</th><th>Language</th><th>Core Function</th></tr>
+<tr><td><strong>pqcscan</strong></td><td>Rust</td><td>TLS/SSH PQC handshake detection, JSON output</td></tr>
+<tr><td><strong>QRAMM Toolkit</strong></td><td>Multi</td><td>CryptoScan (SAST) + TLS Analyzer + CryptoDeps (SBOM)</td></tr>
+<tr><td><strong>IBM QSE + CBOMkit</strong></td><td>Java/Go</td><td>Quantum Safe Explorer (SAST) + CycloneDX CBOM generator</td></tr>
+<tr><td><strong>SSLyze + ssh-audit + testssl.sh</strong></td><td>Python/Bash</td><td>Deep TLS/SSH configuration auditing (combined stack)</td></tr>
+<tr><td><strong>PQC-Scanner (cyberjez)</strong></td><td>Python</td><td>Single-file endpoint scanner, basic algorithm detection</td></tr>
+</table>
+
+<h3>Commercial (10)</h3>
+<table>
+<tr><th>Product</th><th>Vendor</th><th>Core Function</th></tr>
+<tr><td><strong>SandboxAQ AQtive Guard</strong></td><td>SandboxAQ</td><td>Enterprise crypto posture, multi-layer discovery, risk engine</td></tr>
+<tr><td><strong>Keyfactor Command + AgileSec</strong></td><td>Keyfactor</td><td>CLM leader + PQC discovery (acquired InfoSec Global, CipherInsights)</td></tr>
+<tr><td><strong>AppViewX AVX ONE</strong></td><td>AppViewX</td><td>SaaS cert lifecycle + PQC readiness</td></tr>
+<tr><td><strong>CryptoNext COMPASS</strong></td><td>CryptoNext (FR)</td><td>Open COMPASS Discovery + commercial Probe/Analytics</td></tr>
+<tr><td><strong>QryptoCyber</strong></td><td>QryptoCyber</td><td>Network+code PQC scanner, remediation roadmap</td></tr>
+<tr><td><strong>ISARA Advance</strong></td><td>ISARA (CA)</td><td>Posture aggregation over EDR (Tanium, CrowdStrike)</td></tr>
+<tr><td><strong>PQStation QVision</strong></td><td>PQStation (SG)</td><td>AI-correlated PQC platform, APAC focus</td></tr>
+<tr><td><strong>Palo Alto Quantum-Safe</strong></td><td>Palo Alto</td><td>Network-edge PQC + cipher translation proxy (Jan 2026)</td></tr>
+<tr><td><strong>Venafi / CyberArk Cert Mgr</strong></td><td>CyberArk</td><td>Largest CLM base, PQC inventory added 2025</td></tr>
+<tr><td><strong>Binarly + QuSecure</strong></td><td>Partnership</td><td>Binary/firmware reachability + PQC remediation</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>3. Legend</h2>
+<div class="legend">
+<span><span class="box full"></span>Full support</span>
+<span><span class="box partial"></span>Partial support</span>
+<span><span class="box none"></span>Not supported / not applicable</span>
+</div>
+</div>
+
+<div class="section">
+<h2>4. Feature Matrix: Network and Transport Discovery</h2>
+<table>
+<tr><th class="feat">Feature</th><th>pqcscan</th><th>QRAMM</th><th>IBM QSE</th><th>SSLyze stack</th><th>PQC-Scanner</th><th>AQtive Guard</th><th>Keyfactor</th><th>AppViewX</th><th>CryptoNext</th><th>QryptoCyber</th><th>ISARA</th><th>PQStation</th><th>PAN Quantum</th><th>Venafi</th><th>Binarly+Q</th><th>Build Effort</th></tr>
+<tr><td class="feat">TLS active handshake scan</td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box low"></span></td></tr>
+<tr><td class="feat">Hybrid PQC detection (X25519+ML-KEM)</td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box low"></span></td></tr>
+<tr><td class="feat">PQC downgrade detection (allows both)</td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box low"></span></td></tr>
+<tr><td class="feat">SSH KEX / host key audit</td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box low"></span></td></tr>
+<tr><td class="feat">VPN / IKEv2 / IPsec scan</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Passive network tap (SPAN/mirror)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Cipher translation / virtual patch</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box high"></span></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>5. Feature Matrix: PKI and Certificates</h2>
+<table>
+<tr><th class="feat">Feature</th><th>pqcscan</th><th>QRAMM</th><th>IBM QSE</th><th>SSLyze stack</th><th>PQC-Scanner</th><th>AQtive Guard</th><th>Keyfactor</th><th>AppViewX</th><th>CryptoNext</th><th>QryptoCyber</th><th>ISARA</th><th>PQStation</th><th>PAN Quantum</th><th>Venafi</th><th>Binarly+Q</th><th>Build Effort</th></tr>
+<tr><td class="feat">Certificate chain deep parse</td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box low"></span></td></tr>
+<tr><td class="feat">CA inventory (ADCS / cloud CA)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Cert lifecycle + auto-renewal</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box high"></span></td></tr>
+<tr><td class="feat">Issue PQC / hybrid certs</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box high"></span></td></tr>
+<tr><td class="feat">CT log monitoring (public)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box low"></span></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>6. Feature Matrix: Code, SBOM, and Binary</h2>
+<table>
+<tr><th class="feat">Feature</th><th>pqcscan</th><th>QRAMM</th><th>IBM QSE</th><th>SSLyze stack</th><th>PQC-Scanner</th><th>AQtive Guard</th><th>Keyfactor</th><th>AppViewX</th><th>CryptoNext</th><th>QryptoCyber</th><th>ISARA</th><th>PQStation</th><th>PAN Quantum</th><th>Venafi</th><th>Binarly+Q</th><th>Build Effort</th></tr>
+<tr><td class="feat">SAST: source-code crypto API scan</td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Dependency / SBOM crypto lib scan</td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Container image crypto scan</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Binary / firmware deep analysis</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box high"></span></td></tr>
+<tr><td class="feat">Runtime reachability (which algos execute)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box high"></span></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>7. Feature Matrix: Infrastructure and Hosts</h2>
+<table>
+<tr><th class="feat">Feature</th><th>pqcscan</th><th>QRAMM</th><th>IBM QSE</th><th>SSLyze stack</th><th>PQC-Scanner</th><th>AQtive Guard</th><th>Keyfactor</th><th>AppViewX</th><th>CryptoNext</th><th>QryptoCyber</th><th>ISARA</th><th>PQStation</th><th>PAN Quantum</th><th>Venafi</th><th>Binarly+Q</th><th>Build Effort</th></tr>
+<tr><td class="feat">Linux host agent (SSH exec)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Windows host agent (WinRM)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Kubernetes / etcd / ingress scan</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Cloud KMS inventory (AWS/Azure/GCP)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Database TDE scan (Oracle/MSSQL)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">HSM enumeration (PKCS#11 / KMIP)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box high"></span></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>8. Feature Matrix: Inventory, CBOM, and Risk</h2>
+<table>
+<tr><th class="feat">Feature</th><th>pqcscan</th><th>QRAMM</th><th>IBM QSE</th><th>SSLyze stack</th><th>PQC-Scanner</th><th>AQtive Guard</th><th>Keyfactor</th><th>AppViewX</th><th>CryptoNext</th><th>QryptoCyber</th><th>ISARA</th><th>PQStation</th><th>PAN Quantum</th><th>Venafi</th><th>Binarly+Q</th><th>Build Effort</th></tr>
+<tr><td class="feat">CBOM output (CycloneDX)</td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box low"></span></td></tr>
+<tr><td class="feat">CMDB sync (ServiceNow/NetBox)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Relationship graph / blast radius</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box high"></span></td></tr>
+<tr><td class="feat">Multi-dim risk scoring</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">HNDL / Mosca's Theorem model</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box low"></span></td></tr>
+<tr><td class="feat">Migration progress tracking</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Ticketing integration (Jira/ServiceNow)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box low"></span></td></tr>
+<tr><td class="feat">Active drift detection (alert on regression)</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>9. Feature Matrix: Deployment and Operations</h2>
+<table>
+<tr><th class="feat">Feature</th><th>pqcscan</th><th>QRAMM</th><th>IBM QSE</th><th>SSLyze stack</th><th>PQC-Scanner</th><th>AQtive Guard</th><th>Keyfactor</th><th>AppViewX</th><th>CryptoNext</th><th>QryptoCyber</th><th>ISARA</th><th>PQStation</th><th>PAN Quantum</th><th>Venafi</th><th>Binarly+Q</th><th>Build Effort</th></tr>
+<tr><td class="feat">On-prem / air-gap deploy</td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box low"></span></td></tr>
+<tr><td class="feat">Single docker-compose deploy</td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box low"></span></td></tr>
+<tr><td class="feat">Web dashboard / visualisation</td><td><span class="box partial"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box med"></span></td></tr>
+<tr><td class="feat">Multi-tenant SaaS option</td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box none"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box partial"></span></td><td><span class="box partial"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box full"></span></td><td><span class="box none"></span></td><td><span class="box high"></span></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>10. Coverage Summary (per-product totals)</h2>
+<p>Number of features (out of 32) marked Full across the seven matrices. Higher = broader platform.</p>
+<table>
+<tr><th>Product</th><th>Type</th><th>Full count</th><th>Partial count</th><th>Approx coverage</th></tr>
+<tr><td>SandboxAQ AQtive Guard</td><td>Commercial</td><td>22</td><td>4</td><td>~70%</td></tr>
+<tr><td>Keyfactor + AgileSec</td><td>Commercial</td><td>20</td><td>6</td><td>~63%</td></tr>
+<tr><td>CryptoNext COMPASS</td><td>Commercial</td><td>15</td><td>5</td><td>~47%</td></tr>
+<tr><td>QryptoCyber</td><td>Commercial</td><td>15</td><td>6</td><td>~47%</td></tr>
+<tr><td>ISARA Advance</td><td>Commercial</td><td>12</td><td>5</td><td>~38%</td></tr>
+<tr><td>AppViewX AVX ONE</td><td>Commercial</td><td>11</td><td>8</td><td>~34%</td></tr>
+<tr><td>PQStation QVision</td><td>Commercial</td><td>12</td><td>8</td><td>~38%</td></tr>
+<tr><td>Palo Alto Quantum-Safe</td><td>Commercial</td><td>10</td><td>5</td><td>~31%</td></tr>
+<tr><td>Venafi / CyberArk</td><td>Commercial</td><td>11</td><td>8</td><td>~34%</td></tr>
+<tr><td>Binarly + QuSecure</td><td>Commercial</td><td>6</td><td>3</td><td>~19% (depth, not breadth)</td></tr>
+<tr><td>QRAMM Toolkit</td><td>Open Source</td><td>8</td><td>1</td><td>~25%</td></tr>
+<tr><td>IBM QSE + CBOMkit</td><td>Open Source</td><td>5</td><td>1</td><td>~16%</td></tr>
+<tr><td>SSLyze + ssh-audit + testssl.sh</td><td>Open Source</td><td>6</td><td>1</td><td>~19%</td></tr>
+<tr><td>pqcscan</td><td>Open Source</td><td>4</td><td>2</td><td>~13%</td></tr>
+<tr><td>PQC-Scanner (cyberjez)</td><td>Open Source</td><td>2</td><td>3</td><td>~9%</td></tr>
+</table>
+<p><strong>Read this carefully.</strong> The coverage gap between open source and commercial is real but not insurmountable: open source covers ~25% of total surface, and the missing 75% is dominated by four areas - agent deployment, cloud APIs, CMDB sync, and risk/dashboarding - all of which we can build in phases.</p>
+</div>
+
+<div class="section">
+<h2>11. Implementation Complexity for Our Tool</h2>
+<p>Map of every feature category to engineering effort, prerequisites, and dependencies.</p>
+
+<h3>Low complexity (1-2 weeks each)</h3>
+<ul>
+<li>TLS active handshake scan - integrate pqcscan or sslyze.</li>
+<li>SSH audit - integrate ssh-audit.</li>
+<li>Hybrid PQC / downgrade detection - extension of the above.</li>
+<li>CBOM output (CycloneDX) - use cyclonedx-python-lib or similar.</li>
+<li>CT log monitoring - use crt.sh or Sectigo API.</li>
+<li>HNDL / Mosca's Theorem model - the math is simple, the UX is the work.</li>
+<li>Ticketing integration (Jira/ServiceNow) - REST webhooks.</li>
+<li>Single docker-compose deploy - packaging exercise.</li>
+<li>On-prem / air-gap deploy - same.</li>
+</ul>
+
+<h3>Medium complexity (1-2 months each)</h3>
+<ul>
+<li>VPN / IKEv2 / IPsec scan - ike-scan + custom parsing.</li>
+<li>Passive network tap (SPAN) - Zeek or pyshark with PCAP.</li>
+<li>CA inventory (ADCS, Vault, AWS PCA) - one connector per CA, ~1-2 weeks each.</li>
+<li>SAST: source-code crypto API scan - Semgrep rules + QRAMM rules + custom crypto-API dictionary.</li>
+<li>Dependency / SBOM scan - Trivy + CycloneDX ingestion.</li>
+<li>Container image scan - Trivy or Grype wrapper.</li>
+<li>Linux / Windows host agent (or SSH/WinRM remote exec) - choose one to start.</li>
+<li>Kubernetes scan - K8s API client + ingress/secrets enumeration.</li>
+<li>Cloud KMS inventory - one SDK per provider (AWS, Azure, GCP).</li>
+<li>Database TDE scan - vendor-specific SQL queries.</li>
+<li>CMDB sync (ServiceNow/NetBox) - bidirectional REST integration, schema discovery.</li>
+<li>Multi-dim risk scoring -5 input factors, weighting, threshold tuning.</li>
+<li>Migration progress tracking - scan-vs-scan diff engine.</li>
+<li>Drift detection - scheduled re-scan + delta alerting.</li>
+<li>Web dashboard / visualisation - React or simple HTML, a charting library.</li>
+</ul>
+
+<h3>High complexity (3-12+ months each, requires specialists)</h3>
+<ul>
+<li>Cert lifecycle automation + auto-renewal - ACME protocol, vendor hooks, change windows.</li>
+<li>PQC / hybrid cert issuance - integration with EJBCA, Certdog, or in-house CA, requires HSM.</li>
+<li>Binary / firmware deep analysis - disassemblers (Ghidra, Binary Ninja), custom crypto signature DB.</li>
+<li>Runtime reachability - eBPF or dynamic instrumentation, per-language agents.</li>
+<li>HSM enumeration (PKCS#11 / KMIP) - HSM vendor SDKs, lab access for testing, deep PKCS#11 knowledge.</li>
+<li>Relationship graph / blast radius - graph DB (Neo4j), traversal engine, UI, performance tuning at scale.</li>
+<li>Cipher translation / virtual patch - inline network proxy, latency-critical, crypto at line rate.</li>
+<li>Multi-tenant SaaS - identity, billing, tenant isolation, customer-grade SLAs.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>12. Recommended Build Set</h2>
+
+<h3>MVP (8-12 weeks) - the "first useful scan in under an hour" goal</h3>
+<p>Goal: ship a single docker-compose stack that scans a customer's TLS/SSH endpoints, classifies algorithms, produces a CycloneDX CBOM, applies Mosca's Theorem, and shows a simple web dashboard. No agents, no CMDB sync, no cloud APIs. Pure network observation, plus optional CMDB CSV import.</p>
+<ul>
+<li>TLS active scan (integrate pqcscan or sslyze)</li>
+<li>SSH audit (integrate ssh-audit)</li>
+<li>Hybrid PQC + downgrade detection</li>
+<li>CycloneDX CBOM output</li>
+<li>Multi-dim risk scoring (algorithm + exposure + data longevity)</li>
+<li>HNDL / Mosca's Theorem per asset</li>
+<li>Simple HTML/React dashboard (asset list, risk distribution, top-N remediation queue)</li>
+<li>Single docker-compose deploy with Postgres</li>
+<li>Optional: CMDB CSV import for ownership and relationship context</li>
+</ul>
+
+<h3>Phase 2 (months 3-6) - the "real inventory" expansion</h3>
+<p>Goal: pull in the data sources that turn "list of endpoints" into "complete crypto inventory of the organisation". This is where the from-scratch approach (CA queries, SBOM, cloud KMS) is integrated.</p>
+<ul>
+<li>CA inventory: ADCS connector first, then Vault, then AWS Private CA</li>
+<li>CT log monitoring (passive, public)</li>
+<li>SBOM ingestion (CycloneDX/SPDX from build pipeline)</li>
+<li>Container image scan (Trivy wrapper)</li>
+<li>Cloud KMS inventory (start with AWS, add Azure/GCP in 4.x)</li>
+<li>CMDB bidirectional sync (ServiceNow first, NetBox second)</li>
+<li>Migration progress tracking (scan-over-scan diff)</li>
+<li>Drift detection with alerting</li>
+<li>Jira/ServiceNow ticketing integration</li>
+</ul>
+
+<h3>Phase 3 (months 6-12) - the "depth" features that nobody else does</h3>
+<p>Goal: cover the gaps that the matrix shows nobody has solved well. These are the moat features.</p>
+<ul>
+<li>Vendor PQC readiness database (OpenSSL version -> ML-KEM support, Thales firmware -> PQC dates, AWS KMS -> hybrid cert support)</li>
+<li>Relationship graph + blast radius view (Neo4j + traversal UI)</li>
+<li>Linux/Windows host agent (or SSH/WinRM remote exec) for installed library enumeration</li>
+<li>Kubernetes / etcd / secrets scan</li>
+<li>Database TDE scan (MSSQL first, Oracle second)</li>
+<li>SAST integration (Semgrep rules + QRAMM ingestion)</li>
+<li>PQC downgrade nuance scoring (per-endpoint "PQC offered but downgrade allowed")</li>
+</ul>
+
+<h3>Phase 4+ (year 2+) - the "moat" features that justify a price tag</h3>
+<p>Goal: features that no commercial vendor does well and that differentiate a research-grade product.</p>
+<ul>
+<li>HSM PKCS#11 / KMIP enumeration</li>
+<li>Runtime reachability (eBPF or language-specific agents)</li>
+<li>Binary / firmware crypto analysis (if your target is OT/IoT)</li>
+<li>PQC / hybrid cert issuance (requires HSM investment)</li>
+<li>Cert lifecycle automation</li>
+<li>Cipher translation / virtual patch (network-edge only)</li>
+<li>Multi-tenant SaaS tier</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>13. What to Integrate vs Build vs Skip</h2>
+
+<h3>Integrate (1-2 days each, saves months)</h3>
+<ul>
+<li><strong>pqcscan</strong> - Rust binary, ML-KEM + hybrid detection, structured JSON. Do not rebuild this.</li>
+<li><strong>SSLyze</strong> - Python, full TLS analysis. Battle-tested.</li>
+<li><strong>ssh-audit</strong> - Python, SSH config audit.</li>
+<li><strong>testssl.sh</strong> - Bash, comprehensive TLS grading.</li>
+<li><strong>Trivy</strong> - container + SBOM scanner with PQC-relevant detection.</li>
+<li><strong>CycloneDX Python lib</strong> - CBOM generation.</li>
+<li><strong>Semgrep + QRAMM rules</strong> - SAST crypto-API rules.</li>
+<li><strong>ike-scan</strong> - IKEv2/IPsec probing.</li>
+<li><strong>Zeek</strong> - passive network analysis.</li>
+</ul>
+
+<h3>Build (our differentiated value)</h3>
+<ul>
+<li>Risk scoring engine (multi-dim, per-asset)</li>
+<li>Mosca's Theorem UI surface</li>
+<li>Vendor PQC readiness database</li>
+<li>Relationship graph and blast-radius view</li>
+<li>Scan-over-scan progress tracking</li>
+<li>CMDB bidirectional sync with relationship inference</li>
+<li>Drift detection + alerting pipeline</li>
+<li>Remediation roadmap generator</li>
+<li>Dashboard and reporting</li>
+</ul>
+
+<h3>Skip (out of scope for v1, defer to Phase 4+)</h3>
+<ul>
+<li>HSM deep enumeration (high effort, niche buyer)</li>
+<li>Runtime reachability (research-grade, hard to productise)</li>
+<li>Binary/firmware analysis (Binarly has a strong lock here)</li>
+<li>Cipher translation proxy (Palo Alto's territory, hardware-locked)</li>
+<li>Multi-tenant SaaS (Phase 4+ once product-market fit is proven)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>14. Decision Summary</h2>
+<ul>
+<li><strong>15 products reviewed</strong>: 5 open source, 10 commercial.</li>
+<li><strong>Best open source per category</strong>: pqcscan (network), QRAMM CryptoScan (SAST), IBM QSE + CBOMkit (CBOM), Trivy (containers), Semgrep (rules).</li>
+<li><strong>Best commercial reference architecture</strong>: CryptoNext COMPASS (open discovery + commercial probe + analytics) - study this structure.</li>
+<li><strong>Biggest gaps in the entire market</strong>: vendor PQC readiness DB, relationship/blast-radius view, mid-market deployment simplicity, runtime reachability.</li>
+<li><strong>MVP is achievable in 8-12 weeks</strong> by integrating existing open-source scanners and building a risk/CBOM/dashboard layer on top.</li>
+<li><strong>Phase 2 (months 3-6) is what makes the product a real platform</strong>: CA inventory, SBOM, cloud KMS, CMDB sync, drift detection.</li>
+<li><strong>Phase 3 (months 6-12) is what justifies commercial pricing</strong>: relationship graph, vendor DB, host agents, K8s, SAST, downgrade nuance.</li>
+<li><strong>Phase 4+ (year 2+) is the moat</strong>: HSM, runtime, binary, cipher translation - the things that justify a $200K+ price tag or a research-grade positioning.</li>
+</ul>
+<p><strong>Strategic positioning recommendation</strong>: the empty zone is "self-hosted, full-coverage, sub-hour deploy, $15K-$50K/yr mid-market". The MVP builds the floor of that zone; Phases 2-3 build the walls.</p>
+</div>
+
+</body>
+</html>

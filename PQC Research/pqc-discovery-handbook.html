@@ -1,0 +1,2369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC Discovery &amp; Assessment Engineering Handbook</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1eb;
+    --surface: #faf8f3;
+    --surface2: #ede9df;
+    --border: #d4cfc4;
+    --border2: #c5bfb2;
+    --ink: #1c1a16;
+    --ink2: #3d3a34;
+    --muted: #7a7469;
+    --accent: #1a3a5c;
+    --accent-light: #2c5f8a;
+    --red: #8b2a1a;
+    --orange: #9a4a10;
+    --yellow: #7a6010;
+    --green: #1a5c35;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --display: 'Playfair Display', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .site-header {
+    background: var(--accent);
+    color: #fff;
+    padding: 48px 0 40px;
+    border-bottom: 3px solid #0d2240;
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .header-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    max-width: 200px;
+  }
+
+  h1.site-title {
+    font-family: var(--display);
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 16px;
+  }
+
+  h1.site-title span {
+    color: #7ab3d4;
+  }
+
+  .header-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  /* NAV */
+  .tab-nav {
+    background: var(--ink);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid #0d0c0a;
+  }
+
+  .tab-nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab-nav-inner::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    background: none;
+    border: none;
+    padding: 14px 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+  }
+
+  .tab-btn:hover { color: rgba(255,255,255,0.75); }
+
+  .tab-btn.active {
+    color: #fff;
+    border-bottom-color: #7ab3d4;
+  }
+
+  /* MAIN LAYOUT */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 40px 80px;
+  }
+
+  /* TAB PANELS */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: var(--display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    margin-top: 48px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .section-title:first-child { margin-top: 0; }
+
+  .section-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  /* PROSE */
+  .prose {
+    color: var(--ink2);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+    max-width: 860px;
+  }
+
+  .prose strong {
+    color: var(--ink);
+  }
+
+  .prose code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface2);
+    padding: 1px 5px;
+    border: 1px solid var(--border);
+  }
+
+  /* TABLES */
+  .table-wrap {
+    overflow-x: auto;
+    margin-bottom: 32px;
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    font-family: var(--sans);
+    min-width: 600px;
+  }
+
+  thead tr {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody tr:last-child { border-bottom: none; }
+
+  tbody td {
+    padding: 12px 14px;
+    vertical-align: top;
+    color: var(--ink2);
+    line-height: 1.5;
+  }
+
+  tbody tr:nth-child(even) { background: var(--surface); }
+  tbody tr:nth-child(even):hover { background: var(--surface2); }
+
+  td code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface2);
+    padding: 1px 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge-critical { background: #f5e0dd; color: var(--red); border: 1px solid #e8bdb8; }
+  .badge-high { background: #fce8d5; color: var(--orange); border: 1px solid #f0c8a0; }
+  .badge-medium { background: #fdf5d8; color: var(--yellow); border: 1px solid #e8d888; }
+  .badge-low { background: #d8f0e4; color: var(--green); border: 1px solid #a8d8bc; }
+  .badge-safe { background: #d4ecd4; color: #1a5a1a; border: 1px solid #a0cca0; }
+  .badge-info { background: #daeaf5; color: var(--accent); border: 1px solid #b0ccdf; }
+  .badge-now { background: #f5d8d8; color: #6b0a0a; border: 1px solid #d8a0a0; }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: #1c1a16;
+    color: #e8e4da;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 20px 24px;
+    border-radius: 2px;
+    overflow-x: auto;
+    margin-bottom: 24px;
+    line-height: 1.6;
+    border-left: 3px solid var(--accent-light);
+  }
+
+  .code-block .comment { color: #7a7469; }
+  .code-block .string { color: #7ab3d4; }
+  .code-block .keyword { color: #c8a060; }
+  .code-block .fn { color: #90c090; }
+
+  .code-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    margin-top: 20px;
+  }
+
+  /* CARDS & GRIDS */
+  .repo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .repo-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    padding: 20px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .repo-card:hover {
+    border-color: var(--accent-light);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  }
+
+  .repo-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .repo-desc {
+    font-size: 13px;
+    color: var(--ink2);
+    line-height: 1.6;
+  }
+
+  .repo-desc ul {
+    list-style: none;
+  }
+
+  .repo-desc li {
+    position: relative;
+    padding-left: 15px;
+    margin-bottom: 6px;
+  }
+
+  .repo-desc li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--accent-light);
+  }
+
+  /* INFOBOX */
+  .infobox {
+    background: #e8f0f8;
+    border: 1px solid #b8cfe0;
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 13.5px;
+    color: var(--accent);
+    line-height: 1.6;
+  }
+
+  .infobox strong { display: block; margin-bottom: 4px; font-weight: 600; }
+
+  /* WARNBOX */
+  .warnbox {
+    background: #fdf5e0;
+    border: 1px solid #e8d080;
+    border-left: 4px solid var(--yellow);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 13.5px;
+    color: #5a4a10;
+    line-height: 1.6;
+  }
+
+  .warnbox strong { display: block; margin-bottom: 4px; font-weight: 600; color: var(--yellow); }
+
+  /* H2/H3 within content */
+  .content-h2 {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 36px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .content-h3 {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 28px 0 10px;
+  }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  /* FLOW TIMELINE / LAYER BLOCKS */
+  .vflow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 32px;
+  }
+
+  .vflow-step {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    border: 1px solid var(--border2);
+    border-bottom: none;
+    background: var(--surface);
+  }
+
+  .vflow-step:last-child {
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .vflow-step:hover {
+    background: var(--surface2);
+  }
+
+  .vflow-left {
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 900;
+    color: #7ab3d4;
+    border-right: 1px solid #0d2240;
+  }
+
+  .vflow-right {
+    padding: 16px 20px;
+  }
+
+  .vflow-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .vflow-desc {
+    font-size: 13px;
+    color: var(--ink2);
+    line-height: 1.6;
+  }
+
+  .vflow-mono {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* FLOW DIAGRAM CSS */
+  .flow-diagram-container {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    padding: 32px;
+    margin-bottom: 32px;
+    overflow-x: auto;
+  }
+
+  .flow-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    min-width: 600px;
+    margin: 0 auto;
+  }
+
+  .flow-step {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    padding: 12px 18px;
+    border-radius: 4px;
+    font-family: var(--sans);
+    text-align: center;
+    min-width: 320px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    transition: all 0.2s;
+  }
+
+  .flow-step:hover {
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  .flow-step-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .flow-step-desc {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .flow-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--accent-light);
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  /* PLAYBOOK CARD */
+  .playbook-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    padding: 28px;
+    margin-bottom: 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  }
+
+  .playbook-header {
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .playbook-title {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .playbook-layer {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    color: var(--muted);
+  }
+
+  .playbook-section-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-light);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 20px 0 8px;
+  }
+
+  /* FOOTER */
+  .site-footer {
+    background: var(--ink);
+    color: rgba(255,255,255,0.3);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 24px 40px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tab-panel.active { animation: fadeUp 0.3s ease both; }
+
+  @media (max-width: 768px) {
+    .header-inner, .main { padding: 24px 20px; }
+    .tab-nav-inner { padding: 0 20px; }
+    .repo-grid { grid-template-columns: 1fr; }
+    .site-footer { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-eyebrow">PQC Discovery &amp; Assessment</div>
+    <h1 class="site-title">PQC Discovery &amp; Assessment<br><span>Engineering Handbook</span></h1>
+    <div class="header-meta">
+      <span>Compiled: June 2026</span>
+      <span>Target: Security Architects &amp; Scanner Engineers</span>
+      <span>7 Tabs · 15 Discovery Playbooks · Full Reference</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="showTab('tab-intro', this)">00 · Intro &amp; Overview</button>
+    <button class="tab-btn" onclick="showTab('tab-part1', this)">01 · Infrastructure</button>
+    <button class="tab-btn" onclick="showTab('tab-part2', this)">02 · Discovery Map</button>
+    <button class="tab-btn" onclick="showTab('tab-part3a', this)">03 · Playbooks (3.1 - 3.7)</button>
+    <button class="tab-btn" onclick="showTab('tab-part3b', this)">04 · Playbooks (3.8 - 3.15)</button>
+    <button class="tab-btn" onclick="showTab('tab-part4', this)">05 · Architecture</button>
+    <button class="tab-btn" onclick="showTab('tab-part5', this)">06 · Migration</button>
+    <button class="tab-btn" onclick="showTab('tab-appendices', this)">07 · Appendices &amp; Glossary</button>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- ===================== TAB 0: INTRO & OVERVIEW ===================== -->
+  <div id="tab-intro" class="tab-panel active">
+    <div class="section-title">Handbook Introduction &amp; Reading Guide</div>
+    <div class="section-sub">Purpose, target audience, and document structure</div>
+
+    <div class="infobox">
+      <strong>Purpose</strong>
+      This handbook is not a cryptography encyclopedia. It is an engineering reference for discovering every cryptographic component in an enterprise, collecting evidence about the algorithms in use, and assessing PQC readiness.
+    </div>
+
+    <div class="warnbox">
+      <strong>Audience</strong>
+      Scanner engineers, security architects, PQC programme leads, and red/blue teams who must answer one question:<br><br>
+      <em>"Where is cryptography used in our environment, what algorithms does it use, and what must change before PQC migration?"</em>
+    </div>
+
+    <div class="content-h2">How to read this document</div>
+    <p class="prose">
+      The handbook is structured in five parts. Each part answers a different engineering question. Use the tab navigation above to hop to the relevant section.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Part</th>
+            <th>Question it answers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Enterprise Infrastructure Fundamentals</strong></td>
+            <td>What systems exist, and where does cryptography live inside them?</td>
+          </tr>
+          <tr>
+            <td><strong>2. Cryptography Discovery Map</strong></td>
+            <td>Which components use crypto, and how do we discover each one?</td>
+          </tr>
+          <tr>
+            <td><strong>3. Discovery Playbooks</strong></td>
+            <td>What exact commands, access, and evidence apply per component? (Split into Tabs 03 and 04)</td>
+          </tr>
+          <tr>
+            <td><strong>4. Scanner Architecture</strong></td>
+            <td>How do we automate the playbooks at enterprise scale?</td>
+          </tr>
+          <tr>
+            <td><strong>5. PQC Migration</strong></td>
+            <td>How do we turn findings into a prioritised migration plan?</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prose">
+      A scanner engineer should be able to read Part 1 once, keep Part 2 open as an index, drop into Part 3 (Playbooks) for the component they are wiring up, and refer to Parts 4 and 5 for plumbing and follow-through.
+    </p>
+  </div>
+
+
+  <!-- ===================== TAB 1: INFRASTRUCTURE ===================== -->
+  <div id="tab-part1" class="tab-panel">
+    <div class="section-title">Part 1 — Enterprise Infrastructure Fundamentals</div>
+    <div class="section-sub">Layered modeling of cryptographic dependencies in corporate assets</div>
+
+    <div class="content-h2">1.1 Why this part exists</div>
+    <p class="prose">
+      Before we can discover cryptography, we have to know what an enterprise <em>is</em>. Cryptography is not a separate system. It is a property that lives inside almost every system. A scanner that does not understand the surrounding architecture will collect evidence but cannot reason about it.
+    </p>
+    <p class="prose">
+      The goal of Part 1 is to give every reader a shared mental model of what categories of assets exist in a typical enterprise, how those assets are layered, and where cryptography actually appears in each layer.
+    </p>
+
+    <div class="content-h2">1.2 Asset taxonomy</div>
+    <p class="prose">
+      A modern enterprise contains at least the following categories of assets. This list is not exhaustive; it is the baseline that any PQC discovery programme must cover.
+    </p>
+
+    <div class="repo-grid">
+      <div class="repo-card">
+        <div class="repo-name">Compute</div>
+        <div class="repo-desc">
+          <ul>
+            <li>Endpoints (laptops, desktops, mobile devices)</li>
+            <li>Servers (physical and virtual) &amp; VMs</li>
+            <li>Containers &amp; Kubernetes clusters</li>
+            <li>Serverless platforms &amp; Mainframes</li>
+            <li>Edge / IoT devices</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-name">Network</div>
+        <div class="repo-desc">
+          <ul>
+            <li>Routers &amp; Switches (L2/L3)</li>
+            <li>Firewalls (NGFW, WAF) &amp; Load balancers (L4/L7)</li>
+            <li>VPN concentrators &amp; Proxies/Reverse proxies</li>
+            <li>DNS servers &amp; DHCP / IPAM</li>
+            <li>Network taps, packet brokers &amp; SD-WAN edges</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-name">Identity and access</div>
+        <div class="repo-desc">
+          <ul>
+            <li>Active Directory / LDAP directories</li>
+            <li>Identity providers (SAML, OIDC, OAuth)</li>
+            <li>Certificate Authorities (internal, public, private)</li>
+            <li>HSMs &amp; key management appliances</li>
+            <li>Smart card systems (PIV, CAC) &amp; PAM vaults</li>
+            <li>SSO / federation gateways</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-name">Storage and data</div>
+        <div class="repo-desc">
+          <ul>
+            <li>Databases (relational, NoSQL, graph)</li>
+            <li>Object storage (S3-compatible)</li>
+            <li>File shares (SMB, NFS)</li>
+            <li>Backup &amp; Archive systems</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-name">Applications</div>
+        <div class="repo-desc">
+          <ul>
+            <li>Web applications and APIs</li>
+            <li>Internal services (microservices, ESBs)</li>
+            <li>Email (Exchange, Postfix, Gmail)</li>
+            <li>Code signing &amp; CI/CD platforms</li>
+            <li>Package registries &amp; Document signing</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-name">Hardware &amp; Roots of Trust</div>
+        <div class="repo-desc">
+          <ul>
+            <li>BIOS / UEFI firmware</li>
+            <li>TPM (discrete, integrated, firmware)</li>
+            <li>Secure Enclaves &amp; HSMs (network and PCIe)</li>
+            <li>Smart cards, FIDO2 tokens &amp; OTP devices</li>
+            <li>Secure/Measured Boot infrastructure</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-name">Cloud and SaaS</div>
+        <div class="repo-desc">
+          <ul>
+            <li>IaaS accounts (AWS, Azure, GCP, OCI)</li>
+            <li>SaaS tenants (M365, Google Workspace, Salesforce)</li>
+            <li>PaaS services (databases, queues, functions)</li>
+            <li>Cloud HSM / KMS &amp; Certificate management</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="repo-card">
+        <div class="repo-name">Operational</div>
+        <div class="repo-desc">
+          <ul>
+            <li>CMDB / asset inventory &amp; SIEM / logs</li>
+            <li>EDR / XDR &amp; Vulnerability management</li>
+            <li>Patch, backup, and disaster recovery (DR)</li>
+            <li>Config management (Ansible, Puppet, Intune)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-h2">1.3 The layer model</div>
+    <p class="prose">
+      Every asset can be decomposed into the same four layers, top down. Cryptography appears at every layer, and the scanner must look at all four:
+    </p>
+
+    <div class="vflow">
+      <div class="vflow-step">
+        <div class="vflow-left">L1</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Users</div>
+          <div class="vflow-desc">
+            The human or service identity that initiates a cryptographic operation.<br>
+            <strong>Discovery targets:</strong> Authentication methods (smart card, FIDO2, PKINIT), identity providers, certificate-based user identities (S/MIME, signing), and session establishment (TLS, SSH, VPN).
+          </div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">L2</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Applications</div>
+          <div class="vflow-desc">
+            The software components executing application logic. This is the most diverse layer.<br>
+            <strong>Discovery targets:</strong> TLS endpoints and certificate bindings, application certificate stores (Java keystores, IIS, Nginx), API auth (JWT, mTLS, OAuth assertions), code signing pipelines, and internal crypto libraries (OpenSSL, NSS, JCE, CNG, .NET).
+          </div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">L3</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Operating Systems / Runtimes</div>
+          <div class="vflow-desc">
+            The OS exposes the cryptographic stack to applications.<br>
+            <strong>Discovery targets:</strong> OS certificate stores (Windows Cert:\, Linux NSS, macOS Keychain), SSH config, default TLS libraries (Schannel, system OpenSSL), kernel module signing, OS update verification, disk encryption (BitLocker, LUKS), smart card middleware (PKCS#11), and TPM/PKI integrations.
+          </div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">L4</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Hardware / Firmware</div>
+          <div class="vflow-desc">
+            The underlying physical root of trust.<br>
+            <strong>Discovery targets:</strong> TPM presence and spec capabilities, UEFI/Secure Boot variables (PK, KEK, db, dbx), HSM key inventories, smart card reader details, hardware tokens, and BIOS/firmware update signatures.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-h2">1.4 Why the layer model matters for the scanner</div>
+    <p class="prose">
+      The same algorithm (RSA-2048) can appear at every layer. The scanner must collect evidence at the right layer or it will produce the wrong risk picture. A finding of "RSA-2048 found" without context is useless.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>Example finding</th>
+            <th>Risk if missed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Hardware</strong></td>
+            <td>TPM 2.0 supports RSA-2048 only</td>
+            <td>Underestimates the cost of TPM-backed attestation migration.</td>
+          </tr>
+          <tr>
+            <td><strong>Firmware</strong></td>
+            <td>Secure Boot db contains RSA-2048 CA</td>
+            <td>Misses the need to re-issue firmware trust anchors.</td>
+          </tr>
+          <tr>
+            <td><strong>OS</strong></td>
+            <td>OpenSSH supports ssh-rsa</td>
+            <td>Overstates migration scope if ssh-rsa is only listed, not preferred.</td>
+          </tr>
+          <tr>
+            <td><strong>Application</strong></td>
+            <td>Java app uses JCE provider <code>SunRsaSign</code></td>
+            <td>Misses application-specific crypto libraries.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">1.5 Access tiers</div>
+    <p class="prose">
+      Every discovery command in this handbook maps to an access tier. The scanner must request the minimum tier required for each task, escalating only when a lower tier cannot produce the required evidence.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Tier</th>
+            <th>Description</th>
+            <th>Typical Use</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-safe">Tier 0</span></td>
+            <td>Unauthenticated (Public network access)</td>
+            <td>Port scans, banner grabs, active TLS probes, network inspection</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info">Tier 1</span></td>
+            <td>Authenticated (Read-only user)</td>
+            <td>SSH audit, standard certificate store read, local config parse</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-medium">Tier 2</span></td>
+            <td>Privileged (Local Admin / Root)</td>
+            <td>WMI query, iptables inspection, TPM2 direct access, UEFI variable read, AD CS audit</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-high">Tier 3</span></td>
+            <td>Hardware / Out-of-band</td>
+            <td>HSM key inventory, physical tokens, smart card certificate extraction, HSM PED operations</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-critical">Tier 4</span></td>
+            <td>Cloud / Control plane</td>
+            <td>Cloud provider APIs (AWS Config, Azure Resource Graph, GCP Asset Inventory)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ===================== TAB 2: DISCOVERY MAP ===================== -->
+  <div id="tab-part2" class="tab-panel">
+    <div class="section-title">Part 2 — Cryptography Discovery Map</div>
+    <div class="section-sub">The master mapping index and discovery methods</div>
+
+    <div class="content-h2">2.1 The master inventory model</div>
+    <p class="prose">
+      The Discovery Map is the index that ties every enterprise component to its discovery method. It acts as the backbone of the scanner's execution graph, guiding which playbook to run against which discovered configuration item.
+    </p>
+
+    <div class="content-h2">2.2 Master discovery map</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Uses crypto?</th>
+            <th>Discovery method</th>
+            <th>Primary playbook</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>TLS endpoints (HTTPS, LDAPS, SMTPS, IMAPS, DB TLS)</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td>Active probe, certificate chain capture</td>
+            <td><code>§ 3.1 TLS</code></td>
+          </tr>
+          <tr>
+            <td>SSH servers and clients</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td><code>-v</code> KEX dump, keyscan, policy probe</td>
+            <td><code>§ 3.2 SSH</code></td>
+          </tr>
+          <tr>
+            <td>VPN (IPsec, SSL-VPN, WireGuard)</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td>Config read, IKE probe, certificate extraction</td>
+            <td><code>§ 3.3 VPN</code></td>
+          </tr>
+          <tr>
+            <td>Certificate stores (OS, application)</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td>Cert store enumeration, thumbprint resolution</td>
+            <td><code>§ 3.4 Certificate Stores</code></td>
+          </tr>
+          <tr>
+            <td>Active Directory / PKI</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td>LDAP query, CA web enrolment, AD CS inspection</td>
+            <td><code>§ 3.5 Active Directory</code></td>
+          </tr>
+          <tr>
+            <td>TPM</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td><code>tpm2_getcap</code>, CNG, TBS</td>
+            <td><code>§ 3.6 TPM</code></td>
+          </tr>
+          <tr>
+            <td>HSM</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td>PKCS#11 enumeration, vendor CLI, cloud KMS API</td>
+            <td><code>§ 3.7 HSM</code></td>
+          </tr>
+          <tr>
+            <td>Smart cards and tokens</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td>Reader enumerate, <code>certutil -scinfo</code>, <code>pkcs11-tool</code></td>
+            <td><code>§ 3.8 Smart Cards</code></td>
+          </tr>
+          <tr>
+            <td>Secure Boot (UEFI)</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td><code>Confirm-SecureBootUEFI</code>, <code>Get-SecureBootUEFI</code>, <code>efi-readvar</code></td>
+            <td><code>§ 3.9 Secure Boot</code></td>
+          </tr>
+          <tr>
+            <td>Disk encryption</td>
+            <td><span class="badge badge-medium">Partial</span></td>
+            <td><code>manage-bde</code>, <code>cryptsetup status</code>, BitLocker policy</td>
+            <td><code>§ 3.10 Disk Encryption</code></td>
+          </tr>
+          <tr>
+            <td>Code signing</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td>Signing certificate inventory, Authenticode, <code>signtool</code></td>
+            <td><code>§ 3.11 Code Signing</code></td>
+          </tr>
+          <tr>
+            <td>Container and Kubernetes</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td>API audit, image signing, secret scan, etcd encryption</td>
+            <td><code>§ 3.12 Kubernetes</code></td>
+          </tr>
+          <tr>
+            <td>Cloud KMS</td>
+            <td><span class="badge badge-safe">Yes</span></td>
+            <td>Cloud provider API, key policy read, rotation state</td>
+            <td><code>§ 3.13 Cloud KMS</code></td>
+          </tr>
+          <tr>
+            <td>Network devices (routers, switches, firewalls)</td>
+            <td><span class="badge badge-medium">Partial</span></td>
+            <td>SNMP, config read, vendor API, SSH audit</td>
+            <td><code>§ 3.14 Network Devices</code></td>
+          </tr>
+          <tr>
+            <td>CMDB / asset inventory</td>
+            <td><span class="badge badge-low">Indirect</span></td>
+            <td>CMDB API, CI relationships, crypto-relevant asset filter</td>
+            <td><code>§ 3.15 CMDB</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">2.3 Discovery method classes</div>
+    <p class="prose">
+      Every discovery method on the map falls into one of six classes. The scanner must support workers capable of orchestrating all six types of inputs.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Class</th>
+            <th>Description</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Active probe</strong></td>
+            <td>Issue a network request, observe the protocol response</td>
+            <td>TLS handshake, SSH <code>-v</code>, Nmap NSE scripts</td>
+          </tr>
+          <tr>
+            <td><strong>Local inspection</strong></td>
+            <td>Run an administrative command locally on the asset</td>
+            <td><code>Get-Tpm</code>, <code>tpm2_getcap properties-fixed</code></td>
+          </tr>
+          <tr>
+            <td><strong>Configuration read</strong></td>
+            <td>Parse local or centralized configuration files</td>
+            <td><code>sshd_config</code>, Nginx config, OpenVPN config profiles</td>
+          </tr>
+          <tr>
+            <td><strong>API integration</strong></td>
+            <td>Call a vendor or cloud infrastructure management platform API</td>
+            <td>AWS KMS API, Azure Key Vault SDK, ServiceNow CMDB REST endpoint</td>
+          </tr>
+          <tr>
+            <td><strong>Agent telemetry</strong></td>
+            <td>Collect data compiled by a persistently running agent</td>
+            <td>EDR agents, MDM profiles (Intune/MobileIron), OSQuery queries</td>
+          </tr>
+          <tr>
+            <td><strong>Out-of-band</strong></td>
+            <td>Physical interfaces, hardware channels, or offline media</td>
+            <td>HSM PED key ceremonies, physical smart cards, TPM endorsement roots</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ===================== TAB 3: PLAYBOOKS A (3.1 - 3.7) ===================== -->
+  <div id="tab-part3a" class="tab-panel">
+    <div class="section-title">Part 3 — Discovery Playbooks (3.1 - 3.7)</div>
+    <div class="section-sub">Network, OS, and Identity Cryptographic Playbooks</div>
+
+    <!-- PLAYBOOK 3.1 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.1 TLS Endpoints</div>
+        <div class="playbook-layer">Layer 2: Application / Transport</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        TLS protects almost every enterprise protocol: HTTPS, LDAPS, SMTPS, IMAPS, database connections, and microservices. It is the single largest surface for asymmetric cryptography in most enterprises. A PQC readiness assessment that misses TLS is incomplete.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>Windows (IIS / Schannel):</strong> Enumerate active bindings using <code>Get-WebBinding</code> or <code>netsh http show sslcert</code>. Resolve bindings to thumbprints and verify details in the <code>Cert:\LocalMachine\My</code> store.<br>
+        <strong>Linux (Web Servers):</strong> Parse vhost configs for <code>ssl_certificate</code> locations (Nginx, Apache, HAProxy). Retrieve cert details using <code>openssl x509 -text -noout -in cert.pem</code>.<br>
+        <strong>Active Probes (Any Platform):</strong> Probing with tools such as <code>testssl.sh</code> (run in JSON mode for ingestion) or `nmap --script ssl-enum-ciphers,ssl-cert`.
+      </p>
+
+      <div class="code-label">ACTIVE PROBE COMMANDS:</div>
+      <div class="code-block">
+        <span class="comment"># Force specific protocol check &amp; retrieve negotiation details</span>
+        openssl s_client -connect host:443 -tls1_2
+        curl -v --tls-max 1.2 https://host
+      </div>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-safe">Tier 0</span> (Network Access)<br><span class="badge badge-medium">Tier 2</span> (Local cert stores)</td>
+              <td>Protocol versions, Cipher suites, Key exchange groups (X25519, P-256), Sign algs, Certificate chain thumbprints.</td>
+              <td>The origin server if terminated by a reverse proxy. Whether the negotiated ciphers are actively used by real clients.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>endpoint, protocol_versions[], kex_groups[], signature_algs[], cipher_suites[], server_cert_thumbprint, server_cert_sig_alg, pqc_capable (bool), pqc_groups[]</code>
+      </p>
+      
+      <div class="infobox" style="background:#e6f4ea; border-color:#a8dab5; color:var(--green)">
+        <strong>PQC Relevance</strong>
+        TLS is the primary target of NIST standards. ML-KEM (Kyber) replaces ECDHE for key exchange; ML-DSA (Dilithium) replaces RSA/ECDSA for signatures. Hybrid deployment (e.g., X25519MLKEM768) is current best practice.
+      </div>
+    </div>
+
+    <!-- PLAYBOOK 3.2 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.2 SSH</div>
+        <div class="playbook-layer">Layer 3: OS / Application</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        SSH cannot establish trust or secure key exchange without asymmetric cryptography. The SSH surface spans hundreds to thousands of hosts. Algorithm choice on each host determines the migration scope.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>Active Handshake Dump:</strong> Run a verbose connection to see negotiation features.
+      </p>
+      <div class="code-block">
+        ssh -v user@server 2&gt;&amp;1 | grep -E "kex|cipher|host key"
+      </div>
+      <p class="prose">
+        <strong>Server Configuration:</strong> Run <code>ssh -Q kex</code> or <code>ssh -Q key</code> to query supported algorithms, and parse local configuration from <code>/etc/ssh/sshd_config</code> (Linux) or <code>%ProgramData%\ssh\sshd_config</code> (Windows).
+      </p>
+
+      <div class="code-label">ANSIBLE SCALE PLAYBOOK (ssh_audit.yml):</div>
+      <div class="code-block">
+<span class="keyword">- name:</span> Audit SSH Configuration
+<span class="keyword">  hosts:</span> all
+<span class="keyword">  tasks:</span>
+<span class="keyword">    - name:</span> Get sshd config
+<span class="keyword">      ansible.builtin.slurp:</span>
+<span class="keyword">        src:</span> /etc/ssh/sshd_config
+<span class="keyword">      register:</span> sshd_cfg
+      </div>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-info">Tier 1</span> (Read Config / Query SSH)</td>
+              <td>Host key algs (ssh-rsa, ssh-ed25519), KEX algs, Ciphers (aes256-gcm), MACs, config lines.</td>
+              <td>Whether configured key algorithms are actively utilized by real client endpoints. Trust chains of host keys.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>host, sshd_version, host_key_algs[], kex_algs[], ciphers[], macs[], pubkey_accepted_algs[], pqc_capable (bool)</code>
+      </p>
+
+      <div class="infobox" style="background:#e6f4ea; border-color:#a8dab5; color:var(--green)">
+        <strong>PQC Relevance</strong>
+        OpenSSH supports experimental hybrid KEX (sntrup761x25519, mlkem768x25519) and signature algs (dilithium, falcon). Migration requires updating both server configs and client software.
+      </div>
+    </div>
+
+    <!-- PLAYBOOK 3.3 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.3 VPN</div>
+        <div class="playbook-layer">Layer 1: Network</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        VPN concentrators terminate enterprise-wide encrypted tunnels. Their IKE, IPsec, and TLS configuration determines the cryptographic posture of every remote connection.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>IPsec / IKEv2:</strong> Read concentrator config files (Cisco, Fortinet, Palo Alto). Inspect IKE proposals (DH group, PRF, lifetime) and Phase 2 PFS groups.<br>
+        <strong>SSL-VPN:</strong> Read local configs (e.g. <code>openvpn.conf</code> for --tls-cipher directive) and run active probes on HTTPS VPN portals using <code>openssl s_client</code>.<br>
+        <strong>Active probes:</strong> Enumerate endpoints using <code>ike-scan</code> or <code>nmap --script ike-version</code>.
+      </p>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-medium">Tier 2</span> (Network Admin Config Read)</td>
+              <td>IKE proposals, Phase 2 PFS groups, Auth methods (RSA cert, PSK), VPN tunnel configurations.</td>
+              <td>Whether legacy proposals are reachable in production or firewalled. Proprietary vendor algorithms.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>concentrator, protocol, ike_proposals[], pfs_group[], auth_method, server_cert_thumbprint, pqc_capable (bool)</code>
+      </p>
+
+      <div class="infobox" style="background:#e6f4ea; border-color:#a8dab5; color:var(--green)">
+        <strong>PQC Relevance</strong>
+        IPsec/IKEv2 standards are adopting hybrid PQC key exchanges (ML-KEM with DH groups). Vendor support varies. Migration impacts appliance firmware, client software, and PKI certs.
+      </div>
+    </div>
+
+    <!-- PLAYBOOK 3.4 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.4 Certificate Stores</div>
+        <div class="playbook-layer">Layer 3: OS / Application</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        The OS certificate store is the trust anchor for TLS, S/MIME, code signing, and client authentication. A trusted certificate defines what algorithms the OS will trust to validate downstream components.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>Windows:</strong> Enumerate certificates via PowerShell (e.g. <code>Get-ChildItem Cert:\LocalMachine\Root</code>).<br>
+        <strong>Linux (NSS Shared DB):</strong> Enumerate using NSS tools: <code>certutil -L -d sql:/home/user/.pki/nssdb</code>.<br>
+        <strong>macOS:</strong> Extract certificates via Security utility: <code>security find-certificate -a -p /Library/Keychains/System.keychain</code>.<br>
+        <strong>Certificate Inspection:</strong> Parse files using <code>openssl x509 -in cert.pem -text -noout</code> to check OIDs.
+      </p>
+
+      <div class="code-label">RESOLVING MAPPING GRAPH:</div>
+      <div class="code-block">
+        Component Config (IIS Thumbprint / Nginx File Path)
+          ↓
+        Search Cert Store for matching reference
+          ↓
+        Extract Algorithm OID (e.g., RSA-2048 vs ML-DSA)
+      </div>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-info">Tier 1</span> (Read Local Stores)</td>
+              <td>Store location, Subject/Issuer, Thumbprint, PubKey alg, PubKey size, keyUsage, self_signed status.</td>
+              <td>Which applications are actively calling the certificate. Whether the certificate is actually active or orphaned.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>thumbprint, subject, issuer, not_before, not_after, sig_alg, pub_key_alg, pub_key_size, key_usage[], eku[], self_signed, store_location, pqc_capable (bool)</code>
+      </p>
+    </div>
+
+    <!-- PLAYBOOK 3.5 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.5 Active Directory and PKI</div>
+        <div class="playbook-layer">Layer 3: OS / Identity</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        Active Directory and AD Certificate Services (AD CS) manage the majority of internal credentials, trust anchors, Kerberos tickets, and domain TLS configurations.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>CA and Template Enumerate:</strong> Enumerate Active Directory PKI objects using <code>certutil -config - -ping</code>, <code>certutil -CATemplate</code>, and AD commands like <code>Get-ADObject -Filter {objectClass -eq "certificationAuthority"}</code>.<br>
+        <strong>Domain Controller Certs:</strong> Inspect certificates local to Domain Controllers used for Kerberos PKINIT and LDAPS.
+      </p>
+
+      <div class="code-label">AUDIT AD CS VIA TOOLING:</div>
+      <div class="code-block">
+        <span class="comment"># Analyze GPO applied crypto policies</span>
+        gpresult /h gpo.html
+        Get-GPResultantSetOfPolicy -ReportType HTML -Path gpo.html
+      </div>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-medium">Tier 2</span> (Domain/Enterprise Admin)</td>
+              <td>CA lists, CA key sizes &amp; signature algs, template configurations, Kerberos encryption types, GPO cipher ordering.</td>
+              <td>Offline root CAs and their hardware key handling. Certificates issued to endpoints currently offline.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>ca_name, ca_sig_alg, ca_key_size, templates[], template_min_key_size, dc_cert_sig_alg, kerberos_enc_types[], gpo_cipher_order[], pqc_capable (bool)</code>
+      </p>
+
+      <div class="infobox" style="background:#e6f4ea; border-color:#a8dab5; color:var(--green)">
+        <strong>PQC Relevance</strong>
+        KDC keys and domain controllers are highly valuable targets. Microsoft and industry working groups have published explicit PQC guidance for Active Directory PKINIT transitions.
+      </div>
+    </div>
+
+    <!-- PLAYBOOK 3.6 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.6 TPM</div>
+        <div class="playbook-layer">Layer 4: Hardware / Firmware</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        TPMs are secure hardware chips that store keys non-exportably for disk encryption, device identity, and Secure Boot measurements. TPM limitations directly impact attestation systems during PQC migration.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>Windows:</strong> Query local TPM state via <code>Get-Tpm</code> cmdlet.<br>
+        <strong>Linux:</strong> Enumerate properties and algorithms via <code>tpm2-tools</code> commands:
+      </p>
+      <div class="code-block">
+        sudo tpm2_getcap properties-fixed
+        sudo tpm2_getcap algorithms
+        sudo tpm2_listpersistent
+      </div>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-medium">Tier 2</span> (Local Admin / Root)</td>
+              <td>TPM present, TPM version (e.g. 2.0), Manufacturer ID, supported algorithms, persistent objects count.</td>
+              <td>BitLocker recovery key state (requires Active Directory query). Real-time application utilization.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>tpm_present, tpm_version, manufacturer, spec_version, firmware_version, algs[], pcr_banks[], persistent_object_count, attestation_capable, pqc_capable (bool)</code>
+      </p>
+
+      <div class="infobox" style="background:#e6f4ea; border-color:#a8dab5; color:var(--green)">
+        <strong>PQC Relevance</strong>
+        Most production TPMs (TCG 1.38) support RSA and ECC only. Next-gen TPMs (TCG 1.59+) introduce ML-KEM/ML-DSA. attestation chains will require hardware replacement or hybrid firmware updates.
+      </div>
+    </div>
+
+    <!-- PLAYBOOK 3.7 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.7 HSM</div>
+        <div class="playbook-layer">Layer 4: Hardware / Firmware</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        HSMs are high-assurance appliances hosting the keys for root CAs, transaction processors, EV code signing, and TLS offloading. Replacing or updating HSM configurations requires long lead times.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>PKCS#11 Interfaces:</strong> Scan application folders for PKCS#11 references, then run <code>pkcs11-tool --module /usr/lib/opensc-pkcs11.so --list-slots</code>.<br>
+        <strong>Vendor CLI Tools:</strong> Call proprietary management modules (e.g. Thales <code>LunaCM</code>, Entrust <code>keytool</code>).<br>
+        <strong>Cloud HSM KMS:</strong> Audit KMS protected resources via cloud management APIs.
+      </p>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-high">Tier 3</span> (Hardware partitions / PIN)<br><span class="badge badge-critical">Tier 4</span> (Cloud IAM Read)</td>
+              <td>HSM Vendor (Thales, Entrust), FIPS validation level, key labels, key sizes/algorithms, key usage flags.</td>
+              <td>The actual private key material (secured by design). Backup key escrow physical locations.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>hsm_id, vendor, model, fips_level, key_label, key_alg, key_size, key_usage[], state, rotation_policy, pqc_capable (bool)</code>
+      </p>
+    </div>
+  </div>
+
+
+  <!-- ===================== TAB 4: PLAYBOOKS B (3.8 - 3.15) ===================== -->
+  <div id="tab-part3b" class="tab-panel">
+    <div class="section-title">Part 3 — Discovery Playbooks (3.8 - 3.15)</div>
+    <div class="section-sub">Hardware, Platform, and Application Cryptographic Playbooks</div>
+
+    <!-- PLAYBOOK 3.8 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.8 Smart Cards</div>
+        <div class="playbook-layer">Layer 4: Hardware / Token</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        Smart cards store non-exportable identities for PIV/CAC user auth and digital signing. Migrating smart card infrastructure is historically slow and expensive.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>Windows:</strong> Enumerate readers with <code>Get-PnpDevice | Where-Object { $_.Class -eq "SmartCardReader" }</code>, and extract card data with <code>certutil -scinfo</code>.<br>
+        <strong>Linux:</strong> Detect readers using <code>opensc-tool -l</code>, list slots with <code>pkcs11-tool --list-objects</code>, and pull certificates for parsing.
+      </p>
+
+      <div class="code-label">PYTHON READER CHECK (pyscard):</div>
+      <div class="code-block">
+        from smartcard.System import readers
+        print("Connected Readers:", readers())
+      </div>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-info">Tier 1</span> (Endpoint Agent Read)</td>
+              <td>Reader vendor/model, Card ATR (Answer-to-Reset), Certificate subject, issuing CA, public key size and alg.</td>
+              <td>PIN policies (length, retries). Whether the card is actively used for transaction authentication.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>reader_vendor, reader_model, card_atr, card_type, cert_subject, cert_issuer, pub_key_alg, pub_key_size, sig_alg, pqc_capable (bool)</code>
+      </p>
+    </div>
+
+    <!-- PLAYBOOK 3.9 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.9 Secure Boot (UEFI)</div>
+        <div class="playbook-layer">Layer 4: Firmware / Boot</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        UEFI Secure Boot guarantees system bootloader and kernel integrity. A compromised chain or un-migrated Secure Boot db/dbx presents major root-of-trust risks.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>Windows:</strong> Query basic status via <code>Confirm-SecureBootUEFI</code>. Read variable structures via <code>Get-SecureBootUEFI</code>.<br>
+        <strong>Linux:</strong> Check state with <code>mokutil --sb-state</code> and read variables via <code>efi-readvar</code>.
+      </p>
+
+      <div class="code-label">POWERSHELL DATABASE DUMP:</div>
+      <div class="code-block">
+        Get-SecureBootUEFI -Name PK
+        Get-SecureBootUEFI -Name KEK
+        Get-SecureBootUEFI -Name db
+        Get-SecureBootUEFI -Name dbx
+      </div>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-medium">Tier 2</span> (Local Admin / Root)</td>
+              <td>Secure Boot status, PK/KEK subjects and algs, signature database (db) algs, dbx size/entry counts.</td>
+              <td>Measured Boot state (requires PCR verification). firmware upgrade paths for PQC compat.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>secure_boot_enabled, uuefi_firmware_type, pk_alg, kek_algs[], db_algs[], dbx_count, dbx_size, firmware_version, pqc_capable (bool)</code>
+      </p>
+    </div>
+
+    <!-- PLAYBOOK 3.10 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.10 Disk Encryption</div>
+        <div class="playbook-layer">Layer 3: OS / Hardware</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        FDE (BitLocker, LUKS, FileVault) protects stationary data. While symmetric AES-256 is quantum-safe, the key wrapping and TPM seals are asymmetric and require review.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>Windows:</strong> Query using cmdlets <code>manage-bde -status</code> or <code>Get-BitLockerVolume</code>.<br>
+        <strong>Linux:</strong> Dump header variables using <code>cryptsetup status /dev/sda2</code> and <code>cryptsetup luksDump /dev/sda2</code>.<br>
+        <strong>macOS:</strong> Query using <code>fdesetup status</code>.
+      </p>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>PQC Relevance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-medium">Tier 2</span> (Local Admin / Root)</td>
+              <td>Encryption method (XtsAes256), Key size, protector (TPM/password), KDF (SHA-256, Argon2id).</td>
+              <td>Low for symmetric bulk cipher. Medium for asymmetric key protectors (TPM seals).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PLAYBOOK 3.11 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.11 Code Signing</div>
+        <div class="playbook-layer">Layer 2: Application / Software Supply Chain</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        Code signing verifies software authenticity. Compromised, weak, or expiring code-signing keys undermine trust in software delivery pipelines.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>Windows:</strong> Run <code>Get-AuthenticodeSignature "C:\Path\To\File.exe"</code>. Enumerate signed drivers via <code>Get-WindowsDriver -Online</code>.<br>
+        <strong>macOS:</strong> Extract signatures with <code>codesign -dv --verbose=4 /Applications/Sample.app</code>.<br>
+        <strong>Packages:</strong> Audit system public key registers (e.g. <code>apt-key list</code> or rpm databases).
+      </p>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-info">Tier 1</span> (User read access)</td>
+              <td>File paths, Signer subjects/issuers, Signature algorithm, Public key algorithm, RFC 3161 timestamps.</td>
+              <td>The location of HSM or software keys used to generate the signatures during CI/CD.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>file_path, signer_subject, signer_issuer, sig_alg, pub_key_alg, timestamp_authority, status, pqc_capable (bool)</code>
+      </p>
+    </div>
+
+    <!-- PLAYBOOK 3.12 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.12 Kubernetes</div>
+        <div class="playbook-layer">Layer 2: Orchestration / Application</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        Kubernetes runs service-to-service communication. Weak certs in the control plane, etcd configurations, or service mesh parameters degrade cluster posture.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>Cluster Control Plane:</strong> Query cluster configurations and parse API server certificate anchors.
+      </p>
+      <div class="code-block">
+        kubectl version
+        kubectl config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 -d | openssl x509 -text -noout
+      </div>
+      <p class="prose">
+        <strong>Mesh and Ingress:</strong> Audit service mesh SDS endpoints using <code>istioctl proxy-config secret</code> and check Ingress TLS blocks.
+      </p>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>What it cannot determine</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-medium">Tier 2</span> (Kubectl read permissions)</td>
+              <td>API server cert sigs, etcd encryption configurations (AES-CBC/GCM), Service mesh identities, Ingress settings.</td>
+              <td>Underlying container OS library features if running unprivileged workloads.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PLAYBOOK 3.13 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.13 Cloud KMS</div>
+        <div class="playbook-layer">Layer 4: Cloud Control Plane</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        Cloud KMS handles central key infrastructure in public clouds. Reviewing key types, usage parameters, and policies is critical for cloud workloads.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>AWS KMS:</strong> List and describe keys via CLI:
+      </p>
+      <div class="code-block">
+        aws kms list-keys --region us-east-1
+        aws kms describe-key --key-id &lt;arn&gt;
+        aws kms get-key-rotation-status --key-id &lt;arn&gt;
+      </div>
+      <p class="prose">
+        <strong>Azure &amp; GCP:</strong> Audit key configurations using Az PowerShell (<code>Get-AzKeyVaultKey</code>) or gcloud (<code>gcloud kms keys list</code>).
+      </p>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>PQC Relevance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-critical">Tier 4</span> (Cloud IAM Read)</td>
+              <td>Key ARNs, KeySpec (RSA_2048, ECC_NIST_P256), Key usage types, Key origin, Rotation policies, key policies.</td>
+              <td>High. Cloud vendors are rollling out native PQC key types (e.g. ML-KEM).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PLAYBOOK 3.14 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.14 Network Devices</div>
+        <div class="playbook-layer">Layer 1: Network / Firmware</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        Routers, switches, firewalls, and load balancers run administrative SSH, HTTPS, and tunnel encryption (MACsec). Legacy firmware remains constrained.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        <strong>Probes &amp; Configs:</strong> Audit devices using SSH scans, admin TLS scans, SNMP queries (<code>snmpwalk</code>), or query configurations centrally using config archives (Oxidized, Batfish).
+      </p>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>PQC Relevance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-medium">Tier 2</span> (Network Admin Config Read)</td>
+              <td>Vendor/Model/Firmware details, device SSH ciphers, IPsec parameters, TLS management certs.</td>
+              <td>Medium. Network hardware has long lifecycles. vendor roadmaps dictate path.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PLAYBOOK 3.15 -->
+    <div class="playbook-card">
+      <div class="playbook-header">
+        <div class="playbook-title">3.15 CMDB</div>
+        <div class="playbook-layer">Layer 5: Operational</div>
+      </div>
+      
+      <div class="infobox">
+        <strong>Why it matters</strong>
+        A CMDB is the canonical database of Configuration Items (CIs) and relationships. A technical vulnerability finding is unactionable without owning teams, criticality scores, and business service maps.
+      </div>
+
+      <div class="playbook-section-title">Discovery Methods</div>
+      <p class="prose">
+        Query schema tables such as <code>cmdb_ci</code> (ServiceNow, BMC Helix, NetBox) for server classes, networks, databases, web servers, CAs, and their associated relationship bindings (<code>cmdb_rel_ci</code>).
+      </p>
+
+      <div class="code-label">POPULATING CONNECTORS LOGIC:</div>
+      <div class="code-block">
+        WMI (Windows) + SSH (Linux) + SNMP (Network) = Most Infrastructure Assets
+      </div>
+
+      <div class="playbook-section-title">Access &amp; Evidence</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Access Tier</th>
+              <th>Evidence Captured</th>
+              <th>PQC Relevance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-info">Tier 1</span> (CMDB API Read User)</td>
+              <td>CI counts by class, Owner records, business service maps, last discovery timestamps, relationship maps.</td>
+              <td>Critical. Connects scanner-detected OIDs to enterprise owners and risk scoring.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="prose">
+        <strong>Inventory fields:</strong> <code>ci_class, ci_count, owner, business_service, last_discovered, relationships[], crypto_relevance, pqc_owner</code>
+      </p>
+    </div>
+  </div>
+
+
+  <!-- ===================== TAB 5: SCANNER ARCHITECTURE ===================== -->
+  <div id="tab-part4" class="tab-panel">
+    <div class="section-title">Part 4 — Scanner Architecture</div>
+    <div class="section-sub">Designing a scalable, versioned, and modular enterprise discovery system</div>
+
+    <div class="content-h2">4.1 Purpose &amp; 4.2 Architectural Goals</div>
+    <p class="prose">
+      The playbooks in Part 3 produce evidence. The scanner in Part 4 turns that evidence into a continuously updated view of the cryptographic posture of the entire enterprise. It is a system, not a script, built around these core goals:
+    </p>
+
+    <div class="repo-grid">
+      <div class="repo-card">
+        <div class="repo-name">Coverage</div>
+        <div class="repo-desc">
+          Audit every asset identified in the CMDB target registers, plus actively sweep network blocks to locate shadow deployments.
+        </div>
+      </div>
+      <div class="repo-card">
+        <div class="repo-name">Repeatability</div>
+        <div class="repo-desc">
+          Ensure playbooks execute deterministically, producing comparable results across different cycles and runs.
+        </div>
+      </div>
+      <div class="repo-card">
+        <div class="repo-name">Tier-awareness</div>
+        <div class="repo-desc">
+          Enforce strict boundaries so that workers call credentials matching the lowest access tier required.
+        </div>
+      </div>
+      <div class="repo-card">
+        <div class="repo-name">Idempotency</div>
+        <div class="repo-desc">
+          Re-running playbooks on unchanged configurations produces identical hashes and normalized values.
+        </div>
+      </div>
+      <div class="repo-card">
+        <div class="repo-name">Auditability</div>
+        <div class="repo-desc">
+          Sign and timestamp all evidence, including execution environment metadata, parameters, and collector signatures.
+        </div>
+      </div>
+      <div class="repo-card">
+        <div class="repo-name">Composability</div>
+        <div class="repo-desc">
+          Decouple connectors and runners so that adding new playbooks requires zero changes to core pipeline code.
+        </div>
+      </div>
+    </div>
+
+    <div class="content-h2">4.3 High-level Architecture</div>
+    <p class="prose">
+      The overall scanner topology flows from ingestion to reporting, decoupling network-heavy workers from the centralized risk analysis engines:
+    </p>
+
+    <div class="flow-diagram-container">
+      <div class="flow-diagram">
+        <div class="flow-step">
+          <div class="flow-step-title">Ingest Layer</div>
+          <div class="flow-step-desc">CMDB, AWS, Azure, &amp; NetBox Connectors</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flow-step-title">Asset Graph</div>
+          <div class="flow-step-desc">Unified relationship model between corporate CIs</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flow-step-title">Discovery Engine</div>
+          <div class="flow-step-desc">Playbook selector, credential-vault wrapper &amp; workers</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flow-step-title">Evidence Store</div>
+          <div class="flow-step-desc">Signed and versioned append-only observations database</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flow-step-title">Cryptographic Analysis Engine</div>
+          <div class="flow-step-desc">Algorithm normalization, PQC mapping &amp; composite detection</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flow-step-title">Risk Engine</div>
+          <div class="flow-step-desc">Exposure maps &amp; Composite grading (Mosca's Theorem)</div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flow-step-title">Output Layer</div>
+          <div class="flow-step-desc">Dashboard UI, Compliance Export, &amp; API</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-h2">4.4 Component Design</div>
+    <p class="prose">
+      <strong>Ingest Layer:</strong> Syncs CIs daily from ServiceNow, cloud setups (AWS Config/Azure Resource Graph), and endpoint platforms. Outputs a queryable dependency graph.<br>
+      <strong>Discovery Engine:</strong> Selecting playbooks based on target classifications, retrieving scoped credentials from vault (HashiCorp, CyberArk), and running workers.<br>
+      <strong>Cryptographic Analysis:</strong> Normalizing raw strings, flagging hybrid composite markers (e.g. <code>rsa-pss-ml-dsa</code>), and querying deprecation databases.<br>
+      <strong>Risk Engine:</strong> Joining business tiers with cryptographic features to assign composite priority maps.<br>
+      <strong>Dashboard:</strong> Executive and operational widgets showing volume of algorithms, PQC readiness rates, top backlogs, and scan coverage metrics.
+    </p>
+
+    <div class="code-label">EVIDENCE STORE RECORD SCHEMA (JSON):</div>
+    <div class="code-block">
+{
+  <span class="st">"evidence_id"</span>: <span class="st">"uuid-v4-hash-string"</span>,
+  <span class="st">"asset_id"</span>: <span class="st">"ci-12345"</span>,
+  <span class="st">"playbook"</span>: <span class="st">"3.2 SSH"</span>,
+  <span class="st">"playbook_step"</span>: <span class="st">"host_key_algorithm"</span>,
+  <span class="st">"tool"</span>: <span class="st">"ssh -Q key"</span>,
+  <span class="st">"tier"</span>: 1,
+  <span class="st">"collected_at"</span>: <span class="st">"2026-06-01T11:00:00Z"</span>,
+  <span class="st">"collector"</span>: <span class="st">"ansible-2026-06-01-12-00-00"</span>,
+  <span class="st">"raw"</span>: <span class="st">"ssh-ed25519"</span>,
+  <span class="st">"normalized"</span>: {
+    <span class="st">"algorithm"</span>: <span class="st">"Ed25519"</span>,
+    <span class="st">"key_size"</span>: null,
+    <span class="st">"curve"</span>: null,
+    <span class="st">"pqc_relevant"</span>: false
+  },
+  <span class="st">"signature"</span>: <span class="st">"&lt;signature-hash&gt;"</span>
+}
+    </div>
+
+    <div class="content-h2">4.5 - 4.8 Operations &amp; Failure Handling</div>
+    <p class="prose">
+      <strong>Scheduling &amp; Pacing:</strong> Endpoints are scanned on a rolling 7-day schedule, edge portals every 24 hours, and cloud setups dynamically on resource creation signals. Throttlers ensure network limits are respected.<br>
+      <strong>Access-Tier Enforcement:</strong> Workers log matching credential aliases used and immediately throw runtime errors if playbook configurations request access tiers higher than the target class policy limits.<br>
+      <strong>Failure &amp; Provenance:</strong> Failed commands write a <code>failure</code> record to the Evidence Store rather than crashing, keeping run metrics complete. If credentials fail validation, they are quarantined and trigger alerts.
+    </p>
+  </div>
+
+
+  <!-- ===================== TAB 6: MIGRATION ===================== -->
+  <div id="tab-part5" class="tab-panel">
+    <div class="section-title">Part 5 — PQC Migration</div>
+    <div class="section-sub">Operationalizing scanner outputs into a corporate migration roadmap</div>
+
+    <div class="content-h2">5.1 Purpose &amp; 5.2 The 9 Migration Stages</div>
+    <p class="prose">
+      Scanner findings must drive structured remediation. The migration process utilizes a 9-stage workflow to coordinate algorithm uplift across application owners:
+    </p>
+
+    <div class="vflow">
+      <div class="vflow-step">
+        <div class="vflow-left">1</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Find</div>
+          <div class="vflow-desc">Filter active findings from the Cryptographic Analysis Engine. Exclude systems slated for decommission or already assigned to active project workstreams.</div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">2</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Own</div>
+          <div class="vflow-desc">Resolve targets to application or systems owners using CMDB CI records. Escalate to service owners if individual server assignments are missing.</div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">3</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Map</div>
+          <div class="vflow-desc">Build upstream/downstream maps. If a certificate changes, identify which clients, APIs, or relying party integrations are impacted.</div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">4</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Prioritise</div>
+          <div class="vflow-desc">Score findings using risk factors: HNDL threat sensitivity, system exposure, business criticality, and regulatory deadlines.</div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">5</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Recommend</div>
+          <div class="vflow-desc">Draft target PQC algorithms based on current standards (see mapping below) and IETF transition protocols.</div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">6</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Pilot</div>
+          <div class="vflow-desc">Execute migrations in staging. Verify compatibility of composite/hybrid implementations, network overheads, and library stability.</div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">7</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Roll out</div>
+          <div class="vflow-desc">Deploy changes via standard change controls, migrating assets in batches grouped by business service to limit blast radius.</div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">8</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Track</div>
+          <div class="vflow-desc">Log states in the centralized PQC registry (planned, pilot, rolled out, verified). Maintain trace links for compliance metrics.</div>
+        </div>
+      </div>
+
+      <div class="vflow-step">
+        <div class="vflow-left">9</div>
+        <div class="vflow-right">
+          <div class="vflow-title">Re-scan</div>
+          <div class="vflow-desc">Re-run playbooks against the migrated asset. The new evidence record updates the database and moves the registry state to verified.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-h2">5.2.4 Prioritisation Matrix</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Prioritisation Factor</th>
+            <th>Weight</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>HNDL sensitivity</strong></td>
+            <td><span class="badge badge-critical">High</span></td>
+            <td>Long-lived secret keys or identities that are harvested today and decrypted later.</td>
+          </tr>
+          <tr>
+            <td><strong>System Exposure</strong></td>
+            <td><span class="badge badge-critical">High</span></td>
+            <td>Edge systems, partner integrations, internet-facing APIs, and public infrastructure.</td>
+          </tr>
+          <tr>
+            <td><strong>Business Criticality</strong></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>Tier-0 / Tier-1 core transactional services (payments, identity).</td>
+          </tr>
+          <tr>
+            <td><strong>Migration Ease</strong></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>Vendor PQC updates are ready, standard library upgrades, or no client changes required.</td>
+          </tr>
+          <tr>
+            <td><strong>Regulatory Deadline</strong></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>Compliance dates set by NIST, CNSA 2.0, or banking regulators.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">5.2.5 Algorithm Recommendation Map</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Current Vulnerable Algorithm</th>
+            <th>Recommended PQC Replacement</th>
+            <th>Transition State (Hybrid)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>RSA-2048 (signatures)</td>
+            <td>ML-DSA-65</td>
+            <td>RSA-2048 + ML-DSA-65</td>
+          </tr>
+          <tr>
+            <td>RSA-3072 / 4096 (signatures)</td>
+            <td>ML-DSA-87</td>
+            <td>RSA-3072 + ML-DSA-87</td>
+          </tr>
+          <tr>
+            <td>ECDSA P-256 (signatures)</td>
+            <td>ML-DSA-65</td>
+            <td>ECDSA P-256 + ML-DSA-65</td>
+          </tr>
+          <tr>
+            <td>ECDSA P-384 (signatures)</td>
+            <td>ML-DSA-87</td>
+            <td>ECDSA P-384 + ML-DSA-87</td>
+          </tr>
+          <tr>
+            <td>ECDH P-256 (key exchange)</td>
+            <td>ML-KEM-768</td>
+            <td>X25519 + ML-KEM-768 (Preferred)</td>
+          </tr>
+          <tr>
+            <td>DH-2048 / 3072 (key exchange)</td>
+            <td>ML-KEM-1024</td>
+            <td>ECDH P-384 + ML-KEM-1024</td>
+          </tr>
+          <tr>
+            <td>Ed25519 (signatures)</td>
+            <td>ML-DSA-65</td>
+            <td>Ed25519 + ML-DSA-65</td>
+          </tr>
+          <tr>
+            <td>AES-128 / AES-256 (symmetric)</td>
+            <td>AES-256 (No change required)</td>
+            <td>N/A</td>
+          </tr>
+          <tr>
+            <td>SHA-256 / SHA-512 (hashing)</td>
+            <td>SHA-256 / SHA-512 (No change required)</td>
+            <td>N/A</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">5.3 &amp; 5.4 Reporting &amp; Boundaries</div>
+    <p class="prose">
+      The program generates two primary monthly reports: <strong>Executive reports</strong> tracking total PQC readiness rates, top backlogs, and coverage; and <strong>Operational reports</strong> listing specific team backlogs.<br><br>
+      <strong>Scope Limit:</strong> The scanner only discovers, recommends, and verifies. Rebuilding applications, configuring appliances, or rekeying databases is owned by systems owners. A migration is only complete when the scanner verifies the updated algorithms in evidence.
+    </p>
+  </div>
+
+
+  <!-- ===================== TAB 7: APPENDICES ===================== -->
+  <div id="tab-appendices" class="tab-panel">
+    <div class="section-title">Appendices &amp; Glossary</div>
+    <div class="section-sub">Terminology, schemas, and indices</div>
+
+    <div class="content-h2">Appendix A — Glossary</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Term</th>
+            <th>Definition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Asymmetric Cryptography</strong></td>
+            <td>Public-key cryptography. Relies on mathematical relations between public/private keys. Vulnerable to Shor's algorithm.</td>
+          </tr>
+          <tr>
+            <td><strong>CNG</strong></td>
+            <td>Cryptography API: Next Generation. The modern cryptographic service provider interface for Windows OS.</td>
+          </tr>
+          <tr>
+            <td><strong>CNSA 2.0</strong></td>
+            <td>NSA's Commercial National Security Algorithm Suite 2.0. Defines timeline rules for national security assets.</td>
+          </tr>
+          <tr>
+            <td><strong>Evidence</strong></td>
+            <td>A signed, normalized observation data record collected during execution of a playbook step.</td>
+          </tr>
+          <tr>
+            <td><strong>HNDL</strong></td>
+            <td>Harvest Now, Decrypt Later. Collecting encrypted network traffic today to decrypt once cryptanalytically relevant quantum computers exist.</td>
+          </tr>
+          <tr>
+            <td><strong>KEX</strong></td>
+            <td>Key Exchange. Protocol handshake steps that negotiate symmetric keys over open channels.</td>
+          </tr>
+          <tr>
+            <td><strong>ML-DSA</strong></td>
+            <td>Module-Lattice-Based Digital Signature Algorithm (FIPS 204). Replaces classical signatures.</td>
+          </tr>
+          <tr>
+            <td><strong>ML-KEM</strong></td>
+            <td>Module-Lattice-Based Key-Encapsulation Mechanism (FIPS 203). Replaces classical key exchanges.</td>
+          </tr>
+          <tr>
+            <td><strong>PCR</strong></td>
+            <td>Platform Configuration Register. TPM registers recording cryptographic hashes of UEFI boot stages.</td>
+          </tr>
+          <tr>
+            <td><strong>PQC</strong></td>
+            <td>Post-Quantum Cryptography. Algorithms resistant to quantum computer attacks.</td>
+          </tr>
+          <tr>
+            <td><strong>SLH-DSA</strong></td>
+            <td>Stateless Hash-Based Digital Signature Algorithm (FIPS 205). Standard fallback signature algorithm.</td>
+          </tr>
+          <tr>
+            <td><strong>Trust Anchor</strong></td>
+            <td>Root certificates or keys explicitly trusted by the local configuration.</td>
+          </tr>
+          <tr>
+            <td><strong>UEFI</strong></td>
+            <td>Unified Extensible Firmware Interface. The standard firmware platform replacing classical BIOS.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">Appendix B — Access-Tier Reference</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Tier</th>
+            <th>Privilege Level</th>
+            <th>Examples</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Tier 0</strong></td>
+            <td>Unauthenticated</td>
+            <td>Port scanning, TLS handshakes, active banner queries, SSH keyscans.</td>
+          </tr>
+          <tr>
+            <td><strong>Tier 1</strong></td>
+            <td>Authenticated (Read-only)</td>
+            <td>SSH commands, local filesystem config parsing, cert store queries.</td>
+          </tr>
+          <tr>
+            <td><strong>Tier 2</strong></td>
+            <td>Privileged (Admin/Root)</td>
+            <td>WMI TPM queries, reading Secure Boot keys, parsing etcd, auditing active CA templates.</td>
+          </tr>
+          <tr>
+            <td><strong>Tier 3</strong></td>
+            <td>Hardware / Out-of-band</td>
+            <td>Smart card extraction, HSM partition configuration, PED key changes.</td>
+          </tr>
+          <tr>
+            <td><strong>Tier 4</strong></td>
+            <td>Cloud Control Plane</td>
+            <td>AWS Config queries, Azure resource Graph queries, GCP KMS descriptor requests.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">Appendix C — Evidence Record Schema</div>
+    <p class="prose">
+      See the versioned schema description under the <strong>Scanner Architecture</strong> tab (Evidence Store sub-section).
+    </p>
+
+    <div class="content-h2">Appendix D — Component-to-Playbook Index</div>
+    <p class="prose">
+      See the master indexing directory under the <strong>Discovery Map</strong> tab (Master Discovery Map sub-section).
+    </p>
+
+    <div class="content-h2">Appendix E — Open Questions and Follow-ups</div>
+    <p class="prose">
+      These questions are designed for the implementation board to address as the scanner platform matures:
+    </p>
+    <div class="repo-desc" style="margin-bottom: 24px;">
+      <ul>
+        <li>Should workers execute active network TLS probes against sensitive production databases or restrict to canary environments?</li>
+        <li>How will third-party vendor roadmaps be integrated and maintained within the risk engine?</li>
+        <li>Under what parameters should hybrid composite key exchange be chosen over pure PQC deployment configurations?</li>
+        <li>How should test vectors for composite implementations be verified in CI/CD before staging deployment?</li>
+        <li>What regulatory compliance actions apply when software dependencies fail to establish a verified PQC path?</li>
+      </ul>
+    </div>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <span>PQC Discovery &amp; Assessment Engineering Handbook</span>
+  <span>Internal Reference Document · June 2026</span>
+</footer>
+
+<script>
+  function showTab(tabId, btn) {
+    // Hide all panels
+    var panels = document.querySelectorAll('.tab-panel');
+    panels.forEach(function(p) {
+      p.classList.remove('active');
+    });
+
+    // Remove active class from all buttons
+    var btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(function(b) {
+      b.classList.remove('active');
+    });
+
+    // Show target panel
+    document.getElementById(tabId).classList.add('active');
+
+    // Set active button
+    btn.classList.add('active');
+
+    // Scroll back to top smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

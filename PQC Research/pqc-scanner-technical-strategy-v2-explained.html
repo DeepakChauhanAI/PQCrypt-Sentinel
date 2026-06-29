@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PQC Scanner Technical Strategy - Explainer Edition</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-2: #f8fbff;
+      --surface-3: #eef4fb;
+      --border: #d9e2ef;
+      --text: #102033;
+      --text-2: #41536a;
+      --text-3: #6b7d93;
+      --accent: #165dff;
+      --accent-2: #0f7c90;
+      --accent-3: #7c3aed;
+      --good: #0f8a5f;
+      --warn: #aa6b00;
+      --bad: #b42318;
+      --code-bg: #f3f6fb;
+      --shadow: 0 10px 30px rgba(16, 32, 51, 0.08);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --max: 1180px;
+      --mono: Consolas, "Liberation Mono", Menlo, monospace;
+      --sans: "Segoe UI", Arial, Helvetica, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(22, 93, 255, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(124, 58, 237, 0.10), transparent 24%),
+        linear-gradient(180deg, #f7faff 0%, #eef4fb 100%);
+      line-height: 1.7;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .page {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #152847 45%, #1d4ed8 100%);
+      color: #fff;
+      border-radius: 28px;
+      padding: 34px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -120px auto;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.10);
+      filter: blur(8px);
+    }
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      color: rgba(255,255,255,0.88);
+    }
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.1;
+      margin: 0 0 14px;
+      max-width: 14ch;
+    }
+    .hero p {
+      max-width: 80ch;
+      margin: 0;
+      color: rgba(255,255,255,0.88);
+      font-size: 1.05rem;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-card, .card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      padding: 16px;
+      backdrop-filter: blur(8px);
+    }
+    .hero-card strong, .hero-card span {
+      display: block;
+    }
+    .hero-card strong {
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 8px;
+    }
+    .hero-card span {
+      font-size: 0.98rem;
+      color: #fff;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      gap: 22px;
+      margin-top: 22px;
+      align-items: start;
+    }
+    .sidebar, .content section, .callout, .definition, .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .sidebar {
+      position: sticky;
+      top: 22px;
+      padding: 18px;
+    }
+    .sidebar h2, .content h2 {
+      margin: 0 0 12px;
+      font-size: 1.25rem;
+    }
+    .toc {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .toc li { margin: 8px 0; }
+    .toc a {
+      display: block;
+      color: var(--text-2);
+      padding: 7px 10px;
+      border-radius: 10px;
+    }
+    .toc a:hover {
+      background: var(--surface-3);
+      text-decoration: none;
+      color: var(--text);
+    }
+    .content {
+      display: grid;
+      gap: 18px;
+    }
+    section {
+      padding: 22px;
+    }
+    h2 {
+      font-size: 1.6rem;
+      margin: 0 0 10px;
+    }
+    h3 {
+      font-size: 1.15rem;
+      margin: 22px 0 10px;
+    }
+    p { margin: 0 0 12px; color: var(--text-2); }
+    ul, ol { margin: 0 0 12px 20px; color: var(--text-2); }
+    li { margin: 6px 0; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .definition, .callout {
+      padding: 16px;
+      background: var(--surface-2);
+    }
+    .definition h4, .callout h4 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+    .kicker {
+      display: inline-block;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      padding: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 820px;
+    }
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f7faff;
+      color: var(--text);
+      font-size: 0.92rem;
+    }
+    td { color: var(--text-2); }
+    code, pre {
+      font-family: var(--mono);
+      font-size: 0.92rem;
+    }
+    code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid #e1e8f3;
+    }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin: 12px 0 0;
+    }
+    .flow div {
+      background: #f7faff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      color: var(--text-2);
+      min-height: 92px;
+    }
+    .label {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: var(--accent-2);
+    }
+    .note {
+      color: var(--text-3);
+      font-size: 0.95rem;
+    }
+    .good { color: var(--good); font-weight: 700; }
+    .warn { color: var(--warn); font-weight: 700; }
+    .bad { color: var(--bad); font-weight: 700; }
+    .footer {
+      margin: 20px 0 8px;
+      color: var(--text-3);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .hero-grid, .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <span class="eyebrow">Explainer edition</span>
+      <h1>PQC Scanner Technical Strategy, explained from zero</h1>
+      <p>
+        This document is written for someone who does not already know networking, OSI layers,
+        web infrastructure, or cryptography jargon. It explains each term in plain English,
+        then shows how the term matters to a post-quantum cryptography scanner.
+      </p>
+      <div class="hero-grid">
+        <div class="hero-card">
+          <strong>Audience</strong>
+          <span>Beginners who need to learn the concepts and present them clearly.</span>
+        </div>
+        <div class="hero-card">
+          <strong>Goal</strong>
+          <span>Understand what exists in an enterprise, where crypto lives, and what should be scanned.</span>
+        </div>
+        <div class="hero-card">
+          <strong>Scope</strong>
+          <span>OSI layers, web apps, hosting models, protocols, keys, certificates, and scanner priority.</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <h2>Contents</h2>
+        <ul class="toc">
+          <li><a href="#how-to-use">How to use this guide</a></li>
+          <li><a href="#basics">Networking basics</a></li>
+          <li><a href="#osi">OSI layers</a></li>
+          <li><a href="#crypto">Cryptography basics</a></li>
+          <li><a href="#components">Enterprise components</a></li>
+          <li><a href="#web-flow">Web application flow</a></li>
+          <li><a href="#hosting">Where systems are hosted</a></li>
+          <li><a href="#scan-priority">What the scanner should check</a></li>
+          <li><a href="#terms">Glossary</a></li>
+          <li><a href="#presentation">How to present it</a></li>
+        </ul>
+      </aside>
+
+      <main class="content">
+        <section id="how-to-use">
+          <span class="kicker">Section 1</span>
+          <h2>How to use this guide</h2>
+          <p>
+            If you are new to networking, the fastest way to understand this topic is to read it in
+            three passes:
+          </p>
+          <ol>
+            <li>First, learn the basic vocabulary: host, packet, protocol, certificate, and key.</li>
+            <li>Second, learn the OSI model, which is a way of grouping network behavior into layers.</li>
+            <li>Third, connect each enterprise component to the layer where its cryptography appears.</li>
+          </ol>
+          <div class="callout">
+            <h4>What this scanner is really doing</h4>
+            <p>
+              A post-quantum cryptography scanner is not just looking for "encryption."
+              It is trying to find every place where an organization depends on cryptographic
+              trust: certificates, VPN tunnels, secure web traffic, identity systems, hardware
+              security modules, Wi-Fi authentication, database links, and signing keys.
+            </p>
+          </div>
+        </section>
+
+        <section id="basics">
+          <span class="kicker">Section 2</span>
+          <h2>Networking basics, in plain English</h2>
+          <div class="grid-2">
+            <div class="definition">
+              <h4>What is a network?</h4>
+              <p>
+                A network is a group of devices that can communicate with each other.
+                The devices could be laptops, servers, cloud services, phones, printers,
+                Wi-Fi access points, routers, or security appliances.
+              </p>
+            </div>
+            <div class="definition">
+              <h4>What is a packet?</h4>
+              <p>
+                A packet is a small bundle of data sent across the network. Big messages are
+                broken into packets so they can travel efficiently and be reassembled at the destination.
+              </p>
+            </div>
+            <div class="definition">
+              <h4>What is a protocol?</h4>
+              <p>
+                A protocol is a set of rules for communication. For example, HTTP tells a browser
+                how to talk to a web server. TLS tells two systems how to create a secure encrypted channel.
+              </p>
+            </div>
+            <div class="definition">
+              <h4>What is an endpoint?</h4>
+              <p>
+                An endpoint is any device or service that participates in communication.
+                In security work, the word usually means a user device, server, VM, or container host.
+              </p>
+            </div>
+          </div>
+          <p>
+            The important idea is that "networking" is not one thing. It is a stack of layers:
+            some layers move bits, some layers move packets, and some layers create trust,
+            identity, and encryption.
+          </p>
+        </section>
+
+        <section id="osi">
+          <span class="kicker">Section 3</span>
+          <h2>The OSI model, explained simply</h2>
+          <p>
+            The OSI model is a teaching framework that divides networking into seven layers.
+            You do not need to memorize it as a law of nature. You need it because it helps you
+            answer one question: where does a given technology operate, and where does its crypto live?
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Layer</th>
+                  <th>Plain meaning</th>
+                  <th>Typical examples</th>
+                  <th>Why the scanner cares</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>7. Application</td>
+                  <td>The software people directly use.</td>
+                  <td>Web apps, APIs, SaaS portals, email, chat, admin consoles.</td>
+                  <td>This is where business workflows and user-facing crypto often appear.</td>
+                </tr>
+                <tr>
+                  <td>6. Presentation</td>
+                  <td>How data is encoded, serialized, compressed, or encrypted.</td>
+                  <td>JSON, Protobuf, PDF encryption, JWE, codecs, document parsers.</td>
+                  <td>Some crypto is hidden inside libraries or data formats instead of visible UI code.</td>
+                </tr>
+                <tr>
+                  <td>5. Session</td>
+                  <td>How two systems keep a conversation going over time.</td>
+                  <td>SSO, JWT sessions, gRPC sessions, WebSockets, VPN tunnels.</td>
+                  <td>Session identity and token handling are often crypto-dependent.</td>
+                </tr>
+                <tr>
+                  <td>4. Transport</td>
+                  <td>How data moves between two hosts reliably or quickly.</td>
+                  <td>TCP, UDP, TLS termination points, load balancers, API gateways.</td>
+                  <td>Most secure connections are protected here or just above it.</td>
+                </tr>
+                <tr>
+                  <td>3. Network</td>
+                  <td>How packets find their way across networks.</td>
+                  <td>IP, routers, IPsec, VPN gateways, DNSSEC validators.</td>
+                  <td>This layer matters when cryptography protects routing, tunneling, or DNS trust.</td>
+                </tr>
+                <tr>
+                  <td>2. Data Link</td>
+                  <td>How devices communicate on the same local network.</td>
+                  <td>Ethernet, Wi-Fi, switches, 802.1X, MACsec, ARP.</td>
+                  <td>Network access security and Wi-Fi authentication often use certificates or keys.</td>
+                </tr>
+                <tr>
+                  <td>1. Physical</td>
+                  <td>The actual hardware and signals.</td>
+                  <td>Cables, radio, HSMs, TPMs, smart cards, secure boot firmware.</td>
+                  <td>Cryptography is embedded in hardware trust roots and secure device identity.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Why the model is useful even if it is simplified</h3>
+          <p>
+            Real systems do not stay neatly inside one layer. For example, a web application might
+            rely on TLS at transport, JWTs at session/application level, and certificates in a
+            hardware security module at physical level. The OSI model helps you sort these moving parts
+            into a structure you can explain to others.
+          </p>
+        </section>
+
+        <section id="crypto">
+          <span class="kicker">Section 4</span>
+          <h2>Cryptography basics you need before talking about PQC</h2>
+          <div class="grid-2">
+            <div class="definition">
+              <h4>Encryption</h4>
+              <p>
+                Encryption turns readable data into unreadable data so that only authorized parties can recover it.
+                The original readable data is called plaintext. The protected version is ciphertext.
+              </p>
+            </div>
+            <div class="definition">
+              <h4>Symmetric cryptography</h4>
+              <p>
+                The same secret key is used to encrypt and decrypt. It is fast and is often used for bulk data,
+                such as TLS traffic after the handshake completes.
+              </p>
+            </div>
+            <div class="definition">
+              <h4>Asymmetric cryptography</h4>
+              <p>
+                A public key is shared widely, while a private key is kept secret. It is used for identity,
+                key exchange, and signatures. Certificates are built on this model.
+              </p>
+            </div>
+            <div class="definition">
+              <h4>Hashing</h4>
+              <p>
+                A hash function turns data into a fixed-length fingerprint. Hashes are useful for integrity checks,
+                password storage, and digital signatures. A hash is not encryption.
+              </p>
+            </div>
+            <div class="definition">
+              <h4>Digital signature</h4>
+              <p>
+                A signature proves that data came from the holder of a private key and has not been changed.
+                It provides authenticity and integrity, not secrecy.
+              </p>
+            </div>
+            <div class="definition">
+              <h4>Certificate</h4>
+              <p>
+                A certificate is a signed document that binds a public key to an identity such as a domain name,
+                server, organization, or person.
+              </p>
+            </div>
+          </div>
+          <div class="callout">
+            <h4>Why PQC matters</h4>
+            <p>
+              Post-quantum cryptography is the class of algorithms designed to resist attacks from quantum computers.
+              A scanner is interested in where classical cryptography is used so the organization can plan
+              which keys, certificates, and protocols would need replacement or migration.
+            </p>
+          </div>
+          <p>
+            The practical inventory question is not "is there any encryption at all?" The real question is:
+            "where are the trust anchors, who owns them, how are they deployed, and what breaks if we change them?"
+          </p>
+        </section>
+
+        <section id="components">
+          <span class="kicker">Section 5</span>
+          <h2>Enterprise components, translated into beginner language</h2>
+          <p>
+            A large organization contains many kinds of systems. Some are obvious, like web servers.
+            Others are easy to ignore, like DNS resolvers, HSMs, or proxy layers. For a scanner,
+            the goal is to identify every place where cryptography is used directly or indirectly.
+          </p>
+
+          <h3>Application-layer components</h3>
+          <ul>
+            <li><strong>Web applications:</strong> software that users open in a browser. They usually rely on TLS, cookies, sessions, and API calls.</li>
+            <li><strong>APIs:</strong> program-to-program interfaces. They often use TLS, OAuth2, JWT, and mTLS for service identity.</li>
+            <li><strong>SaaS applications:</strong> vendor-hosted services such as email, HR systems, or collaboration platforms. The scanner must watch SSO and admin credentials.</li>
+            <li><strong>Load balancers and reverse proxies:</strong> traffic managers that sit in front of apps. They often terminate TLS, which means they hold or use certificates.</li>
+            <li><strong>Message queues and caching systems:</strong> infrastructure that moves or stores data between app steps. They may not be "user-facing" but still carry secure connections.</li>
+          </ul>
+
+          <h3>Network-layer components</h3>
+          <ul>
+            <li><strong>Routers:</strong> move traffic between networks.</li>
+            <li><strong>Firewalls:</strong> decide which traffic can pass.</li>
+            <li><strong>VPN gateways:</strong> create encrypted tunnels between sites or users and the organization.</li>
+            <li><strong>DNS infrastructure:</strong> resolves names like <code>example.com</code> into IP addresses. Some DNS systems also validate signatures with DNSSEC.</li>
+          </ul>
+
+          <h3>Access and identity components</h3>
+          <ul>
+            <li><strong>SSO systems:</strong> centralized login systems such as SAML or OIDC providers.</li>
+            <li><strong>Certificate authorities and key management:</strong> systems that issue, store, rotate, and revoke keys and certificates.</li>
+            <li><strong>Wi-Fi authentication and 802.1X:</strong> network access controls that can rely on certificates or RADIUS.</li>
+            <li><strong>Hardware security devices:</strong> TPMs, HSMs, smart cards, and tokens that protect private keys from software exposure.</li>
+          </ul>
+        </section>
+
+        <section id="web-flow">
+          <span class="kicker">Section 6</span>
+          <h2>How a web application actually works, step by step</h2>
+          <p>
+            Web applications are important because they are the most common place where cryptography,
+            identity, and infrastructure overlap. A beginner should think of the flow as a chain of hops.
+          </p>
+
+          <div class="flow">
+            <div><span class="label">1. Browser</span>The user types a URL or clicks a link. The browser decides which server to contact.</div>
+            <div><span class="label">2. DNS lookup</span>The browser asks DNS where the domain lives. DNS is the Internet's phone book.</div>
+            <div><span class="label">3. TLS handshake</span>The browser and server agree on encryption and prove identity using certificates.</div>
+            <div><span class="label">4. Web server</span>Nginx, Apache, IIS, or a cloud edge service receives the request and may terminate TLS.</div>
+            <div><span class="label">5. App server</span>The application logic authenticates the user, checks permissions, and processes the request.</div>
+            <div><span class="label">6. Database</span>The app may read or write persistent data through a secure database connection.</div>
+            <div><span class="label">7. Queue or cache</span>Background jobs and cached data help the system stay responsive and reliable.</div>
+            <div><span class="label">8. Response</span>The system sends data back through the same path, often with more than one cryptographic control in place.</div>
+          </div>
+
+          <h3>What TLS is doing in that flow</h3>
+          <p>
+            TLS, or Transport Layer Security, protects data in transit. "In transit" means while it is moving
+            over a network, not while it is stored on disk. TLS gives you three major properties:
+          </p>
+          <ul>
+            <li><strong>Confidentiality:</strong> outsiders cannot read the traffic.</li>
+            <li><strong>Integrity:</strong> outsiders cannot silently alter the traffic.</li>
+            <li><strong>Authentication:</strong> the client can verify the server, and sometimes the server can verify the client.</li>
+          </ul>
+
+          <h3>Why the web path is not just "browser to server"</h3>
+          <p>
+            In real organizations, the browser often talks to a CDN or edge proxy first, then a load balancer,
+            then a web server, then an application server, then one or more internal services. Each hop may use
+            different certificates, different keys, and different trust assumptions. The scanner needs the full chain.
+          </p>
+        </section>
+
+        <section id="hosting">
+          <span class="kicker">Section 7</span>
+          <h2>Where these systems are hosted</h2>
+          <p>
+            Understanding location is important because cryptography changes depending on whether the system is
+            on-premises, in a public cloud, inside a SaaS product, or running on endpoint hardware.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Hosting model</th>
+                  <th>What it means</th>
+                  <th>Typical crypto-related examples</th>
+                  <th>Scanner implication</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>On-premises</td>
+                  <td>Systems physically managed by the organization.</td>
+                  <td>Internal servers, firewalls, switches, HSMs, VPN gateways, directory servers.</td>
+                  <td>You can often inventory hardware, configs, and certificates directly.</td>
+                </tr>
+                <tr>
+                  <td>Public cloud</td>
+                  <td>Infrastructure hosted by a cloud provider but controlled by the organization.</td>
+                  <td>Cloud load balancers, managed databases, cloud KMS, container platforms, edge services.</td>
+                  <td>The scanner must combine cloud APIs with workload inspection.</td>
+                </tr>
+                <tr>
+                  <td>SaaS</td>
+                  <td>Software hosted and operated by a vendor.</td>
+                  <td>SSO integrations, admin portals, SCIM, certificates for federation, email signing.</td>
+                  <td>You may not see the server internals, so you scan the identity and integration surface.</td>
+                </tr>
+                <tr>
+                  <td>Endpoint</td>
+                  <td>User devices and hardware close to the user.</td>
+                  <td>TPM, disk encryption, smart cards, FIDO tokens, secure boot, Wi-Fi authentication.</td>
+                  <td>These assets are critical because they often hold user identity and private keys.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout">
+            <h4>Practical takeaway</h4>
+            <p>
+              A good scanner does not just ask, "Is there a certificate?"
+              It asks, "Where is the certificate used, who owns it, where is the private key stored,
+              how does it move across environments, and what systems depend on it?"
+            </p>
+          </div>
+        </section>
+
+        <section id="scan-priority">
+          <span class="kicker">Section 8</span>
+          <h2>What the scanner should scan first</h2>
+          <p>
+            The scanner should prioritize components by how likely they are to hold important cryptography
+            and by how painful a migration would be if that cryptography changed.
+          </p>
+          <div class="grid-2">
+            <div class="definition">
+              <h4 class="good">High priority</h4>
+              <p>
+                Systems where certificates, key exchange, signatures, or trust anchors are direct and critical:
+                TLS termination, VPN gateways, SSO providers, HSMs, TPMs, certificate stores, database encryption,
+                and secure boot firmware.
+              </p>
+            </div>
+            <div class="definition">
+              <h4 class="warn">Sample or defer</h4>
+              <p>
+                Systems that may use crypto but are not usually the primary migration bottleneck:
+                caching layers, message queues, logging pipelines, proxies, and some internal libraries.
+              </p>
+            </div>
+            <div class="definition">
+              <h4 class="bad">Usually out of scope</h4>
+              <p>
+                Systems with no meaningful cryptographic responsibility:
+                pure routing devices without tunnel crypto, hubs, repeaters, clear-text VLAN tagging,
+                and other components that only move data without securing it.
+              </p>
+            </div>
+            <div class="definition">
+              <h4>Why this ordering matters</h4>
+              <p>
+                Migration planning is limited by time, ownership, and risk.
+                If you spend effort on low-value devices first, you may miss the assets that actually block PQC readiness.
+              </p>
+            </div>
+          </div>
+          <h3>How to explain the scanner logic in one sentence</h3>
+          <p>
+            "The scanner finds the places where trust is created, enforced, stored, or depended on, then ranks them by impact and migration difficulty."
+          </p>
+        </section>
+
+        <section id="terms">
+          <span class="kicker">Section 9</span>
+          <h2>Glossary of key terms</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Term</th>
+                  <th>Plain meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>API</td><td>An interface that lets one program talk to another program.</td></tr>
+                <tr><td>Certificate</td><td>A signed identity document for a public key.</td></tr>
+                <tr><td>Certificate authority</td><td>The organization or system that issues certificates.</td></tr>
+                <tr><td>Cipher suite</td><td>The set of cryptographic algorithms used together in TLS.</td></tr>
+                <tr><td>DNS</td><td>The naming system that turns a domain into an IP address.</td></tr>
+                <tr><td>HSM</td><td>Hardware Security Module, a device that safely stores and uses private keys.</td></tr>
+                <tr><td>IPsec</td><td>A protocol family that encrypts IP traffic, often used for VPNs.</td></tr>
+                <tr><td>JWT</td><td>JSON Web Token, a compact token used to represent identity or claims.</td></tr>
+                <tr><td>mTLS</td><td>Mutual TLS, where both sides present certificates.</td></tr>
+                <tr><td>OAuth2</td><td>A framework for delegated authorization, usually combined with tokens.</td></tr>
+                <tr><td>OIDC</td><td>OpenID Connect, an identity layer on top of OAuth2.</td></tr>
+                <tr><td>PQC</td><td>Post-quantum cryptography, algorithms designed to resist quantum attacks.</td></tr>
+                <tr><td>PKI</td><td>Public Key Infrastructure, the system that manages certificates and trust.</td></tr>
+                <tr><td>RADIUS</td><td>An authentication protocol often used for network access and Wi-Fi.</td></tr>
+                <tr><td>SAML</td><td>Security Assertion Markup Language, used for single sign-on.</td></tr>
+                <tr><td>Secure Boot</td><td>A hardware-backed trust chain that checks firmware and boot components.</td></tr>
+                <tr><td>TLS</td><td>Transport Layer Security, which encrypts traffic in transit.</td></tr>
+                <tr><td>TPM</td><td>Trusted Platform Module, a chip that stores device trust materials.</td></tr>
+                <tr><td>WebSocket</td><td>A long-lived connection used for real-time browser communication.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="presentation">
+          <span class="kicker">Section 10</span>
+          <h2>How to present this to other people</h2>
+          <p>
+            If you need to explain this in a meeting, do not start with abbreviations.
+            Start with the problem: modern organizations depend on cryptography everywhere,
+            but they often do not have a complete inventory of where it is used.
+          </p>
+          <ol>
+            <li>Explain that the OSI model is just a map for organizing network concepts.</li>
+            <li>Show that encryption is not only in web traffic, but also in identity systems, VPNs, Wi-Fi, databases, and hardware.</li>
+            <li>Show that the scanner is trying to find trust points, not just encryptions.</li>
+            <li>End with why PQC matters: organizations need to know what must change before quantum-safe migration becomes urgent.</li>
+          </ol>
+
+          <div class="callout">
+            <h4>One-sentence summary you can reuse</h4>
+            <p>
+              "This strategy maps every important cryptographic dependency in the enterprise so we can rank what must be migrated first for post-quantum readiness."
+            </p>
+          </div>
+
+          <p class="note">
+            If you want, I can turn this into a slide-style version next, or create a second version that is
+            even more beginner-friendly with diagrams and examples for each layer.
+          </p>
+        </section>
+
+        <div class="footer">
+          Built as a standalone explainer for the PQC Scanner technical strategy.
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

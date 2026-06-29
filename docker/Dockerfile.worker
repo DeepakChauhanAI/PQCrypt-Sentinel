@@ -1,0 +1,36 @@
+FROM python:3.12-slim
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV PIP_NO_CACHE_DIR=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates curl git \
+      tshark nmap openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY backend/requirements.txt backend/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
+
+RUN mkdir -p /usr/local/bin /app/bin
+
+RUN curl -fsSL -o /usr/local/bin/pqcscan https://github.com/chediabolique/pqcscan/releases/latest/download/pqcscan-x86_64-unknown-linux-musl \
+    && chmod +x /usr/local/bin/pqcscan || true
+
+RUN git clone --depth 1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh \
+    && ln -sf /opt/testssl.sh/testssl.sh /usr/local/bin/testssl.sh || true
+
+RUN git clone --depth 1 https://github.com/jtesta/ssh-audit.git /opt/ssh-audit \
+    && ln -sf /opt/ssh-audit/ssh-audit.py /usr/local/bin/ssh-audit || true
+
+COPY backend/ /app/
+
+RUN useradd -m -u 1000 pqcrypt \
+    && chown -R pqcrypt:pqcrypt /app
+
+USER pqcrypt
+
+CMD ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info"]

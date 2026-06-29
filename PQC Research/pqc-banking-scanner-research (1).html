@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC Banking Scanner — Research Document</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1eb;
+    --surface: #faf8f3;
+    --surface2: #ede9df;
+    --border: #d4cfc4;
+    --border2: #c5bfb2;
+    --ink: #1c1a16;
+    --ink2: #3d3a34;
+    --muted: #7a7469;
+    --accent: #1a3a5c;
+    --accent-light: #2c5f8a;
+    --red: #8b2a1a;
+    --orange: #9a4a10;
+    --yellow: #7a6010;
+    --green: #1a5c35;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --display: 'Playfair Display', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .site-header {
+    background: var(--accent);
+    color: #fff;
+    padding: 48px 0 40px;
+    border-bottom: 3px solid #0d2240;
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .header-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    max-width: 200px;
+  }
+
+  h1.site-title {
+    font-family: var(--display);
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 16px;
+  }
+
+  h1.site-title span {
+    color: #7ab3d4;
+  }
+
+  .header-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  /* NAV */
+  .tab-nav {
+    background: var(--ink);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid #0d0c0a;
+  }
+
+  .tab-nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab-nav-inner::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    background: none;
+    border: none;
+    padding: 14px 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+  }
+
+  .tab-btn:hover { color: rgba(255,255,255,0.75); }
+
+  .tab-btn.active {
+    color: #fff;
+    border-bottom-color: #7ab3d4;
+  }
+
+  /* MAIN LAYOUT */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 40px 80px;
+  }
+
+  /* TAB PANELS */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: var(--display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    margin-top: 48px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .section-title:first-child { margin-top: 0; }
+
+  .section-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  /* PROSE */
+  .prose {
+    color: var(--ink2);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+    max-width: 860px;
+  }
+
+  /* TABLES */
+  .table-wrap {
+    overflow-x: auto;
+    margin-bottom: 32px;
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    font-family: var(--sans);
+    min-width: 600px;
+  }
+
+  thead tr {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody tr:last-child { border-bottom: none; }
+
+  tbody td {
+    padding: 10px 14px;
+    vertical-align: top;
+    color: var(--ink2);
+    line-height: 1.5;
+  }
+
+  tbody tr:nth-child(even) { background: var(--surface); }
+  tbody tr:nth-child(even):hover { background: var(--surface2); }
+
+  /* RISK BADGES */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge-critical { background: #f5e0dd; color: var(--red); border: 1px solid #e8bdb8; }
+  .badge-high { background: #fce8d5; color: var(--orange); border: 1px solid #f0c8a0; }
+  .badge-medium { background: #fdf5d8; color: var(--yellow); border: 1px solid #e8d888; }
+  .badge-low { background: #d8f0e4; color: var(--green); border: 1px solid #a8d8bc; }
+  .badge-safe { background: #d4ecd4; color: #1a5a1a; border: 1px solid #a0cca0; }
+  .badge-now { background: #f5d8d8; color: #6b0a0a; border: 1px solid #d8a0a0; }
+
+  /* FIELD TABLE (CBOM) */
+  .field-table {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    margin-bottom: 32px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .field-table-header {
+    background: var(--surface2);
+    border-bottom: 2px solid var(--border2);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .field-table-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .asset-type-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 200px 140px 1fr;
+    border-bottom: 1px solid var(--border);
+    padding: 9px 20px;
+    gap: 20px;
+    align-items: start;
+    transition: background 0.15s;
+  }
+
+  .field-row:last-child { border-bottom: none; }
+  .field-row:hover { background: var(--surface2); }
+
+  .field-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .field-example {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .field-desc {
+    font-size: 12.5px;
+    color: var(--ink2);
+    line-height: 1.5;
+  }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: #1c1a16;
+    color: #e8e4da;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 20px 24px;
+    border-radius: 2px;
+    overflow-x: auto;
+    margin-bottom: 24px;
+    line-height: 1.6;
+    border-left: 3px solid var(--accent-light);
+  }
+
+  .code-block .comment { color: #7a7469; }
+  .code-block .string { color: #7ab3d4; }
+  .code-block .keyword { color: #c8a060; }
+  .code-block .fn { color: #90c090; }
+
+  .code-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    margin-top: 20px;
+  }
+
+  /* CONNECTION CARDS */
+  .conn-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-left: 4px solid var(--accent);
+    margin-bottom: 20px;
+    padding: 20px 24px;
+  }
+
+  .conn-card-title {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .conn-card-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .conn-card-body {
+    font-size: 13px;
+    color: var(--ink2);
+    line-height: 1.65;
+  }
+
+  .conn-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    margin: 2px 2px 2px 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* INFOBOX */
+  .infobox {
+    background: #e8f0f8;
+    border: 1px solid #b8cfe0;
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--accent);
+    line-height: 1.6;
+  }
+
+  .infobox strong { display: block; margin-bottom: 4px; font-weight: 600; }
+
+  /* WARNBOX */
+  .warnbox {
+    background: #fdf5e0;
+    border: 1px solid #e8d080;
+    border-left: 4px solid var(--yellow);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: #5a4a10;
+    line-height: 1.6;
+  }
+
+  .warnbox strong { display: block; margin-bottom: 4px; font-weight: 600; color: var(--yellow); }
+
+  /* H2/H3 within content */
+  .content-h2 {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 36px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .content-h3 {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 28px 0 10px;
+  }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  /* LAYER HEADER */
+  .layer-header {
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 20px;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .layer-num {
+    font-family: var(--display);
+    font-size: 28px;
+    font-weight: 900;
+    color: #7ab3d4;
+    line-height: 1;
+  }
+
+  .layer-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .layer-note {
+    font-family: var(--sans);
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 2px;
+  }
+
+  .layer-block {
+    margin-bottom: 32px;
+    border: 1px solid var(--border2);
+    overflow: hidden;
+  }
+
+  /* PRIORITY SUMMARY TABLE */
+  .priority-block {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: 52px 1fr 2fr 1fr;
+    transition: background 0.2s;
+  }
+
+  .priority-block:hover { background: var(--surface2); }
+
+  .pb-num {
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--display);
+    font-size: 24px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pb-cell {
+    padding: 14px 16px;
+    border-left: 1px solid var(--border);
+  }
+
+  .pb-name {
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+
+  .pb-org {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .pb-why {
+    font-size: 12.5px;
+    color: var(--ink2);
+    line-height: 1.5;
+  }
+
+  /* footer */
+  .site-footer {
+    background: var(--ink);
+    color: rgba(255,255,255,0.3);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Animation */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tab-panel.active { animation: fadeUp 0.3s ease both; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .header-inner, .main { padding: 24px 20px; }
+    .tab-nav-inner { padding: 0 20px; }
+    .priority-block { grid-template-columns: 40px 1fr; }
+    .pb-cell:nth-child(3), .pb-cell:nth-child(4) { display: none; }
+    .site-footer { padding: 20px; }
+  }
+
+  /* REFERENCES */
+  .refs-section {
+    margin-top: 56px;
+    border-top: 2px solid var(--accent);
+    padding-top: 32px;
+  }
+
+  .refs-title {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .refs-subtitle {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .refs-group {
+    margin-bottom: 28px;
+  }
+
+  .refs-group-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .refs-group-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .ref-item {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 12px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    margin-bottom: 3px;
+    transition: background 0.15s, border-color 0.15s;
+    align-items: start;
+  }
+
+  .ref-item:hover {
+    background: var(--surface2);
+    border-color: var(--accent);
+  }
+
+  .ref-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    padding-top: 2px;
+    text-align: right;
+  }
+
+  .ref-body {}
+
+  .ref-title {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+    line-height: 1.4;
+  }
+
+  .ref-title:hover { border-bottom-color: var(--accent); }
+
+  .ref-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 3px;
+    letter-spacing: 0.03em;
+  }
+
+  .ref-scope {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--accent-light);
+    background: #e8f0f8;
+    border: 1px solid #b8cfe0;
+    padding: 1px 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-eyebrow">PQC Research · Banking Sector</div>
+    <h1 class="site-title">Post-Quantum Cryptography<br><span>Banking Scanner Research</span></h1>
+    <div class="header-meta">
+      <span>Compiled: May 2026</span>
+      <span>Sources: NIST SP 1800-38B · FS-ISAC · CMORG · BSI · CycloneDX CBOM</span>
+      <span>4 Sections · For Internal Use</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="showTab('tab1', this)">01 · What to Scan</button>
+    <button class="tab-btn" onclick="showTab('tab2', this)">02 · Risk Assessment</button>
+    <button class="tab-btn" onclick="showTab('tab3', this)">03 · NIST Reporting Format</button>
+    <button class="tab-btn" onclick="showTab('tab4', this)">04 · Scanner Connections</button>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- ===================== TAB 1: WHAT TO SCAN ===================== -->
+  <div id="tab1" class="tab-panel active">
+
+    <div class="section-title">What to Scan — Banking PQC Asset Table</div>
+    <div class="section-sub">All seven infrastructure layers · Derived from NIST SP 1800-38B, FS-ISAC Future State, CMORG April 2025</div>
+
+    <div class="infobox">
+      <strong>Scope</strong>
+      This table covers every asset class across a bank's infrastructure that must be scanned for quantum-vulnerable cryptography. For each asset, it defines the specific component, what to scan for, the CBOM asset type, PQC risk level, and NIST IR 8547 deprecation deadline.
+    </div>
+
+    <!-- Layer 1 -->
+    <div class="layer-block">
+      <div class="layer-header">
+        <div class="layer-num">L1</div>
+        <div>
+          <div class="layer-name">Network & Transport</div>
+          <div class="layer-note">Everything transmitted over the wire — TLS, VPN, SWIFT, RTGS</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Specific Component</th><th>What to Scan For</th><th>CBOM Type</th><th>Risk</th><th>Deadline</th></tr></thead>
+          <tbody>
+            <tr><td>TLS endpoints</td><td>HTTPS, API gateways, load balancers, CDNs</td><td>TLS version, cipher suites, key exchange algorithm, certificate algorithm & key size</td><td>Protocol + Certificate + Algorithm</td><td><span class="badge badge-critical">Critical</span></td><td>2030 (KEX) · 2035 (all)</td></tr>
+            <tr><td>Internal service mesh</td><td>Microservice mTLS (Kubernetes, Istio, Linkerd)</td><td>mTLS cipher suites, certificate validity, key algorithm, auto-rotation capability</td><td>Protocol + Certificate</td><td><span class="badge badge-critical">Critical</span></td><td>2030</td></tr>
+            <tr><td>VPN tunnels</td><td>IPSec, OpenVPN, WireGuard (branch-to-DC, DC-to-cloud)</td><td>IKE/IKEv2 cipher proposals, DH group sizes, PSK vs certificate auth</td><td>Protocol + Algorithm</td><td><span class="badge badge-critical">Critical</span></td><td>2030</td></tr>
+            <tr><td>SWIFT connectivity</td><td>SWIFTNet Link, Alliance Gateway, Alliance Lite2</td><td>SWIFTNet TLS certificate algorithm, LAU key (HMAC-SHA256 — safe), SWIFT PKI certs</td><td>Certificate + Key + Protocol</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>RTGS / NEFT / IMPS</td><td>RBI / NPCI network interfaces</td><td>TLS cipher suites at regulatory interface, certificate algorithm</td><td>Protocol + Certificate</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>DNS / DNSSEC</td><td>Internal resolvers, DNSSEC signing zones</td><td>DNSSEC signing algorithm (RSA vs ECDSA), key rollover period</td><td>Algorithm + Key</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>OCSP / CRL</td><td>Certificate revocation infrastructure</td><td>Signing algorithm on OCSP responder, OCSP certificate</td><td>Certificate + Algorithm</td><td><span class="badge badge-medium">Medium</span></td><td>2030</td></tr>
+            <tr><td>SMTP / Email</td><td>Email servers, STARTTLS, S/MIME</td><td>STARTTLS cipher suite, S/MIME signing certificate algorithm</td><td>Protocol + Certificate + Algorithm</td><td><span class="badge badge-medium">Medium</span></td><td>2035</td></tr>
+            <tr><td>Network appliances</td><td>Firewalls, routers, switches (management plane)</td><td>SSH cipher suites for remote management, firmware signing algorithm</td><td>Protocol + Algorithm</td><td><span class="badge badge-medium">Medium</span></td><td>2035</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Layer 2 -->
+    <div class="layer-block">
+      <div class="layer-header">
+        <div class="layer-num">L2</div>
+        <div>
+          <div class="layer-name">PKI & Certificate Infrastructure</div>
+          <div class="layer-note">Must be migrated first — all other layers depend on it</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Specific Component</th><th>What to Scan For</th><th>CBOM Type</th><th>Risk</th><th>Deadline</th></tr></thead>
+          <tbody>
+            <tr><td>Root CA</td><td>Internal root certificate authority</td><td>Signing algorithm (RSA-4096 or ECDSA), key size, validity period, HSM-backed?</td><td>Certificate + Key</td><td><span class="badge badge-critical">Critical</span></td><td>2035</td></tr>
+            <tr><td>Intermediate CAs</td><td>Issuing CAs for TLS, code signing, client auth</td><td>Algorithm, key size, HSM-backed, CRL/OCSP configuration</td><td>Certificate + Key</td><td><span class="badge badge-critical">Critical</span></td><td>2035</td></tr>
+            <tr><td>TLS server certificates</td><td>All issued TLS certs across domains and services</td><td>Algorithm (RSA vs ECDSA), key size, SAN entries, expiry, issuer chain</td><td>Certificate + Key</td><td><span class="badge badge-critical">Critical</span></td><td>2030</td></tr>
+            <tr><td>Client certificates</td><td>Device auth (802.1X), API mTLS, banker smartcards</td><td>Algorithm, key size, validity period, issuing CA</td><td>Certificate + Key</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>Code signing certificates</td><td>Application releases, scripts, firmware signing</td><td>Algorithm, key size, key storage (HSM?), certificate validity</td><td>Certificate + Key</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>Document signing certificates</td><td>Regulatory filings, legal documents, contracts</td><td>Algorithm, key size, timestamp authority certificate</td><td>Certificate + Key</td><td><span class="badge badge-medium">Medium</span></td><td>2035</td></tr>
+            <tr><td>Timestamp authority (TSA)</td><td>Used for long-term signature validity</td><td>Signing algorithm, key size</td><td>Certificate + Algorithm</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Layer 3 -->
+    <div class="layer-block">
+      <div class="layer-header">
+        <div class="layer-num">L3</div>
+        <div>
+          <div class="layer-name">HSM & Key Management</div>
+          <div class="layer-note">Highest criticality — all cryptographic operations flow through here</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Specific Component</th><th>What to Scan For</th><th>CBOM Type</th><th>Risk</th><th>Deadline</th></tr></thead>
+          <tbody>
+            <tr><td>General purpose HSMs</td><td>Thales Luna, Entrust nShield, Utimaco</td><td>Firmware version, supported algorithms, PQC readiness (ML-KEM/ML-DSA support), FIPS 140-3 status</td><td>Key + Algorithm</td><td><span class="badge badge-critical">Critical</span></td><td>Hardware replacement may be required before 2030</td></tr>
+            <tr><td>Payment HSMs</td><td>Thales payShield, Futurex Excrypt</td><td>PIN block encryption algorithm (3DES vs AES), HSM firmware version, PCI HSM validation</td><td>Key + Algorithm</td><td><span class="badge badge-now">Now</span></td><td>3DES disallowed now</td></tr>
+            <tr><td>Key Management Server</td><td>Thales CipherTrust, IBM SKLM, Entrust KeyControl</td><td>Master key algorithm, key wrapping algorithm, key hierarchy structure</td><td>Key + Algorithm</td><td><span class="badge badge-critical">Critical</span></td><td>2030</td></tr>
+            <tr><td>Master keys (LMK / ZMK)</td><td>Local Master Keys, Zone Master Keys in HSM</td><td>Algorithm, key size, last rotation date, key custody process</td><td>Key</td><td><span class="badge badge-critical">Critical</span></td><td>2030</td></tr>
+            <tr><td>Zone keys (ZEK / ZPK)</td><td>Zone Encryption Keys, Zone PIN Keys</td><td>Algorithm (3DES vs AES), rotation frequency, injection method</td><td>Key</td><td><span class="badge badge-now">Now</span></td><td>3DES disallowed now</td></tr>
+            <tr><td>Token vault</td><td>Tokenization system HSM (card PAN tokenization)</td><td>Format-preserving encryption algorithm (AES-FF1/FF3), key algorithm</td><td>Key + Algorithm</td><td><span class="badge badge-low">Low if AES-256</span></td><td>Safe if AES-256</td></tr>
+            <tr><td>Cloud KMS</td><td>AWS KMS, Azure Key Vault, GCP Cloud KMS</td><td>CMK algorithm (RSA/ECDSA — vulnerable), key type, BYOK vs managed</td><td>Key + Algorithm</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Layer 4 -->
+    <div class="layer-block">
+      <div class="layer-header">
+        <div class="layer-num">L4</div>
+        <div>
+          <div class="layer-name">Application Layer</div>
+          <div class="layer-note">Largest attack surface — CBS, payment systems, internet/mobile banking</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Specific Component</th><th>What to Scan For</th><th>CBOM Type</th><th>Risk</th><th>Deadline</th></tr></thead>
+          <tbody>
+            <tr><td>Core Banking System</td><td>Finacle, Temenos, FIS Profile, Flexcube</td><td>Hardcoded crypto API calls, crypto library versions (OpenSSL, BouncyCastle), TLS config, session token signing</td><td>Algorithm + Protocol</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>Internet banking portal</td><td>Web frontend + backend APIs</td><td>TLS config, JWT signing algorithm (RS256/ES256 — vulnerable), OAuth2 token signing, session cookie signing</td><td>Algorithm + Protocol</td><td><span class="badge badge-critical">Critical</span></td><td>2030</td></tr>
+            <tr><td>Mobile banking app</td><td>iOS/Android apps and backend API</td><td>TLS pinned certificate algorithm, JWT signing, local data encryption algorithm, crypto library in APK/IPA</td><td>Algorithm + Certificate</td><td><span class="badge badge-critical">Critical</span></td><td>2030</td></tr>
+            <tr><td>Payment switch</td><td>NEFT/RTGS/IMPS/UPI processing engine</td><td>Message signing algorithm, TLS to NPCI/RBI, HSM interface protocol</td><td>Algorithm + Protocol + Key</td><td><span class="badge badge-critical">Critical</span></td><td>2030</td></tr>
+            <tr><td>Card management system</td><td>Credit/debit card issuance, PIN generation</td><td>PIN block format (ISO-0/ISO-3 → ISO-4), card verification algorithm (CVV), card personalisation bureau interface</td><td>Algorithm + Key</td><td><span class="badge badge-now">Now</span></td><td>ISO-0/3DES disallowed now</td></tr>
+            <tr><td>ATM application</td><td>XFS middleware, ATM host interface</td><td>EPP firmware algorithm, TLS to ATM host, remote management encryption</td><td>Algorithm + Protocol</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>SWIFT messaging app</td><td>Alliance Messaging Hub, Alliance Web Platform</td><td>Message signing algorithm, SWIFT LAU key (HMAC-SHA256 — safe), MX vs MT message signing</td><td>Algorithm + Key</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>Treasury / FX system</td><td>Reuters Eikon, Bloomberg Terminal APIs</td><td>TLS cipher suite on market data feeds, FIX protocol encryption</td><td>Protocol + Algorithm</td><td><span class="badge badge-medium">Medium</span></td><td>2035</td></tr>
+            <tr><td>AML / KYC platform</td><td>Transaction monitoring, customer screening</td><td>API TLS, data encryption at rest algorithm, report signing</td><td>Algorithm + Protocol</td><td><span class="badge badge-medium">Medium</span></td><td>2035</td></tr>
+            <tr><td>CI/CD pipeline</td><td>Jenkins, GitHub Actions, GitLab CI</td><td>Code signing certificate, artifact signing, container image signing (Cosign)</td><td>Certificate + Key + Algorithm</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Layer 5 -->
+    <div class="layer-block">
+      <div class="layer-header">
+        <div class="layer-num">L5</div>
+        <div>
+          <div class="layer-name">Data & Storage Layer</div>
+          <div class="layer-note">HNDL threat is most acute here — long-lived data already being harvested</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Specific Component</th><th>What to Scan For</th><th>CBOM Type</th><th>Risk</th><th>Deadline</th></tr></thead>
+          <tbody>
+            <tr><td>Database encryption (TDE)</td><td>Oracle TDE, SQL Server TDE, DB2 encryption</td><td>Encryption algorithm, key size (AES-128 vs AES-256), key storage location (in-DB vs HSM)</td><td>Algorithm + Key</td><td><span class="badge badge-medium">Medium</span></td><td>AES-128 → AES-256 upgrade needed</td></tr>
+            <tr><td>Column-level encryption</td><td>Encrypted PII columns (Aadhaar, PAN, account numbers)</td><td>Algorithm, key size, key management method</td><td>Algorithm + Key</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>Backup encryption</td><td>Tape backup, cloud backup (Veeam, Commvault)</td><td>Algorithm, key size, key storage for backup decryption</td><td>Algorithm + Key</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>File/disk encryption</td><td>LUKS (Linux), BitLocker (Windows) on servers</td><td>Encryption algorithm, key size</td><td>Algorithm + Key</td><td><span class="badge badge-medium">Medium</span></td><td>AES-256 safe · AES-128 upgrade needed</td></tr>
+            <tr><td>Email encryption</td><td>S/MIME certificates, PGP keys</td><td>Encryption algorithm (RSA/ECDH in S/MIME — vulnerable), key size</td><td>Algorithm + Key + Certificate</td><td><span class="badge badge-medium">Medium</span></td><td>2035</td></tr>
+            <tr><td>Cold storage / archive tapes</td><td>Regulatory archive data (7–10 year retention)</td><td>Algorithm on archived data, key accessibility, re-encryption feasibility</td><td>Algorithm + Key</td><td><span class="badge badge-critical">Critical</span></td><td>Immediate — HNDL threat</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Layer 6 -->
+    <div class="layer-block">
+      <div class="layer-header">
+        <div class="layer-num">L6</div>
+        <div>
+          <div class="layer-name">Infrastructure & Compute</div>
+          <div class="layer-note">SSH keys, Kerberos, container secrets, firmware</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Specific Component</th><th>What to Scan For</th><th>CBOM Type</th><th>Risk</th><th>Deadline</th></tr></thead>
+          <tbody>
+            <tr><td>Server SSH</td><td>All Linux/Unix servers</td><td>SSH key algorithm (RSA-2048/ECDSA vs Ed25519), host key algorithm, authorized_keys entries</td><td>Algorithm + Key</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>Kerberos (Active Directory)</td><td>Windows AD authentication</td><td>Kerberos ticket encryption algorithm (AES-256-CTS — safe; RC4 — vulnerable), PKINIT certificate algorithm</td><td>Algorithm + Certificate</td><td><span class="badge badge-high">High</span></td><td>RC4: Now · PKINIT RSA: 2030</td></tr>
+            <tr><td>Container platform</td><td>Kubernetes API server, etcd encryption</td><td>etcd encryption key algorithm, API server TLS cipher suite, service account signing key</td><td>Algorithm + Certificate + Key</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>Firmware signing</td><td>BIOS/UEFI firmware, OS kernel signing</td><td>Signing algorithm (RSA vs ECDSA vs LMS/XMSS), signing certificate</td><td>Algorithm + Certificate</td><td><span class="badge badge-high">High</span></td><td>2030 — firmware runs for 10+ years</td></tr>
+            <tr><td>OS trust store</td><td>Java cacerts, Windows Cert Store, Linux ca-bundle</td><td>Algorithm and key size of every trusted root CA</td><td>Certificate</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>Hypervisor / VM</td><td>VMware vSphere, Hyper-V management</td><td>vCenter TLS certificate, VM encryption algorithm, vSAN encryption</td><td>Certificate + Algorithm</td><td><span class="badge badge-medium">Medium</span></td><td>2035</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Layer 7 -->
+    <div class="layer-block">
+      <div class="layer-header">
+        <div class="layer-num">L7</div>
+        <div>
+          <div class="layer-name">Endpoint, Branch & Third Party</div>
+          <div class="layer-note">Long hardware replacement cycles — planning must start now</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Specific Component</th><th>What to Scan For</th><th>CBOM Type</th><th>Risk</th><th>Deadline</th></tr></thead>
+          <tbody>
+            <tr><td>ATM hardware</td><td>Diebold Nixdorf, NCR, GRG ATMs</td><td>EPP firmware algorithm, ATM host TLS, OS Schannel settings</td><td>Algorithm + Protocol</td><td><span class="badge badge-high">High</span></td><td>2030 — 7–10 yr replacement cycle</td></tr>
+            <tr><td>POS terminals</td><td>Payment terminals at branches and merchants</td><td>PIN block format (ISO-0/ISO-3 → ISO-4), TLS to acquirer, firmware signing algorithm</td><td>Algorithm + Key</td><td><span class="badge badge-now">Now</span></td><td>3DES disallowed now</td></tr>
+            <tr><td>802.1X certificates</td><td>Network device authentication (wired/wireless)</td><td>Certificate algorithm, key size, issuing CA</td><td>Certificate</td><td><span class="badge badge-medium">Medium</span></td><td>2030</td></tr>
+            <tr><td>Payment networks</td><td>Visa/Mastercard host interfaces</td><td>TLS cipher suite at network boundary, HSM interface algorithm</td><td>Protocol + Algorithm</td><td><span class="badge badge-critical">Critical</span></td><td>2030 — cannot migrate faster than network</td></tr>
+            <tr><td>Card personalisation bureau</td><td>External bureau embedding keys on new cards</td><td>Key injection algorithm (RSA vs AES), transport key algorithm</td><td>Algorithm + Key</td><td><span class="badge badge-critical">Critical</span></td><td>2030</td></tr>
+            <tr><td>Cloud providers</td><td>AWS, Azure, GCP (IaaS/PaaS services)</td><td>KMS CMK algorithm, TLS to cloud APIs, object storage encryption</td><td>Algorithm + Key + Certificate</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>SWIFT Service Bureau</td><td>Third-party SWIFT operator (if used)</td><td>All SWIFT-layer assets plus bureau's own PKI</td><td>Certificate + Algorithm + Key</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td>SaaS vendors</td><td>CRM, HR, collaboration tools</td><td>TLS cipher suite, SSO (SAML) certificate algorithm, data-at-rest encryption</td><td>Protocol + Certificate + Algorithm</td><td><span class="badge badge-medium">Medium</span></td><td>2035</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Priority summary -->
+    <div class="section-title" style="margin-top:48px;">Layer Priority Summary</div>
+    <div class="section-sub">Migration order based on FS-ISAC risk framework and NIST IR 8547 deadlines</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Priority</th><th>Layer</th><th>Overall Risk</th><th>Primary Reason</th></tr></thead>
+        <tbody>
+          <tr><td>1st</td><td>HSM & Key Management</td><td><span class="badge badge-critical">Critical</span></td><td>Everything depends on key material; HSM hardware may require physical replacement</td></tr>
+          <tr><td>2nd</td><td>PKI & Certificates</td><td><span class="badge badge-critical">Critical</span></td><td>All TLS, code signing, and auth depends on CA chain — migrate before dependent systems</td></tr>
+          <tr><td>3rd</td><td>Network & Transport</td><td><span class="badge badge-critical">Critical</span></td><td>Internet-facing, HNDL-exposed, payment continuity risk</td></tr>
+          <tr><td>4th</td><td>Application (CBS, payments)</td><td><span class="badge badge-high">High</span></td><td>Largest attack surface; most HNDL-exposed data flows through application layer</td></tr>
+          <tr><td>5th</td><td>Data & Storage (archives, backups)</td><td><span class="badge badge-high">High</span></td><td>HNDL: adversaries may already be storing intercepted traffic for future decryption</td></tr>
+          <tr><td>6th</td><td>Infrastructure & Compute</td><td><span class="badge badge-high">High</span></td><td>SSH keys, Kerberos, container secrets are broadly used across all other layers</td></tr>
+          <tr><td>7th</td><td>Endpoint & Branch (ATMs, POS)</td><td><span class="badge badge-high">High</span></td><td>Long hardware replacement cycle — planning must begin immediately despite lower urgency</td></tr>
+          <tr><td>8th</td><td>Third Party & Vendor</td><td><span class="badge badge-medium">Medium-High</span></td><td>Bank cannot migrate faster than vendors; engagement and assessment must start now</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- REFERENCES TAB 1 -->
+    <div class="refs-section">
+      <div class="refs-title">References</div>
+      <div class="refs-subtitle">Sources used for the asset scanning table · All links verified May 2026</div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">NIST — Primary Standards & Guidance</div>
+
+        <div class="ref-item">
+          <div class="ref-num">1</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.nccoe.nist.gov/publications/practice-guide/migration-post-quantum-cryptography-nist-sp-1800-38-practice-guide" target="_blank">NIST SP 1800-38B — Migration to Post-Quantum Cryptography: Cryptographic Discovery</a>
+            <span class="ref-scope">Layer scan methodology · Discovery domains · CBOM output</span>
+            <div class="ref-meta">NIST NCCoE · Newhouse, Souppaya, Barker, Brown · Dec 2023 Preliminary Draft · nccoe.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">2</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf" target="_blank">NIST IR 8547 — Transition to Post-Quantum Cryptography Standards (Initial Public Draft)</a>
+            <span class="ref-scope">Deprecation deadlines · Algorithm disallowance timeline</span>
+            <div class="ref-meta">NIST · Moody et al. · November 2024 · nvlpubs.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">3</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://csrc.nist.gov/pubs/fips/203/final" target="_blank">FIPS 203 — Module-Lattice-Based Key-Encapsulation Mechanism Standard (ML-KEM)</a>
+            <span class="ref-scope">PQC replacement for RSA/ECDH key exchange</span>
+            <div class="ref-meta">NIST · August 2024 · csrc.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">4</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://csrc.nist.gov/pubs/fips/204/final" target="_blank">FIPS 204 — Module-Lattice-Based Digital Signature Algorithm Standard (ML-DSA)</a>
+            <span class="ref-scope">PQC replacement for RSA/ECDSA signatures</span>
+            <div class="ref-meta">NIST · August 2024 · csrc.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">5</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://csrc.nist.gov/pubs/fips/205/final" target="_blank">FIPS 205 — Stateless Hash-Based Digital Signature Standard (SLH-DSA)</a>
+            <span class="ref-scope">Backup signature algorithm · Long-lived signing keys · Firmware signing</span>
+            <div class="ref-meta">NIST · August 2024 · csrc.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">6</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://csrc.nist.gov/pubs/sp/800/208/final" target="_blank">NIST SP 800-208 — Recommendation for Stateful Hash-Based Signature Schemes (LMS, XMSS)</a>
+            <span class="ref-scope">Firmware signing · Code signing · HSM root key signing</span>
+            <div class="ref-meta">NIST · October 2020 · csrc.nist.gov</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">Financial Sector Guidance</div>
+
+        <div class="ref-item">
+          <div class="ref-num">7</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.fsisac.com/hubfs/Knowledge/PQC/FutureState.pdf" target="_blank">FS-ISAC — PQC Future State Technical Paper</a>
+            <span class="ref-scope">Banking layer prioritization · SWIFT scanning · HSM risk · Phase 1 Discovery framework</span>
+            <div class="ref-meta">FS-ISAC PQC Working Group · 2023 · fsisac.com</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">8</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.fsisac.com/hubfs/Knowledge/PQC/BuildingCryptographicAgilityInTheFinancialSector.pdf" target="_blank">FS-ISAC — Building Cryptographic Agility in the Financial Sector</a>
+            <span class="ref-scope">Layer migration priority order · Application layer crypto dependencies</span>
+            <div class="ref-meta">FS-ISAC PQC Working Group · October 2024 · fsisac.com</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">9</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.fsisac.com/hubfs/Knowledge/PQC/PreparingForAPostQuantumWorldByManagingCryptographicRisk.pdf" target="_blank">FS-ISAC — Preparing for a Post-Quantum World by Managing Cryptographic Risk</a>
+            <span class="ref-scope">HNDL threat model · Data sensitivity classification · Long-lived data risk</span>
+            <div class="ref-meta">FS-ISAC PQC Working Group · March 2023 · fsisac.com</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">10</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.cmorg.org.uk/sites/default/files/2025-06/CMORG%20-%20Guidance%20for%20Post-Quantum%20Cryptography%20-%20April%202025%20-%20TLP%20CLEAR%20(1).pdf" target="_blank">CMORG — Guidance for Post-Quantum Cryptography (TLP:CLEAR)</a>
+            <span class="ref-scope">SWIFT · HSM · Settlement system scanning · UK capital markets layer assets</span>
+            <div class="ref-meta">Capital Markets Operations & Regulatory Group · April 2025 · cmorg.org.uk</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">Technical & Algorithm Standards</div>
+
+        <div class="ref-item">
+          <div class="ref-num">11</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TG02102/BSI-TR-02102-1.pdf" target="_blank">BSI TR-02102-1 — Cryptographic Mechanisms: Recommendations and Key Lengths (Version 2026-01)</a>
+            <span class="ref-scope">Minimum key sizes · Algorithm selection · 120-bit security floor · Hybrid mode requirements</span>
+            <div class="ref-meta">Bundesamt für Sicherheit in der Informationstechnik (BSI) · Updated 2026 · bsi.bund.de</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">12</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://datatracker.ietf.org/doc/draft-ietf-tls-hybrid-design/" target="_blank">IETF Draft — Hybrid Key Exchange in TLS 1.3 (draft-ietf-tls-hybrid-design)</a>
+            <span class="ref-scope">TLS layer scanning · X25519MLKEM768 named group · Hybrid migration path for TLS endpoints</span>
+            <div class="ref-meta">IETF TLS Working Group · Latest draft · datatracker.ietf.org</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">13</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://media.defense.gov/2025/May/30/2003728741/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS.PDF" target="_blank">NSA CNSA 2.0 — Commercial National Security Algorithm Suite 2.0</a>
+            <span class="ref-scope">Algorithm deadlines · NSS system migration timelines · Firmware signing requirements</span>
+            <div class="ref-meta">National Security Agency (NSA) · Updated 2025 · media.defense.gov</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab1 -->
+
+
+  <!-- ===================== TAB 2: RISK ASSESSMENT ===================== -->
+  <div id="tab2" class="tab-panel">
+
+    <div class="section-title">PQC Vulnerability & Risk Assessment</div>
+    <div class="section-sub">How to score each scanned asset · Derived from FS-ISAC Future State and NIST IR 8547</div>
+
+    <div class="content-h2">Step 1 — Algorithm Risk Classification</div>
+    <p class="prose">Every algorithm found during scanning must be assigned a PQC threat level. This table defines the classification for all algorithms commonly found in banking infrastructure.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Algorithm</th><th>Type</th><th>PQC Threat</th><th>Quantum Attack</th><th>Action Required</th></tr></thead>
+        <tbody>
+          <tr><td style="font-family:var(--mono);">RSA (any key size)</td><td>Asymmetric</td><td><span class="badge badge-critical">Critical</span></td><td>Shor's algorithm — broken exponentially fast</td><td>Replace with ML-KEM (key exchange) or ML-DSA (signing)</td></tr>
+          <tr><td style="font-family:var(--mono);">ECDSA / ECDH</td><td>Asymmetric</td><td><span class="badge badge-critical">Critical</span></td><td>Shor's algorithm — broken in polynomial time</td><td>Replace with ML-DSA / ML-KEM</td></tr>
+          <tr><td style="font-family:var(--mono);">Diffie-Hellman (DH)</td><td>Key exchange</td><td><span class="badge badge-critical">Critical</span></td><td>Shor's algorithm</td><td>Replace with ML-KEM hybrid in TLS/IKEv2</td></tr>
+          <tr><td style="font-family:var(--mono);">DSA</td><td>Signature</td><td><span class="badge badge-critical">Critical</span></td><td>Shor's algorithm</td><td>Replace with ML-DSA</td></tr>
+          <tr><td style="font-family:var(--mono);">AES-128</td><td>Symmetric</td><td><span class="badge badge-medium">Medium</span></td><td>Grover's algorithm reduces to 64-bit effective security</td><td>Upgrade to AES-256</td></tr>
+          <tr><td style="font-family:var(--mono);">AES-256</td><td>Symmetric</td><td><span class="badge badge-safe">Safe</span></td><td>Grover's reduces to 128-bit — still secure</td><td>No action required</td></tr>
+          <tr><td style="font-family:var(--mono);">3DES</td><td>Symmetric</td><td><span class="badge badge-now">Disallowed Now</span></td><td>Already classically weak + quantum reduces further</td><td>Replace immediately with AES-256</td></tr>
+          <tr><td style="font-family:var(--mono);">SHA-256 / SHA-384</td><td>Hash</td><td><span class="badge badge-safe">Safe</span></td><td>Grover's has minimal practical impact</td><td>No action required</td></tr>
+          <tr><td style="font-family:var(--mono);">SHA-1 / MD5</td><td>Hash</td><td><span class="badge badge-now">Disallowed Now</span></td><td>Already classically broken (collision attacks)</td><td>Replace immediately</td></tr>
+          <tr><td style="font-family:var(--mono);">HMAC-SHA256</td><td>MAC</td><td><span class="badge badge-safe">Safe</span></td><td>Symmetric MAC — quantum-resistant</td><td>No action required</td></tr>
+          <tr><td style="font-family:var(--mono);">ML-KEM (FIPS 203)</td><td>Key encapsulation</td><td><span class="badge badge-safe">Quantum Safe</span></td><td>Lattice-based — quantum resistant</td><td>Target replacement for RSA/ECDH</td></tr>
+          <tr><td style="font-family:var(--mono);">ML-DSA (FIPS 204)</td><td>Signature</td><td><span class="badge badge-safe">Quantum Safe</span></td><td>Lattice-based — quantum resistant</td><td>Target replacement for RSA/ECDSA signatures</td></tr>
+          <tr><td style="font-family:var(--mono);">SLH-DSA (FIPS 205)</td><td>Signature</td><td><span class="badge badge-safe">Quantum Safe</span></td><td>Hash-based — quantum resistant</td><td>Backup signature algorithm — use for long-lived signing keys</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">Step 2 — Data Sensitivity Classification (HNDL Risk)</div>
+    <div class="infobox">
+      <strong>Harvest Now, Decrypt Later (HNDL)</strong>
+      Even though quantum computers do not exist today, adversaries are recording encrypted traffic now and storing it to decrypt later. This means data being transmitted today under RSA/ECDH is already at risk. Assets protecting long-lived sensitive data must be treated as Tier 1.
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tier</th><th>Data Type</th><th>Examples in Banking</th><th>HNDL Risk</th><th>Migration Priority</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Tier 1</strong></td><td>Long-lived sensitive data — must remain confidential for 10+ years</td><td>Master keys, root CA private keys, Aadhaar/PAN data, mortgage records, archive tapes, interbank payment messages</td><td><span class="badge badge-critical">Immediate</span></td><td>Migrate now — adversaries may already be recording</td></tr>
+          <tr><td><strong>Tier 2</strong></td><td>Medium-lived sensitive data — confidential 3–10 years</td><td>Customer PII in transit, trade history, regulatory reports, long-term tokens, session signing keys</td><td><span class="badge badge-high">High</span></td><td>Migrate before 2028</td></tr>
+          <tr><td><strong>Tier 3</strong></td><td>Short-lived data — confidential &lt;1 year</td><td>Short-lived session tokens (minutes), real-time transaction data, publicly disclosed information</td><td><span class="badge badge-medium">Medium</span></td><td>Migrate before 2030</td></tr>
+          <tr><td><strong>Tier 4</strong></td><td>Public data — integrity only, no confidentiality requirement</td><td>Public website content, publicly signed documents, published rate sheets</td><td><span class="badge badge-low">Low</span></td><td>Migrate before 2035</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">Step 3 — Exposure Classification</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Exposure Type</th><th>Definition</th><th>Examples</th><th>PQC Priority Impact</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Internet-facing</strong></td><td>Directly reachable by anyone on the internet</td><td>Internet banking portal, mobile app backend, public API gateway</td><td>+++ Highest — visible to all adversaries including nation-states</td></tr>
+          <tr><td><strong>Partner-facing</strong></td><td>Reachable by authenticated external parties</td><td>SWIFT interfaces, correspondent bank APIs, Visa/MC connections, NPCI/RBI interfaces</td><td>++ High — sensitive financial data in transit</td></tr>
+          <tr><td><strong>Internal only</strong></td><td>Only reachable within the bank's own network</td><td>Core banking DB, intranet, HR, internal microservices</td><td>+ Medium — still vulnerable to insider threats and network compromise</td></tr>
+          <tr><td><strong>Air-gapped / isolated</strong></td><td>No network connectivity — physically isolated</td><td>ATM HSMs, offline root CA, offline signing systems</td><td>Lower urgency — but hardware constraints make migration harder</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">Step 4 — Composite Risk Scoring</div>
+    <p class="prose">Score each scanned asset across five dimensions. The composite score drives the migration priority queue output by the scanner.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Dimension</th><th>Score 1</th><th>Score 2</th><th>Score 3</th><th>Score 4</th><th>Score 5</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Algorithm Risk</strong></td><td>AES-256 / SHA-256 (safe)</td><td>AES-128 (weakened)</td><td>SHA-1 / MD5 / 3DES (broken)</td><td>ECDSA / ECDH (critically vulnerable)</td><td>RSA / DH (critically vulnerable)</td></tr>
+          <tr><td><strong>Data Sensitivity</strong></td><td>Public data</td><td>Internal, short-lived</td><td>Customer PII, medium-lived</td><td>Long-lived sensitive (keys, PAN)</td><td>Master keys, root CA, archive tapes</td></tr>
+          <tr><td><strong>Exposure</strong></td><td>Air-gapped</td><td>Internal only</td><td>Partner-facing</td><td>Internet-facing (low traffic)</td><td>Internet-facing (high traffic / critical path)</td></tr>
+          <tr><td><strong>Replaceability</strong></td><td>Software config change only</td><td>Library update required</td><td>Application redeployment</td><td>Hardware upgrade required</td><td>Physical hardware replacement (ATM, HSM)</td></tr>
+          <tr><td><strong>Regulatory obligation</strong></td><td>No mandate</td><td>NIST recommendation</td><td>CISA guidance applicable</td><td>PCI-DSS / RBI scope</td><td>Hard regulatory deadline (PCI 3DES: Now)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="warnbox">
+      <strong>Scoring Output</strong>
+      Sum the five dimension scores (max 25). Assets scoring 20–25 must be flagged as Priority 1 (immediate remediation). Assets 15–19 are Priority 2 (migrate before 2028). Assets 10–14 are Priority 3 (migrate before 2030). Assets below 10 are Priority 4 (migrate before 2035).
+    </div>
+
+    <div class="content-h2">Step 5 — Data Flow Classification</div>
+    <p class="prose">Overlay asset risk scores with data flow paths to identify which flows are HNDL-critical. The five key payment data flows in a bank:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data Flow</th><th>Path</th><th>Encryption Checkpoints</th><th>HNDL Risk</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Customer → Bank</strong></td><td>Mobile/web → CDN → WAF → API Gateway → CBS → DB</td><td>TLS on each hop, JWT at API gateway, TDE at DB</td><td><span class="badge badge-critical">Critical</span></td></tr>
+          <tr><td><strong>Intrabank</strong></td><td>Branch teller → MPLS/VPN → Head Office → Core Banking</td><td>IPSec on MPLS, application encryption in CBS</td><td><span class="badge badge-high">High</span></td></tr>
+          <tr><td><strong>Interbank (SWIFT)</strong></td><td>Bank CBS → Alliance Gateway → SWIFTNet → Correspondent Bank</td><td>SWIFT LAU (HMAC-SHA256 — safe), SWIFTNet TLS (RSA/ECDSA — vulnerable), message signing</td><td><span class="badge badge-critical">Critical</span></td></tr>
+          <tr><td><strong>Bank → Card Networks</strong></td><td>Card auth → Payment switch → HSM → Visa/MC network</td><td>PIN block encryption in HSM (3DES → AES), TLS to Visa/MC</td><td><span class="badge badge-now">Now — 3DES</span></td></tr>
+          <tr><td><strong>Bank → Regulator / Cloud</strong></td><td>Reporting → RBI portal / AWS/Azure/GCP</td><td>TLS to regulatory APIs, Cloud KMS key algorithm</td><td><span class="badge badge-high">High</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- REFERENCES TAB 2 -->
+    <div class="refs-section">
+      <div class="refs-title">References</div>
+      <div class="refs-subtitle">Sources used for risk assessment & scoring methodology · All links verified May 2026</div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">Algorithm Risk & Deprecation</div>
+
+        <div class="ref-item">
+          <div class="ref-num">1</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf" target="_blank">NIST IR 8547 — Transition to Post-Quantum Cryptography Standards</a>
+            <span class="ref-scope">Algorithm risk table · RSA/ECC deprecation 2030/2035 · Disallowance schedule</span>
+            <div class="ref-meta">NIST · Moody et al. · November 2024 · nvlpubs.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">2</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://csrc.nist.gov/pubs/fips/203/final" target="_blank">FIPS 203 — ML-KEM Standard</a>
+            <span class="ref-scope">Quantum-safe algorithm classification · Key exchange replacement</span>
+            <div class="ref-meta">NIST · August 2024 · csrc.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">3</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://csrc.nist.gov/pubs/fips/204/final" target="_blank">FIPS 204 — ML-DSA Standard</a>
+            <span class="ref-scope">Quantum-safe algorithm classification · Signature replacement</span>
+            <div class="ref-meta">NIST · August 2024 · csrc.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">4</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TG02102/BSI-TR-02102-1.pdf" target="_blank">BSI TR-02102-1 — Cryptographic Mechanisms: Recommendations and Key Lengths</a>
+            <span class="ref-scope">AES-256 requirement · 120-bit security floor · Classical security level definitions</span>
+            <div class="ref-meta">BSI Germany · Version 2026-01 · bsi.bund.de</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">HNDL Threat Model & Data Classification</div>
+
+        <div class="ref-item">
+          <div class="ref-num">5</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.fsisac.com/hubfs/Knowledge/PQC/PreparingForAPostQuantumWorldByManagingCryptographicRisk.pdf" target="_blank">FS-ISAC — Preparing for a Post-Quantum World by Managing Cryptographic Risk</a>
+            <span class="ref-scope">HNDL threat model · Mosca's Theorem · Data sensitivity tiers · Long-lived data risk</span>
+            <div class="ref-meta">FS-ISAC PQC Working Group · March 2023 · fsisac.com</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">6</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.fsisac.com/hubfs/Knowledge/PQC/FutureState.pdf" target="_blank">FS-ISAC — PQC Future State Technical Paper</a>
+            <span class="ref-scope">Cryptographic Agility Index (CAI) · Risk scoring methodology · Exposure classification</span>
+            <div class="ref-meta">FS-ISAC PQC Working Group · 2023 · fsisac.com</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">7</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.whitehouse.gov/wp-content/uploads/2022/11/M-23-02-M-Memo-on-Migrating-to-Post-Quantum-Cryptography.pdf" target="_blank">OMB M-23-02 — Memorandum on Migrating to Post-Quantum Cryptography</a>
+            <span class="ref-scope">Risk prioritization framework · High-value asset identification · Regulatory exposure basis</span>
+            <div class="ref-meta">White House Office of Management and Budget · November 2022 · whitehouse.gov</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">Data Flow & Banking Payment Flows</div>
+
+        <div class="ref-item">
+          <div class="ref-num">8</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.cmorg.org.uk/sites/default/files/2025-06/CMORG%20-%20Guidance%20for%20Post-Quantum%20Cryptography%20-%20April%202025%20-%20TLP%20CLEAR%20(1).pdf" target="_blank">CMORG — Guidance for Post-Quantum Cryptography (TLP:CLEAR)</a>
+            <span class="ref-scope">SWIFT data flow · Payment network encryption checkpoints · Four-phase CMORG roadmap</span>
+            <div class="ref-meta">Capital Markets Operations & Regulatory Group · April 2025 · cmorg.org.uk</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">9</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.nccoe.nist.gov/publications/practice-guide/migration-post-quantum-cryptography-nist-sp-1800-38-practice-guide" target="_blank">NIST SP 1800-38B — Migration to Post-Quantum Cryptography: Cryptographic Discovery</a>
+            <span class="ref-scope">Composite risk scoring basis · Discovery output fields · Prioritization framework</span>
+            <div class="ref-meta">NIST NCCoE · December 2023 Preliminary Draft · nccoe.nist.gov</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab2 -->
+
+
+  <!-- ===================== TAB 3: NIST REPORTING FORMAT ===================== -->
+  <div id="tab3" class="tab-panel">
+
+    <div class="section-title">NIST Asset Reporting Format — CBOM</div>
+    <div class="section-sub">Cryptography Bill of Materials · CycloneDX v1.7 · ECMA-424 · Endorsed by NIST SP 1800-38B</div>
+
+    <div class="infobox">
+      <strong>Standard</strong>
+      NIST SP 1800-38B endorses the CycloneDX CBOM (Cryptography Bill of Materials) as the standard output format for cryptographic asset discovery. CBOM is now ratified as ECMA-424. Every finding from the scanner should be output as a CBOM record.
+    </div>
+
+    <div class="content-h2">CBOM Document Envelope</div>
+    <p class="prose">Every CBOM report must include this top-level structure:</p>
+
+    <div class="code-block">
+<span class="comment">// CycloneDX CBOM v1.7 — Top-level envelope</span>
+{
+  <span class="string">"bomFormat"</span>: <span class="string">"CycloneDX"</span>,
+  <span class="string">"specVersion"</span>: <span class="string">"1.7"</span>,
+  <span class="string">"serialNumber"</span>: <span class="string">"urn:uuid:550e8400-e29b-41d4-a716-446655440000"</span>,
+  <span class="string">"version"</span>: 1,
+  <span class="string">"metadata"</span>: {
+    <span class="string">"timestamp"</span>: <span class="string">"2026-05-24T00:00:00Z"</span>,
+    <span class="string">"tools"</span>: [{ <span class="string">"name"</span>: <span class="string">"BankPQCScanner"</span>, <span class="string">"version"</span>: <span class="string">"1.0"</span> }],
+    <span class="string">"component"</span>: {
+      <span class="string">"type"</span>: <span class="string">"application"</span>,
+      <span class="string">"name"</span>: <span class="string">"Core Banking System"</span>,
+      <span class="string">"version"</span>: <span class="string">"12.4"</span>
+    }
+  },
+  <span class="string">"components"</span>: [ <span class="comment">/* cryptographic asset records */</span> ],
+  <span class="string">"dependencies"</span>: [ <span class="comment">/* which asset uses/implements which */</span> ]
+}
+    </div>
+
+    <div class="content-h2">Asset Type 1 — ALGORITHM</div>
+    <p class="prose">Every cryptographic algorithm found in the system. This is the most fundamental CBOM record type.</p>
+
+    <div class="field-table">
+      <div class="field-table-header">
+        <div class="field-table-title">Algorithm Record</div>
+        <div class="asset-type-badge">type: algorithm</div>
+      </div>
+      <div class="field-row"><div class="field-name">name</div><div class="field-example">RSA, AES, ECDSA</div><div class="field-desc">Algorithm family name</div></div>
+      <div class="field-row"><div class="field-name">variant</div><div class="field-example">RSA-2048, AES-128-GCM</div><div class="field-desc">Specific instantiation — must include mode and key size, not just family name</div></div>
+      <div class="field-row"><div class="field-name">primitive</div><div class="field-example">pke, ae, signature, hash, kdf</div><div class="field-desc">Cryptographic primitive type: public key encryption, authenticated encryption, digital signature, hash function, or key derivation function</div></div>
+      <div class="field-row"><div class="field-name">parameterSetIdentifier</div><div class="field-example">ML-KEM-768, ML-DSA-65</div><div class="field-desc">Parameter set identifier — required for PQC algorithms; defines security level and performance trade-off</div></div>
+      <div class="field-row"><div class="field-name">curve</div><div class="field-example">P-256, P-384, secp256k1</div><div class="field-desc">Elliptic curve — required for ECDSA and ECDH algorithms</div></div>
+      <div class="field-row"><div class="field-name">executionEnvironment</div><div class="field-example">software-plain-ram, hsm, tee</div><div class="field-desc">Where the algorithm executes — distinguishes software from hardware-protected implementations</div></div>
+      <div class="field-row"><div class="field-name">implementationPlatform</div><div class="field-example">OpenSSL, BouncyCastle, Java</div><div class="field-desc">Library or runtime implementing the algorithm</div></div>
+      <div class="field-row"><div class="field-name">certificationLevel</div><div class="field-example">fips140-3-level-3, none</div><div class="field-desc">FIPS 140-3 validation status of the implementing module</div></div>
+      <div class="field-row"><div class="field-name">cryptoFunctions</div><div class="field-example">encrypt, sign, keygen, verify</div><div class="field-desc">What operations this algorithm is used for in this context</div></div>
+      <div class="field-row"><div class="field-name">classicalSecurityLevel</div><div class="field-example">112, 128, 256</div><div class="field-desc">Effective security level in bits against classical (non-quantum) computers</div></div>
+      <div class="field-row"><div class="field-name">nistQuantumSecurityLevel</div><div class="field-example">1, 3, 5</div><div class="field-desc">NIST PQC security category (1=AES-128 equivalent, 3=AES-192, 5=AES-256)</div></div>
+      <div class="field-row"><div class="field-name">pqcSafe</div><div class="field-example">true / false</div><div class="field-desc">Whether this algorithm is considered quantum-safe per current NIST guidance</div></div>
+      <div class="field-row"><div class="field-name">oid</div><div class="field-example">1.2.840.113549.1.1.11</div><div class="field-desc">ASN.1 Object Identifier for the algorithm — enables precise machine-readable identification</div></div>
+    </div>
+
+    <div class="content-h2">Asset Type 2 — KEY / KEY MATERIAL</div>
+
+    <div class="field-table">
+      <div class="field-table-header">
+        <div class="field-table-title">Key Record</div>
+        <div class="asset-type-badge">type: related-crypto-material</div>
+      </div>
+      <div class="field-row"><div class="field-name">relatedCryptoMaterialType</div><div class="field-example">private-key, public-key, secret-key, token, seed</div><div class="field-desc">Classification of the key material</div></div>
+      <div class="field-row"><div class="field-name">id</div><div class="field-example">key-rsa-001</div><div class="field-desc">Unique identifier for this key within the inventory</div></div>
+      <div class="field-row"><div class="field-name">state</div><div class="field-example">active, pre-activation, suspended, deactivated, compromised, destroyed</div><div class="field-desc">NIST-defined key lifecycle state</div></div>
+      <div class="field-row"><div class="field-name">size</div><div class="field-example">2048, 4096, 256</div><div class="field-desc">Key size in bits</div></div>
+      <div class="field-row"><div class="field-name">algorithmRef</div><div class="field-example">ref to Algorithm asset</div><div class="field-desc">Reference to the Algorithm record this key belongs to</div></div>
+      <div class="field-row"><div class="field-name">creationDate</div><div class="field-example">2024-01-01T00:00:00Z</div><div class="field-desc">When the key was generated — ISO 8601 datetime</div></div>
+      <div class="field-row"><div class="field-name">expirationDate</div><div class="field-example">2026-01-01T00:00:00Z</div><div class="field-desc">Key expiry — essential for tracking rotation requirements</div></div>
+      <div class="field-row"><div class="field-name">secured</div><div class="field-example">hsm, tpm, software, none</div><div class="field-desc">Key protection mechanism — HSM-backed keys receive lower remediation urgency than software-protected keys</div></div>
+      <div class="field-row"><div class="field-name">format</div><div class="field-example">PEM, DER, PKCS8, PKCS12, JWK</div><div class="field-desc">Key encoding format</div></div>
+    </div>
+
+    <div class="content-h2">Asset Type 3 — CERTIFICATE</div>
+
+    <div class="field-table">
+      <div class="field-table-header">
+        <div class="field-table-title">Certificate Record</div>
+        <div class="asset-type-badge">type: certificate</div>
+      </div>
+      <div class="field-row"><div class="field-name">subjectName</div><div class="field-example">CN=api.bank.com, O=Bank Ltd</div><div class="field-desc">Certificate subject distinguished name</div></div>
+      <div class="field-row"><div class="field-name">issuerName</div><div class="field-example">CN=DigiCert TLS RSA SHA256</div><div class="field-desc">Issuing CA distinguished name</div></div>
+      <div class="field-row"><div class="field-name">notValidBefore</div><div class="field-example">2024-01-01T00:00:00Z</div><div class="field-desc">Certificate valid-from date</div></div>
+      <div class="field-row"><div class="field-name">notValidAfter</div><div class="field-example">2026-01-01T00:00:00Z</div><div class="field-desc">Certificate expiry — critical for lifecycle management</div></div>
+      <div class="field-row"><div class="field-name">algorithmRef</div><div class="field-example">ref to Algorithm (RSA-2048)</div><div class="field-desc">Reference to the signing algorithm record</div></div>
+      <div class="field-row"><div class="field-name">subjectPublicKeyRef</div><div class="field-example">ref to Key asset</div><div class="field-desc">Reference to the public key embedded in this certificate</div></div>
+      <div class="field-row"><div class="field-name">certificateFormat</div><div class="field-example">X.509, PEM, DER</div><div class="field-desc">Certificate encoding format</div></div>
+      <div class="field-row"><div class="field-name">serialNumber</div><div class="field-example">1A2B3C4D...</div><div class="field-desc">Certificate serial number — hex string</div></div>
+    </div>
+
+    <div class="content-h2">Asset Type 4 — PROTOCOL</div>
+
+    <div class="field-table">
+      <div class="field-table-header">
+        <div class="field-table-title">Protocol Record</div>
+        <div class="asset-type-badge">type: protocol</div>
+      </div>
+      <div class="field-row"><div class="field-name">name</div><div class="field-example">TLS, SSH, IKEv2, IPSEC</div><div class="field-desc">Protocol name</div></div>
+      <div class="field-row"><div class="field-name">version</div><div class="field-example">1.2, 1.3, 2.0</div><div class="field-desc">Protocol version — TLS 1.0/1.1/1.2 should be flagged; TLS 1.3 is baseline</div></div>
+      <div class="field-row"><div class="field-name">cipherSuites</div><div class="field-example">TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</div><div class="field-desc">All negotiated cipher suites — each suite contains algorithm references that must be individually evaluated</div></div>
+      <div class="field-row"><div class="field-name">ikev2TransformTypes</div><div class="field-example">AES-256, SHA-256, DH-14</div><div class="field-desc">IKEv2 transform types for IPsec: encryption, PRF, integrity, DH group</div></div>
+      <div class="field-row"><div class="field-name">cryptoRefArray</div><div class="field-example">refs to Algorithm assets</div><div class="field-desc">All algorithms used by this protocol instance — enables graph-level dependency analysis</div></div>
+      <div class="field-row"><div class="field-name">relatedTo</div><div class="field-example">ref to parent component</div><div class="field-desc">Which system or service is using this protocol instance</div></div>
+    </div>
+
+    <div class="content-h2">Dependency Relationships</div>
+    <p class="prose">CBOM requires capturing how assets relate — not just what exists. This produces the key hierarchy map and data flow dependency graph required by NIST SP 1800-38B.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Relationship</th><th>Meaning</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td style="font-family:var(--mono);">provides</td><td>Library implements an algorithm</td><td>OpenSSL provides RSA-2048</td></tr>
+          <tr><td style="font-family:var(--mono);">uses</td><td>Application calls a library</td><td>Payment app uses OpenSSL</td></tr>
+          <tr><td style="font-family:var(--mono);">implements</td><td>Protocol implements an algorithm</td><td>TLS 1.3 implements ECDHE</td></tr>
+          <tr><td style="font-family:var(--mono);">ancestorOf</td><td>Key hierarchy — parent key</td><td>Master key is ancestor of zone key</td></tr>
+          <tr><td style="font-family:var(--mono);">descendantOf</td><td>Key hierarchy — child key</td><td>Session key is descendant of zone key</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">Output Formats</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Format</th><th>Use Case</th><th>When to Use</th></tr></thead>
+        <tbody>
+          <tr><td><strong>CycloneDX CBOM JSON</strong></td><td>Machine-readable inventory</td><td>Primary output — all scanning results; feeds GRC tools and dashboards</td></tr>
+          <tr><td><strong>CycloneDX CBOM XML</strong></td><td>Alternative serialization</td><td>Where downstream tools require XML (e.g., legacy SIEM integrations)</td></tr>
+          <tr><td><strong>SARIF (Static Analysis Results)</strong></td><td>Finding reports from SAST</td><td>Source code scanning violations — integrates with GitHub, GitLab, Azure DevOps</td></tr>
+          <tr><td><strong>CSV / Spreadsheet</strong></td><td>Human-readable summary</td><td>Board and CISO reporting; non-technical stakeholder communication</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">Minimum Required Fields (per NIST SP 1800-38B)</div>
+    <div class="warnbox">
+      <strong>Every reported asset must include at minimum:</strong>
+      (1) Algorithm name and specific variant — not just "RSA" but "RSA-2048" &nbsp;·&nbsp; (2) Location where it was found (host, service, file path) &nbsp;·&nbsp; (3) Usage context (TLS, signing, encryption at rest, key exchange) &nbsp;·&nbsp; (4) Owning system or application &nbsp;·&nbsp; (5) PQC vulnerability flag — is this algorithm quantum-vulnerable per NIST IR 8547? &nbsp;·&nbsp; (6) Deprecation deadline — when it must be replaced (2030 or 2035).
+    </div>
+
+    <!-- REFERENCES TAB 3 -->
+    <div class="refs-section">
+      <div class="refs-title">References</div>
+      <div class="refs-subtitle">Sources used for the CBOM reporting format · All links verified May 2026</div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">CBOM Standard & Specification</div>
+
+        <div class="ref-item">
+          <div class="ref-num">1</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://cyclonedx.org/capabilities/cbom/" target="_blank">CycloneDX — Cryptography Bill of Materials (CBOM) Capability Overview</a>
+            <span class="ref-scope">CBOM asset types · Schema overview · PQC readiness use case · ECMA-424 ratification</span>
+            <div class="ref-meta">OWASP CycloneDX · v1.7 · cyclonedx.org</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">2</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://cyclonedx.org/guides/OWASP_CycloneDX-Authoritative-Guide-to-CBOM-en.pdf" target="_blank">OWASP CycloneDX — Authoritative Guide to CBOM</a>
+            <span class="ref-scope">Full field definitions · Schema · Implementation guidance · IBM Research CBOM design</span>
+            <div class="ref-meta">OWASP CycloneDX · 2024 · cyclonedx.org</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">3</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://cyclonedx.org/use-cases/cryptographic-algorithm/" target="_blank">CycloneDX — CBOM Use Case: Cryptographic Algorithm Record</a>
+            <span class="ref-scope">Algorithm asset type schema · JSON example · Field definitions</span>
+            <div class="ref-meta">OWASP CycloneDX · cyclonedx.org</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">4</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://cyclonedx.org/use-cases/cryptographic-key/" target="_blank">CycloneDX — CBOM Use Case: Cryptographic Key Record</a>
+            <span class="ref-scope">Key asset type schema · relatedCryptoMaterialType · Key lifecycle states · JSON example</span>
+            <div class="ref-meta">OWASP CycloneDX · cyclonedx.org</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">5</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://cyclonedx.org/use-cases/cryptographic-certificate/" target="_blank">CycloneDX — CBOM Use Case: Cryptographic Certificate Record</a>
+            <span class="ref-scope">Certificate asset type schema · X.509 fields · subjectPublicKeyRef · JSON example</span>
+            <div class="ref-meta">OWASP CycloneDX · cyclonedx.org</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">6</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://cyclonedx.org/use-cases/cryptographic-protocol/" target="_blank">CycloneDX — CBOM Use Case: Protocol Record</a>
+            <span class="ref-scope">Protocol asset type schema · cipher suite fields · TLS protocol example · JSON</span>
+            <div class="ref-meta">OWASP CycloneDX · cyclonedx.org</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">NIST Discovery & Output Format Guidance</div>
+
+        <div class="ref-item">
+          <div class="ref-num">7</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.nccoe.nist.gov/publications/practice-guide/migration-post-quantum-cryptography-nist-sp-1800-38-practice-guide" target="_blank">NIST SP 1800-38B — Migration to Post-Quantum Cryptography: Cryptographic Discovery</a>
+            <span class="ref-scope">CBOM endorsement · Minimum required fields · SARIF output for SAST · Output format requirements</span>
+            <div class="ref-meta">NIST NCCoE · December 2023 Preliminary Draft · nccoe.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">8</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.39.pdf" target="_blank">NIST CSWP 39 — Considerations for Achieving Crypto Agility: Strategies and Practices</a>
+            <span class="ref-scope">CBOM as foundation for agility · Dependency relationship types · API abstraction layer design</span>
+            <div class="ref-meta">NIST · Barker, Chen, Cooper, Moody et al. · December 19, 2025 (Final) · nvlpubs.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">9</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf" target="_blank">NIST IR 8547 — Transition to Post-Quantum Cryptography Standards</a>
+            <span class="ref-scope">pqcSafe flag values · Deprecation deadline fields · Algorithm OIDs for disallowed algorithms</span>
+            <div class="ref-meta">NIST · November 2024 · nvlpubs.nist.gov</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">CBOM Tooling</div>
+
+        <div class="ref-item">
+          <div class="ref-num">10</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://cyclonedx.org/tool-center/" target="_blank">CycloneDX Tool Center — CBOM-compatible Scanners & Generators</a>
+            <span class="ref-scope">CBOMkit · Static crypto asset scanners · CBOM generator tools · PQC readiness classification tools</span>
+            <div class="ref-meta">OWASP CycloneDX · cyclonedx.org</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">11</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://qramm.org/learn/cryptographic-inventory-guide.html" target="_blank">QRAMM — Cryptographic Inventory Guide (CBOM Step-by-Step)</a>
+            <span class="ref-scope">CBOM construction · CycloneDX format · Nmap + SSLyze + Semgrep tool chain</span>
+            <div class="ref-meta">QRAMM · 2024 · qramm.org</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab3 -->
+
+
+  <!-- ===================== TAB 4: SCANNER CONNECTIONS ===================== -->
+  <div id="tab4" class="tab-panel">
+
+    <div class="section-title">Scanner Connection Architecture</div>
+    <div class="section-sub">How your application connects to each component · 5 connection mechanisms · Derived from NIST SP 1800-38B</div>
+
+    <div class="infobox">
+      <strong>NIST SP 1800-38B defines two top-level strategies</strong>
+      Active (your scanner initiates contact) and Passive (your scanner observes traffic). These break down into five specific connection mechanisms below. Most banking environments will use all five simultaneously.
+    </div>
+
+    <!-- Mechanism 1 -->
+    <div class="conn-card">
+      <div class="conn-card-title">Mechanism 1 — Active Network Handshake</div>
+      <div class="conn-card-meta">No credentials required · Zero production impact · Agentless</div>
+      <div class="conn-card-body">
+        <p style="margin-bottom:10px;">Your scanner initiates a real protocol handshake — TLS ClientHello, SSH KEX Init, IKEv2 SA Init — and reads back what the server advertises. The connection is never completed (aborted after ServerHello). Requires only network reachability to the target IP and port.</p>
+        <p style="margin-bottom:10px;"><strong>Libraries:</strong> SSLyze (Python), testssl.sh, ssh-audit, pqcscan (Rust), Python <code style="font-family:var(--mono);font-size:12px;">ssl</code> module, Java SSLEngine.</p>
+      </div>
+      <div class="table-wrap" style="margin-top:12px;margin-bottom:0;">
+        <table>
+          <thead><tr><th>Target Component</th><th>Port</th><th>What You Extract</th></tr></thead>
+          <tbody>
+            <tr><td>HTTPS / API gateways</td><td>443</td><td>TLS version, cipher suite, key exchange group, full certificate chain</td></tr>
+            <tr><td>Internal microservices</td><td>8443, custom</td><td>mTLS cipher suites, certificate algorithm</td></tr>
+            <tr><td>SMTP with STARTTLS</td><td>587, 25</td><td>TLS cipher suite after STARTTLS upgrade</td></tr>
+            <tr><td>LDAPS (Active Directory)</td><td>636</td><td>Certificate algorithm on AD/LDAP server</td></tr>
+            <tr><td>SSH servers</td><td>22</td><td>KEX algorithms, host key algorithm, MAC algorithms</td></tr>
+            <tr><td>VPN endpoints (IKEv2)</td><td>UDP 500, 4500</td><td>IKE cipher proposals, DH group, auth method</td></tr>
+            <tr><td>Database listeners (TLS)</td><td>1521 Oracle, 5432 Postgres</td><td>TLS cipher suite on DB connection</td></tr>
+            <tr><td>SWIFT Alliance Gateway</td><td>443 / custom</td><td>TLS certificate and cipher suite</td></tr>
+            <tr><td>ATM host interface</td><td>8443 / custom</td><td>TLS cipher suite at host-ATM boundary</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mechanism 2 -->
+    <div class="conn-card">
+      <div class="conn-card-title">Mechanism 2 — Passive Network Tap / SPAN</div>
+      <div class="conn-card-meta">No scanner-server contact · Zero production impact · Sees actual negotiated ciphers</div>
+      <div class="conn-card-body">
+        <p style="margin-bottom:10px;">Your scanner sits on a network tap (physical) or SPAN/mirror port and captures all traffic. TLS ClientHello and ServerHello are not encrypted — cipher suites and certificates are fully visible without decrypting payload. Catches actual negotiated ciphers in production (what's really used, not just what's configured).</p>
+        <p style="margin-bottom:10px;"><strong>Deployment:</strong> Cisco SPAN, Gigamon taps, network broker appliances. Libraries: Wireshark/tshark, Zeek (Bro), SandboxAQ AQtive Guard (commercial), Python Scapy/pyshark.</p>
+      </div>
+      <div class="table-wrap" style="margin-top:12px;margin-bottom:0;">
+        <table>
+          <thead><tr><th>What You See</th><th>Advantage Over Active Scan</th></tr></thead>
+          <tbody>
+            <tr><td>All TLS traffic on the network segment — cipher suites, server certificates, key exchange type</td><td>Sees legacy clients that downgrade to weak ciphers in real production traffic</td></tr>
+            <tr><td>SWIFT interbank TLS handshake parameters</td><td>No need to connect to SWIFT systems — passively observe</td></tr>
+            <tr><td>All service-to-service cipher suites simultaneously</td><td>Maps actual cipher suite usage across the entire segment at once</td></tr>
+            <tr><td>IKEv2 proposals on VPN negotiation</td><td>Captures every VPN tunnel negotiation without touching the VPN device</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mechanism 3 -->
+    <div class="conn-card">
+      <div class="conn-card-title">Mechanism 3 — Authenticated Agent / SSH + WinRM Remote Execution</div>
+      <div class="conn-card-meta">Requires privileged service account · Low production impact · Deepest visibility</div>
+      <div class="conn-card-body">
+        <p style="margin-bottom:10px;">Your scanner authenticates to each server via SSH (Linux) or WinRM (Windows) and runs commands remotely to enumerate crypto assets on the filesystem and in OS configuration. Use a read-only service account provisioned through your PAM system.</p>
+        <p style="margin-bottom:10px;"><strong>Libraries:</strong> Python paramiko (SSH), pywinrm (WinRM), Ansible (orchestrated multi-host). Can be replaced by a lightweight deployed agent on highest-priority systems.</p>
+      </div>
+
+      <div class="code-label">Linux — Remote Commands via SSH</div>
+      <div class="code-block">
+<span class="comment"># Find all crypto key and certificate files</span>
+<span class="fn">find</span> / -name <span class="string">"*.pem"</span> -o -name <span class="string">"*.key"</span> -o -name <span class="string">"*.crt"</span> \
+       -o -name <span class="string">"*.p12"</span> -o -name <span class="string">"*.jks"</span> -o -name <span class="string">"*.pfx"</span> 2>/dev/null
+
+<span class="comment"># Check OpenSSL version and supported algorithms</span>
+<span class="fn">openssl</span> version
+<span class="fn">openssl</span> ciphers -v <span class="string">'ALL'</span>
+
+<span class="comment"># Check SSH server configuration</span>
+<span class="fn">grep</span> -E <span class="string">'HostKey|KexAlgorithms|Ciphers|MACs'</span> /etc/ssh/sshd_config
+
+<span class="comment"># List installed crypto libraries</span>
+<span class="fn">dpkg</span> -l | grep -E <span class="string">'openssl|libssl|libgcrypt|bouncycastle'</span>
+<span class="fn">rpm</span> -qa | grep -E <span class="string">'openssl|nss|libgcrypt'</span>
+
+<span class="comment"># Check Java keystores</span>
+<span class="fn">find</span> / -name <span class="string">"cacerts"</span> -o -name <span class="string">"*.jks"</span> 2>/dev/null
+<span class="fn">keytool</span> -list -keystore /path/to/keystore.jks
+      </div>
+
+      <div class="code-label">Windows — Remote Commands via WinRM (PowerShell)</div>
+      <div class="code-block">
+<span class="comment"># Enumerate Windows certificate store</span>
+<span class="fn">Get-ChildItem</span> -Path Cert:\LocalMachine\ -Recurse |
+  Select-Object Subject, Issuer, NotAfter, SignatureAlgorithm, Thumbprint
+
+<span class="comment"># Check Schannel (TLS) registry settings</span>
+<span class="fn">Get-Item</span> <span class="string">"HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL"</span>
+
+<span class="comment"># Find certificate files on filesystem</span>
+<span class="fn">Get-ChildItem</span> -Path C:\ -Recurse `
+  -Include *.pfx,*.p12,*.pem,*.cer,*.crt -ErrorAction SilentlyContinue
+
+<span class="comment"># Check Kerberos encryption types</span>
+<span class="fn">Get-ItemProperty</span> <span class="string">"HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\Kerberos\Parameters"</span>
+      </div>
+    </div>
+
+    <!-- Mechanism 4 -->
+    <div class="conn-card">
+      <div class="conn-card-title">Mechanism 4 — API / Management Console (Vendor-Specific)</div>
+      <div class="conn-card-meta">Authenticated API calls · Read-only permissions · Zero production impact</div>
+      <div class="conn-card-body">
+        <p style="margin-bottom:12px;">Different protocol for each component type. All use read-only authenticated access to vendor management interfaces.</p>
+      </div>
+
+      <div class="content-h3" style="margin-top:4px;">4A — HSM (PKCS#11 Interface)</div>
+      <div class="conn-card-body" style="font-size:13px;margin-bottom:8px;">
+        Protocol: PKCS#11 C API via vendor-provided shared library (.so/.dll). Thales Luna → CKS library · Entrust nShield → nfast library. Enumerates key metadata only — no private key export by design.
+      </div>
+      <div class="code-block">
+<span class="keyword">import</span> PyKCS11
+
+lib = PyKCS11.<span class="fn">PyKCS11Lib</span>()
+lib.<span class="fn">load</span>(<span class="string">'/usr/lib/libCryptoki2_64.so'</span>)  <span class="comment"># Thales Luna</span>
+session = lib.<span class="fn">openSession</span>(slot)
+session.<span class="fn">login</span>(PyKCS11.CKU_USER, hsm_pin)
+
+<span class="comment"># Enumerate all objects in HSM partition</span>
+objects = session.<span class="fn">findObjects</span>()
+<span class="keyword">for</span> obj <span class="keyword">in</span> objects:
+    attrs = session.<span class="fn">getAttributeValue</span>(obj, [
+        PyKCS11.CKA_CLASS,        <span class="comment"># CKO_PRIVATE_KEY, CKO_CERTIFICATE...</span>
+        PyKCS11.CKA_KEY_TYPE,     <span class="comment"># CKK_RSA, CKK_ECDSA, CKK_AES</span>
+        PyKCS11.CKA_MODULUS_BITS, <span class="comment"># RSA key size in bits</span>
+        PyKCS11.CKA_LABEL,        <span class="comment"># Key label/name</span>
+        PyKCS11.CKA_ID            <span class="comment"># Key identifier</span>
+    ])
+      </div>
+
+      <div class="content-h3">4B — Key Management Server (KMIP Protocol)</div>
+      <div class="conn-card-body" style="font-size:13px;margin-bottom:8px;">
+        Protocol: KMIP 1.x/2.x over mutual TLS (port 5696). Supported by: Thales CipherTrust, IBM SKLM, HashiCorp Vault, Entrust KeyControl.
+      </div>
+      <div class="code-block">
+<span class="comment"># KMIP Locate + Get Attributes — enumerate all managed keys</span>
+request = {
+  <span class="string">"operation"</span>: <span class="string">"Locate"</span>,
+  <span class="string">"attributes"</span>: [{<span class="string">"name"</span>: <span class="string">"Object Type"</span>, <span class="string">"value"</span>: <span class="string">"Symmetric Key"</span>}]
+}
+<span class="comment"># Returns key IDs — then Get Attributes for each:</span>
+<span class="comment"># Algorithm, Key Length, Cryptographic Usage Mask, State, Creation Date</span>
+      </div>
+
+      <div class="content-h3">4C — Cloud KMS (REST API)</div>
+      <div class="code-block">
+<span class="comment"># AWS KMS — list keys and describe each</span>
+GET https://kms.{region}.amazonaws.com  →  ListKeys, DescribeKey
+<span class="comment"># Returns: KeyAlgorithm (RSA_2048, EC_SIGN_P256 — vulnerable; AES_256 — safe)</span>
+
+<span class="comment"># Azure Key Vault</span>
+GET https://{vault}.vault.azure.net/keys  →  list, getKey
+
+<span class="comment"># GCP Cloud KMS</span>
+GET https://cloudkms.googleapis.com/v1/projects/{p}/keyRings/{kr}/cryptoKeys
+
+<span class="comment"># Auth: IAM read-only role / service principal — no write permissions needed</span>
+      </div>
+
+      <div class="content-h3">4D — Microsoft ADCS / Active Directory (LDAP + certutil)</div>
+      <div class="code-block">
+<span class="comment"># Query all issued certificates from Microsoft ADCS</span>
+<span class="fn">certutil</span> -view -restrict <span class="string">"Disposition=20"</span> \
+  -out <span class="string">"CommonName,NotAfter,CertificateTemplate,PublicKeyAlgorithm"</span>
+
+<span class="comment"># LDAP query — enumerate CA objects</span>
+<span class="fn">ldapsearch</span> -H ldaps://dc.bank.local:636 \
+  -b <span class="string">"CN=Public Key Services,CN=Services,CN=Configuration,DC=bank,DC=local"</span> \
+  <span class="string">"(objectClass=pKIEnrollmentService)"</span>
+      </div>
+
+      <div class="content-h3">4E — Database TDE (JDBC SQL Queries)</div>
+      <div class="code-block">
+<span class="comment">-- Oracle TDE status — requires read-only DBA account</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> V$ENCRYPTION_WALLET;
+<span class="keyword">SELECT</span> OWNER, TABLE_NAME, COLUMN_NAME, ENCRYPTION_ALG
+<span class="keyword">FROM</span> DBA_ENCRYPTED_COLUMNS;
+
+<span class="comment">-- SQL Server TDE</span>
+<span class="keyword">SELECT</span> db.name, dek.encryption_state, dek.encryptor_type,
+       dek.key_algorithm, dek.key_length
+<span class="keyword">FROM</span> sys.dm_database_encryption_keys dek
+<span class="keyword">JOIN</span> sys.databases db <span class="keyword">ON</span> dek.database_id = db.database_id;
+      </div>
+
+      <div class="content-h3">4F — Kubernetes API</div>
+      <div class="code-block">
+<span class="comment"># Get all TLS secrets across namespaces — read-only RBAC token</span>
+<span class="fn">kubectl</span> get secrets --all-namespaces -o json | \
+  jq <span class="string">'.items[] | select(.type=="kubernetes.io/tls") | .metadata.name'</span>
+
+<span class="comment"># Get etcd encryption config</span>
+<span class="fn">kubectl</span> get secret -n kube-system -o yaml | grep -A5 <span class="string">'encryption'</span>
+
+<span class="comment"># Get API server TLS certificate</span>
+<span class="fn">kubectl</span> get secret -n kube-system kube-apiserver-certs -o yaml
+      </div>
+    </div>
+
+    <!-- Mechanism 5 -->
+    <div class="conn-card">
+      <div class="conn-card-title">Mechanism 5 — Static Analysis / Source Code Scan (SAST)</div>
+      <div class="conn-card-meta">Read access to repository or filesystem · No live system connection · Finds hardcoded algorithms</div>
+      <div class="conn-card-body">
+        <p style="margin-bottom:10px;">Directly reads source code, compiled binaries, and dependency manifests without connecting to any live system. Uses pattern matching and AST analysis to find hardcoded algorithm names, crypto API calls, and vulnerable library versions.</p>
+        <p style="margin-bottom:10px;"><strong>Tools:</strong> Semgrep (with crypto rulesets), Veracode, Checkmarx, CycloneDX SBOM generators (Syft, cdxgen), custom tree-sitter AST parsers.</p>
+      </div>
+
+      <div class="code-label">Flagged patterns — Python</div>
+      <div class="code-block">
+<span class="keyword">from</span> Crypto.PublicKey <span class="keyword">import</span> RSA          <span class="comment"># pycryptodome RSA — VULNERABLE</span>
+<span class="keyword">import</span> ssl; ssl.PROTOCOL_TLSv1             <span class="comment"># deprecated TLS version — VULNERABLE</span>
+hashlib.<span class="fn">md5</span>(data)                           <span class="comment"># MD5 usage — VULNERABLE</span>
+cipher = DES.<span class="fn">new</span>(key, DES.MODE_ECB)        <span class="comment"># 3DES usage — DISALLOWED NOW</span>
+      </div>
+
+      <div class="code-label">Flagged patterns — Java</div>
+      <div class="code-block">
+KeyPairGenerator.<span class="fn">getInstance</span>(<span class="string">"RSA"</span>)         <span class="comment">// RSA key generation — VULNERABLE</span>
+Cipher.<span class="fn">getInstance</span>(<span class="string">"DES/ECB/PKCS5Padding"</span>) <span class="comment">// 3DES — DISALLOWED NOW</span>
+MessageDigest.<span class="fn">getInstance</span>(<span class="string">"SHA-1"</span>)         <span class="comment">// SHA-1 — DISALLOWED NOW</span>
+      </div>
+
+      <div class="table-wrap" style="margin-top:12px;margin-bottom:0;">
+        <table>
+          <thead><tr><th>Target</th><th>Connection Method</th><th>What You Extract</th></tr></thead>
+          <tbody>
+            <tr><td>Git repositories</td><td>Git clone or GitHub/GitLab API</td><td>Crypto API calls in source, hardcoded algorithm strings, vulnerable library versions</td></tr>
+            <tr><td>Maven/Gradle projects</td><td>pom.xml / build.gradle file parsing</td><td>Crypto library versions (BouncyCastle, Conscrypt, etc.)</td></tr>
+            <tr><td>Container images</td><td>Docker registry API pull + layer extraction</td><td>Crypto libraries installed in image, OpenSSL version in container</td></tr>
+            <tr><td>Binary / JAR files</td><td>Byte-pattern scanning of artifacts</td><td>Crypto function signatures, embedded certificate bytes</td></tr>
+            <tr><td>Node.js / Python packages</td><td>npm audit / pip-audit + crypto pattern scan</td><td>crypto module usage, algorithm strings in dependencies</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Summary table -->
+    <div class="section-title" style="margin-top:48px;">Connection Method Summary</div>
+    <div class="section-sub">Quick reference — mechanism by layer · Auth requirement · Production impact</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Layer / Component</th><th>Mechanism</th><th>Protocol</th><th>Auth Required</th><th>Production Impact</th></tr></thead>
+        <tbody>
+          <tr><td>Network / TLS endpoints</td><td>Active handshake</td><td>TLS ClientHello</td><td>None</td><td>None</td></tr>
+          <tr><td>Network traffic (all flows)</td><td>Passive tap / SPAN</td><td>Packet capture</td><td>None</td><td>Zero — passive</td></tr>
+          <tr><td>SSH servers</td><td>Active handshake</td><td>SSH KEX Init</td><td>None (for KEX only)</td><td>None</td></tr>
+          <tr><td>PKI / ADCS</td><td>API (4D)</td><td>LDAP / certutil</td><td>Domain service account</td><td>None</td></tr>
+          <tr><td>HSM</td><td>API (4A)</td><td>PKCS#11 C API</td><td>HSM partition PIN</td><td>None — read-only enumerate</td></tr>
+          <tr><td>Key Management Server</td><td>API (4B)</td><td>KMIP over mTLS</td><td>Client certificate</td><td>None</td></tr>
+          <tr><td>Cloud KMS</td><td>API (4C)</td><td>REST HTTPS</td><td>IAM read-only role</td><td>None</td></tr>
+          <tr><td>Windows servers</td><td>Agent (3)</td><td>WinRM / PowerShell</td><td>Admin service account</td><td>Low — read-only commands</td></tr>
+          <tr><td>Linux servers</td><td>Agent (3)</td><td>SSH + bash</td><td>SSH service account</td><td>Low — read-only commands</td></tr>
+          <tr><td>Databases (TDE)</td><td>API (4E)</td><td>JDBC + SQL</td><td>Read-only DBA account</td><td>Low — read queries only</td></tr>
+          <tr><td>Kubernetes</td><td>API (4F)</td><td>K8s REST API</td><td>Read-only RBAC token</td><td>None</td></tr>
+          <tr><td>Source code</td><td>SAST (5)</td><td>Git API / clone</td><td>Repo read access</td><td>None</td></tr>
+          <tr><td>Container images</td><td>SAST (5)</td><td>Docker registry API</td><td>Registry read access</td><td>None</td></tr>
+          <tr><td>ATM / POS hardware</td><td>Vendor management API</td><td>Vendor-specific</td><td>Vendor admin credentials</td><td>Requires maintenance window</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-h2">Agent-Based vs Agentless — Key Design Decision</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Approach</th><th>Mechanisms</th><th>Pros</th><th>Cons</th><th>NIST Recommendation</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Agentless</strong></td>
+            <td>1 (Active), 2 (Passive), 4 (API)</td>
+            <td>No software deployment on target hosts; easier change management approval; lower operational overhead</td>
+            <td>Misses memory-resident keys, in-process crypto calls, some embedded crypto usage</td>
+            <td>Start here — provides coverage and scope without deployment friction</td>
+          </tr>
+          <tr>
+            <td><strong>Agent-based</strong></td>
+            <td>3 (SSH/WinRM), 5 (SAST)</td>
+            <td>Deeper access — finds process-level crypto, memory-resident keys, hardcoded algorithm strings</td>
+            <td>Requires deployment approval for every host; higher operational overhead</td>
+            <td>Deploy on highest-risk systems (CBS, HSM hosts, payment switches) after agentless pass</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- REFERENCES TAB 4 -->
+    <div class="refs-section">
+      <div class="refs-title">References</div>
+      <div class="refs-subtitle">Sources used for scanner connection architecture · All links verified May 2026</div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">Discovery Architecture — NIST</div>
+
+        <div class="ref-item">
+          <div class="ref-num">1</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.nccoe.nist.gov/publications/practice-guide/migration-post-quantum-cryptography-nist-sp-1800-38-practice-guide" target="_blank">NIST SP 1800-38B — Migration to Post-Quantum Cryptography: Cryptographic Discovery</a>
+            <span class="ref-scope">Active vs passive scanning strategy · Three discovery domains (network, filesystem, code) · Agent vs agentless decision</span>
+            <div class="ref-meta">NIST NCCoE · Newhouse, Souppaya, Barker, Brown · December 2023 Preliminary Draft · nccoe.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">2</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://postquantum.com/post-quantum/cryptographic-inventory-vendors/" target="_blank">Cryptographic Inventory Vendors & Methodologies — Comparative Analysis</a>
+            <span class="ref-scope">Network analyzer · Application analyzer · Filesystem analyzer modalities · SandboxAQ, Keyfactor, Venafi comparison</span>
+            <div class="ref-meta">Post-Quantum.com · June 2025 · postquantum.com</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">HSM & Key Management Protocols</div>
+
+        <div class="ref-item">
+          <div class="ref-num">3</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.2/pkcs11-spec-v3.2.html" target="_blank">PKCS #11 Cryptographic Token Interface (Cryptoki) Specification v3.2 — OASIS Standard</a>
+            <span class="ref-scope">HSM connection protocol · CKA_KEY_TYPE · CKA_MODULUS_BITS · Object enumeration via findObjects()</span>
+            <div class="ref-meta">OASIS PKCS11 Technical Committee · docs.oasis-open.org</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">4</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://docs.oasis-open.org/kmip/kmip-spec/v2.1/kmip-spec-v2.1.html" target="_blank">Key Management Interoperability Protocol (KMIP) Specification v2.1 — OASIS Standard</a>
+            <span class="ref-scope">KMS connection protocol · Locate + Get Attributes operations · Port 5696 mTLS · Thales CipherTrust · IBM SKLM</span>
+            <div class="ref-meta">OASIS KMIP Technical Committee · December 2020 · docs.oasis-open.org</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">5</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://postquantum.com/post-quantum/payments-quantum-pqc/" target="_blank">Payments & PQC — HSM Landscape Analysis (Thales, Entrust, Utimaco, Futurex)</a>
+            <span class="ref-scope">HSM vendor firmware versions · PQC support status · FIPS 140-3 validation · payShield / Luna / nShield</span>
+            <div class="ref-meta">Post-Quantum.com · February 2026 · postquantum.com</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">TLS & Network Protocol Scanning</div>
+
+        <div class="ref-item">
+          <div class="ref-num">6</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://datatracker.ietf.org/doc/draft-ietf-tls-hybrid-design/" target="_blank">IETF Draft — Hybrid Key Exchange in TLS 1.3 (draft-ietf-tls-hybrid-design)</a>
+            <span class="ref-scope">Active TLS handshake scanning · Hybrid named groups (X25519MLKEM768) · ClientHello parameters to check</span>
+            <div class="ref-meta">IETF TLS Working Group · Latest draft · datatracker.ietf.org</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">7</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://datatracker.ietf.org/doc/rfc9794/" target="_blank">RFC 9794 — Terminology for Post-Quantum Traditional Hybrid Schemes</a>
+            <span class="ref-scope">Standard terminology for scanner output · Hybrid scheme vocabulary · combiner definitions</span>
+            <div class="ref-meta">IETF · Britta Hale et al. · 2024 · datatracker.ietf.org</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">Active Directory, PKI & Database</div>
+
+        <div class="ref-item">
+          <div class="ref-num">8</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.nccoe.nist.gov/sites/default/files/2023-04/pqc-migration-nist-sp-1800-38a-preliminary-draft.pdf" target="_blank">NIST SP 1800-38A — Migration to Post-Quantum Cryptography: Executive Summary & Preparation</a>
+            <span class="ref-scope">PKI migration prerequisite · CA chain dependencies · Service account requirements for scanning</span>
+            <div class="ref-meta">NIST NCCoE · April 2023 · nccoe.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">9</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.nccoe.nist.gov/sites/default/files/2023-12/pqc-migration-nist-sp-1800-38c-preliminary-draft.pdf" target="_blank">NIST SP 1800-38C — Interoperability & Performance Testing of PQC Algorithms</a>
+            <span class="ref-scope">Performance overhead of scanning operations · TLS handshake impact · Database connection overhead</span>
+            <div class="ref-meta">NIST NCCoE · December 2023 · nccoe.nist.gov</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="refs-group">
+        <div class="refs-group-label">SAST & Source Code Scanning</div>
+
+        <div class="ref-item">
+          <div class="ref-num">10</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.39.pdf" target="_blank">NIST CSWP 39 — Considerations for Achieving Crypto Agility: Strategies and Practices</a>
+            <span class="ref-scope">Source code crypto pattern detection · Hardcoded algorithm strings · API abstraction detection · SBOM/CBOM generation</span>
+            <div class="ref-meta">NIST · December 19, 2025 (Final) · nvlpubs.nist.gov</div>
+          </div>
+        </div>
+
+        <div class="ref-item">
+          <div class="ref-num">11</div>
+          <div class="ref-body">
+            <a class="ref-title" href="https://www.fsisac.com/hubfs/Knowledge/PQC/BuildingCryptographicAgilityInTheFinancialSector.pdf" target="_blank">FS-ISAC — Building Cryptographic Agility in the Financial Sector</a>
+            <span class="ref-scope">Crypto-as-a-service API abstraction · CBS source code scanning requirements · CI/CD pipeline scanning</span>
+            <div class="ref-meta">FS-ISAC PQC Working Group · October 2024 · fsisac.com</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab4 -->
+
+</main>
+
+<footer class="site-footer">
+  <span>PQC Banking Scanner Research · Internal Document · May 2026</span>
+  <span>Sources: NIST SP 1800-38B · NIST IR 8547 · FS-ISAC Future State · FS-ISAC Crypto Agility (Oct 2024) · CMORG April 2025 · CycloneDX CBOM Guide v2</span>
+</footer>
+
+<script>
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

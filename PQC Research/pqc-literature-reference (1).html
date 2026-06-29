@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC Migration Literature Reference Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;0,900;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface2: #eef1f6;
+    --border: #dde2ec;
+    --accent: #1a56b0;
+    --accent2: #c94f1e;
+    --accent3: #1a56b0;
+    --text: #1a202c;
+    --muted: #6b7280;
+    --warn: #b45309;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 32px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 40px;
+    margin-bottom: 48px;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 3px 10px;
+    margin-bottom: 20px;
+    opacity: 0.9;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+    margin-bottom: 16px;
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Section headers */
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* PRIORITY TABLE */
+  .priority-section {
+    margin-bottom: 64px;
+  }
+
+  .priority-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .priority-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 2fr 1.5fr;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: border-color 0.2s, background 0.2s;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .priority-row:hover {
+    background: var(--surface2);
+    border-color: var(--accent);
+  }
+
+  .priority-row.header-row {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+    animation: none;
+  }
+
+  .priority-row.header-row .cell {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .priority-row:nth-child(1) { animation-delay: 0.05s; }
+  .priority-row:nth-child(2) { animation-delay: 0.1s; }
+  .priority-row:nth-child(3) { animation-delay: 0.15s; }
+  .priority-row:nth-child(4) { animation-delay: 0.2s; }
+  .priority-row:nth-child(5) { animation-delay: 0.25s; }
+  .priority-row:nth-child(6) { animation-delay: 0.3s; }
+  .priority-row:nth-child(7) { animation-delay: 0.35s; }
+
+  .cell {
+    padding: 16px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .cell:last-child { border-right: none; }
+
+  .priority-num {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .doc-name {
+    font-weight: 500;
+    color: #0f172a;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .doc-name a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  .doc-name a:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  .doc-org {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .doc-why {
+    color: #374151;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .badge-critical { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+  .badge-high { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .badge-medium { background: #fef9c3; color: #854d0e; border: 1px solid #fde68a; }
+
+  /* FULL CATALOGUE */
+  .catalogue-section {
+    margin-bottom: 64px;
+  }
+
+  .org-block {
+    margin-bottom: 32px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .org-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .org-name {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .org-flag {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+  }
+
+  .doc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .doc-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: start;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .doc-item:hover {
+    background: var(--surface2);
+    border-color: #2e3547;
+  }
+
+  .doc-item-title {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .doc-item-title a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .doc-item-title a:hover { color: #1e3a8a; }
+
+  .doc-item-desc {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .doc-summary {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    color: #374151;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+
+  .doc-summary strong {
+    color: #0f172a;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .doc-item-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    min-width: 80px;
+  }
+
+  .doc-year {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    color: var(--muted);
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="tag">Research Reference</div>
+    <h1>PQC Migration<br><span>Literature Guide</span></h1>
+    <p class="subtitle">Post-Quantum Cryptography — Authoritative Documentation for Banking Applications &nbsp;·&nbsp; Compiled May 2026</p>
+  </header>
+
+  <!-- PRIORITY TABLE -->
+  <section class="priority-section">
+    <div class="section-label">Priority Reading List — Scanning Application</div>
+
+    <div class="priority-grid">
+
+      <div class="priority-row header-row">
+        <div class="cell">#</div>
+        <div class="cell">Document</div>
+        <div class="cell">Relevance to Scanning App</div>
+        <div class="cell">Focus Area</div>
+      </div>
+
+      <div class="priority-row">
+        <div class="cell priority-num">1</div>
+        <div class="cell">
+          <div>
+            <div class="doc-name"><a href="https://www.nccoe.nist.gov/sites/default/files/2024-07/pqc-migration-nist-sp-1800-38b-preliminary-draft.pdf" target="_blank">NIST SP 1800-38B</a></div>
+            <div class="doc-org">NIST NCCoE · 2024</div>
+          </div>
+        </div>
+        <div class="cell doc-why">Cryptographic discovery methodology — directly maps to how your scanner finds, identifies, and inventories quantum-vulnerable cryptography across infrastructure layers.</div>
+        <div class="cell"><span class="badge badge-critical">Cryptographic Discovery</span></div>
+      </div>
+
+      <div class="priority-row">
+        <div class="cell priority-num">2</div>
+        <div class="cell">
+          <div>
+            <div class="doc-name"><a href="https://www.fsisac.com/hubfs/Knowledge/PQC/FutureState.pdf" target="_blank">FS-ISAC Future State Technical Paper</a></div>
+            <div class="doc-org">FS-ISAC PQC Working Group · 2023</div>
+          </div>
+        </div>
+        <div class="cell doc-why">Phase 1 Discovery + Risk Scoring framework built specifically for financial institutions. Covers what's at risk, initial exposure evaluation, and risk modeling for banks.</div>
+        <div class="cell"><span class="badge badge-critical">Banking Risk Model</span></div>
+      </div>
+
+      <div class="priority-row">
+        <div class="cell priority-num">3</div>
+        <div class="cell">
+          <div>
+            <div class="doc-name"><a href="https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf" target="_blank">NIST IR 8547</a></div>
+            <div class="doc-org">NIST · November 2024</div>
+          </div>
+        </div>
+        <div class="cell doc-why">Algorithm deprecation timeline — defines exactly what your scanner must flag. RSA, ECDSA, classic DH disallowed after 2030/2035. Sets the compliance boundary for every finding.</div>
+        <div class="cell"><span class="badge badge-critical">Deprecation Timeline</span></div>
+      </div>
+
+      <div class="priority-row">
+        <div class="cell priority-num">4</div>
+        <div class="cell">
+          <div>
+            <div class="doc-name"><a href="https://csrc.nist.gov/pubs/cswp/39/final" target="_blank">NIST CSWP 39</a></div>
+            <div class="doc-org">NIST · 2024</div>
+          </div>
+        </div>
+        <div class="cell doc-why">Crypto agility strategies and practices — defines what a remediation recommendation should look like. Required reading for the output/reporting layer of the scanning app.</div>
+        <div class="cell"><span class="badge badge-high">Crypto Agility</span></div>
+      </div>
+
+      <div class="priority-row">
+        <div class="cell priority-num">5</div>
+        <div class="cell">
+          <div>
+            <div class="doc-name"><a href="https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TG02102/BSI-TR-02102-1.pdf" target="_blank">BSI TR-02102-1</a></div>
+            <div class="doc-org">BSI Germany · 2024 (updated)</div>
+          </div>
+        </div>
+        <div class="cell doc-why">Most technically detailed on hybrid schemes and algorithm selection. Defines minimum key sizes, approved cipher combinations, and how to handle legacy algorithm coexistence during migration.</div>
+        <div class="cell"><span class="badge badge-high">Technical Algorithms</span></div>
+      </div>
+
+      <div class="priority-row">
+        <div class="cell priority-num">6</div>
+        <div class="cell">
+          <div>
+            <div class="doc-name"><a href="https://www.cmorg.org.uk/sites/default/files/2025-06/CMORG%20-%20Guidance%20for%20Post-Quantum%20Cryptography%20-%20April%202025%20-%20TLP%20CLEAR%20(1).pdf" target="_blank">CMORG PQC Guidance</a></div>
+            <div class="doc-org">CMORG (UK Capital Markets) · April 2025</div>
+          </div>
+        </div>
+        <div class="cell doc-why">Financial market infrastructure specific — covers SWIFT, HSM, settlement system scanning. Direct applicability to the interbank and payment layer scanning covered in this research.</div>
+        <div class="cell"><span class="badge badge-high">Financial Infrastructure</span></div>
+      </div>
+
+      <div class="priority-row">
+        <div class="cell priority-num">7</div>
+        <div class="cell">
+          <div>
+            <div class="doc-name"><a href="https://www.fsisac.com/hubfs/Knowledge/PQC/BuildingCryptographicAgilityInTheFinancialSector.pdf" target="_blank">FS-ISAC: Building Cryptographic Agility</a></div>
+            <div class="doc-org">FS-ISAC · October 2024</div>
+          </div>
+        </div>
+        <div class="cell doc-why">Risk modeling framework specifically for banks — covers discovery, risk scoring, remediation phases. Complements the Future State paper with more recent guidance on crypto agility for financial sector.</div>
+        <div class="cell"><span class="badge badge-medium">Banking Agility</span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FULL CATALOGUE -->
+  <section class="catalogue-section">
+    <div class="section-label">Full Literature Catalogue</div>
+
+    <!-- NIST -->
+    <div class="org-block">
+      <div class="org-header">
+        <div class="org-name">NIST</div>
+        <div class="org-flag">US · Primary Authority</div>
+      </div>
+      <div class="doc-list">
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://csrc.nist.gov/pubs/fips/203/final" target="_blank">FIPS 203 — ML-KEM (Module-Lattice Key Encapsulation Mechanism)</a></div>
+            <div class="doc-item-desc">Finalized Aug 2024. Replaces RSA/ECDH for key exchange. Formerly CRYSTALS-Kyber. Ready for immediate implementation.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Specifies ML-KEM, a key-encapsulation mechanism for establishing shared secret keys over a public channel. Security is based on the hardness of the Module Learning with Errors (MLWE) problem, which is believed to be resistant to quantum attacks. Defines three parameter sets — ML-KEM-512, ML-KEM-768, and ML-KEM-1024 — in increasing order of security strength and decreasing performance. The shared secret established by ML-KEM is then used with symmetric-key algorithms for encryption and authentication. This is the primary replacement for RSA and ECDH key exchange in TLS, SSH, and other protocols. Immediate implementation is recommended.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2024</span><span class="badge badge-critical">STANDARD</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://csrc.nist.gov/pubs/fips/204/final" target="_blank">FIPS 204 — ML-DSA (Module-Lattice Digital Signature Algorithm)</a></div>
+            <div class="doc-item-desc">Finalized Aug 2024. Replaces RSA/ECDSA for digital signatures. Formerly CRYSTALS-Dilithium.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Specifies ML-DSA, the primary post-quantum digital signature algorithm based on the CRYSTALS-Dilithium scheme. Security is grounded in the hardness of lattice problems (MLWE and SelfTargetMSIS). Defines three parameter sets — ML-DSA-44, ML-DSA-65, ML-DSA-87 — offering different security/performance trade-offs. Used for signing code, firmware, documents, certificates, and authenticating TLS connections. Replaces RSA-PSS and ECDSA signatures across all banking and payment infrastructure. Notably larger signature sizes than RSA/ECDSA — important for scanning findings on protocols with size constraints (e.g., DNS, some IoT protocols).
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2024</span><span class="badge badge-critical">STANDARD</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://csrc.nist.gov/pubs/fips/205/final" target="_blank">FIPS 205 — SLH-DSA (Stateless Hash-Based Digital Signature)</a></div>
+            <div class="doc-item-desc">Finalized Aug 2024. Additional signature scheme using hash-based construction. Backup signature algorithm.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Specifies SLH-DSA (based on SPHINCS+), a stateless hash-based signature scheme. Its security relies only on the properties of hash functions — a fundamentally different and more conservative mathematical assumption than ML-DSA. Considered the "backup" signature algorithm if lattice-based schemes are ever broken. Defines 12 parameter sets across small (fast signing, large signatures) and fast (smaller signatures, slower signing) variants. Particularly suited for long-lived signatures such as root CA certificates, firmware signing keys, and code-signing infrastructure where the signing key must remain valid for 10–20+ years. Higher performance cost than ML-DSA but stronger security guarantees due to its different mathematical foundation.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2024</span><span class="badge badge-critical">STANDARD</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.nccoe.nist.gov/sites/default/files/2023-12/pqc-migration-nist-sp-1800-38b-preliminary-draft.pdf" target="_blank">NIST SP 1800-38B — Cryptographic Discovery</a></div>
+            <div class="doc-item-desc">Automated discovery tools and methodology for identifying quantum-vulnerable cryptography. Lessons learned from real discovery exercises. Priority #1 for this project.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Covers three discovery domains: (1) Code pipeline — scanning source code, binaries, and dependencies in CI/CD for vulnerable algorithms via SAST tools; (2) Operational systems — filesystem scanning for cryptographic libraries, keystores (PKCS#12, JKS), certificate files (.pem, .p12, .pfx), and application binaries; (3) Network/transport — passive and active scanning of TLS, SSH, and IPsec traffic for cipher suites and key exchange parameters. Introduces the Cryptography Bill of Materials (CBOM) concept using CycloneDX format to create a machine-readable inventory of every crypto asset. Defines a normalized output format (SARIF for static analysis, JSON/CBOM for network) so findings from multiple tools can be aggregated into a single risk dashboard. Identifies the vulnerable algorithms to flag: RSA, ECDSA, ECDH, DH, DSA, EdDSA, MQV. Emphasizes that most organizations cannot currently see all cryptography in use — the first step is building visibility, then prioritizing replacement using a risk-based methodology.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2024</span><span class="badge badge-critical">DISCOVERY</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.nccoe.nist.gov/sites/default/files/2023-04/pqc-migration-nist-sp-1800-38a-preliminary-draft.pdf" target="_blank">NIST SP 1800-38A — Executive Summary & Preparation Overview</a></div>
+            <div class="doc-item-desc">Overview of the migration project scope, outcomes, and organizational preparation guidance.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Executive-level overview of the entire NIST NCCoE PQC Migration project. Sets out four mandatory steps every organization must take: (1) Establish a Quantum Readiness Roadmap; (2) Prepare a Cryptographic Inventory; (3) Discuss quantum-safe roadmaps with technology vendors; (4) Determine supply chain quantum-readiness. Explains that previous cryptographic transitions (3DES→AES, SHA-1→SHA-2, RSA→ECC) each took years or decades, and the PQC transition will be more complex due to the scale and depth of deployment. Emphasizes that the "harvest now, decrypt later" (HNDL) threat means migration cannot wait for quantum computers to arrive — data being captured today is already at risk. Intended for CISOs, CIOs, and board-level stakeholders to understand the scope and urgency.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2023</span><span class="badge badge-high">OVERVIEW</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.nccoe.nist.gov/sites/default/files/2023-12/pqc-migration-nist-sp-1800-38c-preliminary-draft.pdf" target="_blank">NIST SP 1800-38C — Interoperability & Performance Testing</a></div>
+            <div class="doc-item-desc">Results from testing PQC algorithm implementations for interoperability and performance. Relevant for assessing migration feasibility across banking systems.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Documents real-world testing of PQC algorithm implementations across TLS, SSH, and X.509 certificate use cases. Identifies compatibility issues encountered when mixing classical and PQC implementations across different vendors and platforms. Key findings: ML-KEM and ML-DSA introduce larger key and signature sizes that can break assumptions in existing protocols (e.g., TLS handshake size limits, DNSSEC packet sizes). Performance testing shows acceptable overhead for most enterprise use cases, but legacy hardware (ATM controllers, HSMs) may require firmware updates or replacement. Provides a basis for assessing which systems in a bank's stack can be migrated quickly vs. which require hardware replacement or protocol redesign.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2023</span><span class="badge badge-high">TESTING</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://nvlpubs.nist.gov/nistpubs/ir/2024/NIST.IR.8547.ipd.pdf" target="_blank">NIST IR 8547 — Transition to PQC Standards</a></div>
+            <div class="doc-item-desc">Federal transition planning and algorithm selection. Defines deprecation: RSA/ECC disallowed after 2030 (112-bit) and 2035 (all). Core compliance reference for scanner output.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Defines NIST's official deprecation and disallowance timeline for quantum-vulnerable algorithms — this is the compliance backbone for every finding your scanner produces. Key dates: RSA and ECC with 112-bit security disallowed after 2030; all remaining RSA/ECC/DH disallowed after 2035. FIPS 203, 204, and 205 are the designated replacements. Identifies which existing NIST standards (SP 800-56A/B/C, FIPS 186-5, SP 800-131A) are being deprecated and what replaces each one. Intended to align federal agencies, vendors, and critical infrastructure operators on a common transition schedule. For your scanner: every finding should be cross-referenced against this timeline to classify urgency as "disallowed now," "disallowed by 2030," or "disallowed by 2035."
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Nov 2024</span><span class="badge badge-critical">TRANSITION</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.39.pdf" target="_blank">NIST CSWP 39 — Considerations for Achieving Crypto Agility</a></div>
+            <div class="doc-item-desc">In-depth survey of approaches to crypto agility. Defines what it means to build systems that can swap algorithms without disruption. Shapes remediation recommendation output.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Defines crypto agility as the capability to replace and adapt cryptographic algorithms in protocols, applications, hardware, firmware, and infrastructure while preserving security and ongoing operations. Covers four areas: (1) Protocol-level agility — mandatory algorithm negotiation, hybrid schemes (classical+PQC in parallel), backward compatibility design; (2) Implementation-level agility — use of crypto APIs that abstract algorithm choice from application logic, hardware-agnostic crypto modules; (3) Organizational strategy — a five-phase plan covering inventory, risk assessment, prioritization, migration execution, and validation; (4) Future considerations — metrics for measuring agility, sector-specific guidance gaps. Key design principle: applications should call a crypto API layer that can be updated centrally, rather than hardcoding algorithm choices. Directly shapes what your scanner's remediation recommendations should look like — flag hardcoded algorithm calls, missing API abstraction layers, and non-agile certificate management.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2024</span><span class="badge badge-high">AGILITY</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://csrc.nist.gov/pubs/sp/800/208/final" target="_blank">NIST SP 800-208 — Stateful Hash-Based Signatures (LMS, XMSS)</a></div>
+            <div class="doc-item-desc">Guidance on LMS and XMSS — hash-based signature schemes. Relevant for code signing, firmware signing in banking infrastructure.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Specifies LMS (Leighton-Micali Signature) and XMSS (eXtended Merkle Signature Scheme) — stateful hash-based signature schemes considered quantum-safe today. Unlike ML-DSA (stateless), these schemes maintain a state counter that must never repeat, making them suitable for closed, controlled signing environments such as firmware signing servers, HSM root keys, and code-signing infrastructure. Not appropriate for general-purpose TLS or interactive authentication. For banking: relevant for ATM firmware signing keys, core banking software update pipelines, and HSM key ceremonies. Scanner should identify where LMS/XMSS could replace RSA in code-signing flows.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2020</span><span class="badge badge-medium">SIGNATURES</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://pages.nist.gov/nccoe-migration-post-quantum-cryptography/FAQ/" target="_blank">NCCoE PQC Migration — FAQ & Full Document Timeline</a></div>
+            <div class="doc-item-desc">Comprehensive FAQ and curated timeline of all international PQC guidance documents. Useful as a master index.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Living FAQ maintained by NIST NCCoE that answers the most common questions from organizations beginning migration: What algorithms should I implement? What is the difference between FIPS 203/204/205? When will my vendor support PQC? Do I need to replace AES? Also maintains a curated, chronological timeline of all international PQC guidance publications — useful for tracking when new guidance from regulators, standards bodies, and industry groups is released. Bookmark this page and check it regularly as the regulatory landscape is evolving rapidly. Also links to the NCCoE's GitHub repository where code examples and discovery tool configurations are published.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Ongoing</span><span class="badge badge-medium">INDEX</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- US Government -->
+    <div class="org-block">
+      <div class="org-header">
+        <div class="org-name">US Government</div>
+        <div class="org-flag">Federal Mandates & Policy</div>
+      </div>
+      <div class="doc-list">
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.cisa.gov/quantum" target="_blank">CISA PQC Roadmap</a></div>
+            <div class="doc-item-desc">Critical infrastructure guidance requiring owners/operators to begin PQC migration planning now. Defines "cryptographic inventory" as a mandatory first step.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              CISA's guidance explicitly targets critical infrastructure sectors including financial services. Defines cryptographic inventory as Step 1 — mandatory before any other migration action. Lists four required actions: (1) identify and document all quantum-vulnerable cryptographic systems; (2) prioritize systems by risk and operational impact; (3) engage vendors to understand their PQC timelines; (4) develop and execute a migration plan with milestones. CISA jointly published a "Quantum Readiness: Migration to PQC" factsheet with NSA and NIST in 2025 that provides a concise checklist version of this roadmap. Banks operating US critical infrastructure (payments, clearing, settlement) are in scope for CISA guidance and may face regulatory follow-up.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2023–ongoing</span><span class="badge badge-critical">MANDATE</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://media.defense.gov/2025/May/30/2003728741/-1/-1/0/CSA_CNSA_2.0_ALGORITHMS.PDF" target="_blank">NSA CNSA 2.0 — Commercial National Security Algorithm Suite</a></div>
+            <div class="doc-item-desc">Most aggressive US timeline. Mandates ML-KEM, ML-DSA, LMS/XMSS for national security systems. Sets the ceiling for what banking regulators may eventually require.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Sets the most aggressive migration timeline in any US government document. For national security systems: software and firmware signing must use LMS or XMSS by 2025; networking equipment must support ML-KEM by 2026; operating systems must support ML-KEM by 2027; all new products must be PQC-only (no classical) by 2030. While this directly applies only to NSS (National Security Systems), it signals the direction of travel for commercial regulation. Key implication for banking: any bank supplying technology to US government or defense customers must meet CNSA 2.0 timelines. Also sets the benchmark for what "fully quantum-safe" means — pure PQC, not hybrid — which is the long-term target even if hybrid is the acceptable transition state.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Updated Dec 2024</span><span class="badge badge-high">NSS MANDATE</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.whitehouse.gov/wp-content/uploads/2022/11/M-23-02-M-Memo-on-Migrating-to-Post-Quantum-Cryptography.pdf" target="_blank">OMB M-23-02</a></div>
+            <div class="doc-item-desc">Federal agency mandate for PQC inventory completion and migration planning. Directly shaped the NIST SP 1800-38 series.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              White House memorandum that made PQC migration a mandatory federal government activity. Required all federal agencies to: (1) complete an inventory of quantum-vulnerable cryptographic systems within 90 days of issuance; (2) develop prioritized migration plans; (3) include PQC migration as a line item in IT budget requests. This memo directly commissioned the NIST SP 1800-38 series. For private sector banks: while not directly binding, this memo created the regulatory framework that CISA and banking regulators are now building on. It defines the language and structure ("cryptographic inventory," "migration plan," "prioritized systems") that regulators will use in future banking-specific guidance.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2022</span><span class="badge badge-high">POLICY</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Sector -->
+    <div class="org-block">
+      <div class="org-header">
+        <div class="org-name">Financial Sector</div>
+        <div class="org-flag">Banking & Payments Specific</div>
+      </div>
+      <div class="doc-list">
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.fsisac.com/hubfs/Knowledge/PQC/FutureState.pdf" target="_blank">FS-ISAC — PQC Future State Technical Paper</a></div>
+            <div class="doc-item-desc">Phase 1 Discovery, risk exposure evaluation, risk scoring methodology and remediation guidance. Built specifically for financial institutions. Priority #2 for this project.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Five-phase risk assessment framework tailored for banks: Phase 1 (Discovery) — create a full cryptographic inventory using self-identification, automated scanning, SBOM/CBOM tools, and manual code review; Phase 2 (Risk Modeling) — score each asset using a Cryptographic Agility Index (CAI) that factors in whether the asset is internally built or from a third-party vendor, since vendor assets introduce additional supply chain risk; Phase 3 (Risk Tolerance) — define acceptable residual risk; Phase 4 (Prioritization) — rank assets for migration with HNDL-exposed data and internet-facing systems first; Phase 5 (Outcome) — vendor assessment and remediation roadmap. Highlights SWIFT as a sector-specific system requiring careful migration risk calculation. Discusses QKD (Quantum Key Distribution) as a supplementary measure. Defines three "degrees of readiness" for measuring progress: Inventory Complete → Migration Planned → Migration Executed.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2023</span><span class="badge badge-critical">BANKING</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.fsisac.com/hubfs/Knowledge/PQC/PreparingForAPostQuantumWorldByManagingCryptographicRisk.pdf" target="_blank">FS-ISAC — Preparing for a Post-Quantum World by Managing Cryptographic Risk</a></div>
+            <div class="doc-item-desc">Risk management framework for financial institutions. Covers risk model application and remediation planning.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Applies Mosca's Theorem to financial institutions: if the time to migrate (y) plus the time data needs to remain secure (x) exceeds the time before a cryptographically relevant quantum computer arrives (z), action must begin now. Distinguishes three data exposure categories: data-in-motion (TLS, SWIFT), data-at-rest (encrypted databases, backup tapes), and data-in-use (keys in memory, HSM operations). The HNDL threat applies most acutely to long-lived data such as mortgage records, trade history, and customer PII — these need to be prioritized in the scanner's risk output. Provides practical guidance on building a cryptographic inventory in financial institutions where shadow IT and legacy systems are common. Discusses how to assess vendor PQC readiness using questionnaires and contractual audit rights.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Mar 2023</span><span class="badge badge-critical">BANKING</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.fsisac.com/hubfs/Knowledge/PQC/BuildingCryptographicAgilityInTheFinancialSector.pdf" target="_blank">FS-ISAC — Building Cryptographic Agility in the Financial Sector</a></div>
+            <div class="doc-item-desc">Evaluate, inventory, plan, validate, and execute framework for financial sector crypto agility. Priority #7.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Defines crypto agility for financial institutions as "the ability to adapt cryptographic solutions or algorithms quickly and efficiently in response to developments in cryptanalysis, emerging threats, or vulnerabilities — with no significant architectural changes and minimal business disruption." Core prerequisite: you cannot be crypto agile without a current, accurate cryptographic inventory — the scanner is the foundation. Provides nine core elements of a successful transition including topology design for a "crypto-as-a-service" central architecture, technical details of algorithm replacement at the API layer, and transition governance. Includes specific API schema designs for abstracting cryptographic operations in financial middleware. Critically warns that future PQC algorithms will likely have shorter operational lives than RSA — organizations must build for ongoing, repeatable transitions, not a one-off migration. Addresses the Shor and Grover algorithm threats in an appendix for executive education.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Oct 2024</span><span class="badge badge-high">BANKING</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.fsisac.com/knowledge/pqc" target="_blank">FS-ISAC — PQC Resource Hub (all documents)</a></div>
+            <div class="doc-item-desc">Master index of all FS-ISAC PQC publications including the Payment Card Industry quantum impact paper (Feb 2025) and Quantum Threat Timeline Report.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Central repository for all FS-ISAC PQC Working Group output. Key additional documents available here beyond what is listed individually: (1) "Impact of Quantum Computing on the Payment Card Industry" (Feb 2025) — covers HSM PIN encryption (3DES→AES migration, ISO-4 PIN block format), card personalization bureau scanning, and PCI-DSS compliance implications; (2) "Quantum Threat Timeline Report" — annual update on quantum computer progress and expert timeline estimates for cryptographically relevant quantum computers; (3) "Current State (Crypto Agility) Technical Paper" — inventory of how cryptography is currently managed in typical financial institutions, identifying governance gaps. Recommended as a live bookmark — new papers are published quarterly.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Ongoing</span><span class="badge badge-high">HUB</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.cmorg.org.uk/sites/default/files/2025-06/CMORG%20-%20Guidance%20for%20Post-Quantum%20Cryptography%20-%20April%202025%20-%20TLP%20CLEAR%20(1).pdf" target="_blank">CMORG — Guidance for Post-Quantum Cryptography (TLP:CLEAR)</a></div>
+            <div class="doc-item-desc">UK Capital Markets specific. Covers SWIFT, HSM, settlement scanning. Vendor PQC assessment guidance. Priority #6.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Explicitly states that banks as critical national infrastructure (CNI) must begin PQC uplift immediately — waiting is not an option given the scope of effort required. Defines a four-phase CMORG PQC Roadmap: (1) Discovery and Inventory — establish cryptographic inventory and identify dependencies; (2) Risk Assessment — prioritize assets, focusing on long-lived sensitive data and HNDL exposure; (3) Migration Planning — develop detailed roadmaps with vendor timelines; (4) Implementation — phased deployment of quantum-safe solutions with testing. Strongly emphasizes vendor readiness assessment: financial institutions must engage HSM vendors (Thales, Entrust, Utimaco), network providers, and software vendors to confirm their PQC migration timelines before planning internal migrations. Notes that AES symmetric encryption is considered low risk (Grover's algorithm requires doubling key length, which is manageable), while all public-key cryptography requires replacement. Aligns with NCSC three-phase timeline: 2028 → 2031 → 2035.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Apr 2025</span><span class="badge badge-high">MARKETS</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://postquantum.com/security-pqc/g7-postquantum-roadmap-pqc/" target="_blank">G7 Cyber Expert Group — Financial Sector PQC Roadmap</a></div>
+            <div class="doc-item-desc">Global coordination framework for banking sector with 2030–2035 target window. Emphasises cryptographic agility as a core requirement.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Establishes the multilateral coordination framework for PQC migration across G7 financial systems (US, UK, EU, Canada, Japan, Italy, France). Key outcomes: all G7 central banks and financial regulators have agreed to a 2030–2035 target window for completing PQC migration in systemically important financial institutions. Cryptographic agility is a core requirement — institutions must not implement static PQC solutions that cannot be updated. Cross-border interoperability is a priority — correspondent banking, SWIFT, and payment network migrations must be coordinated to avoid breaking connectivity between institutions in different jurisdictions. Provides the political and regulatory context for why banks cannot delay — regulatory pressure from multiple directions is building simultaneously.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2024–2025</span><span class="badge badge-high">G7</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://postquantum.com/post-quantum/payments-quantum-pqc/" target="_blank">Payments & PQC — HSM Landscape Analysis</a></div>
+            <div class="doc-item-desc">Detailed analysis of HSM vendor PQC readiness (Thales, Entrust, Utimaco, Futurex). FIPS 140-3 validation status as of mid-2025. Critical for HSM scanning layer.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Current PQC status of major HSM vendors as of early 2026: Thales Luna Network HSM 7 supports ML-KEM and ML-DSA from firmware 7.9+; Entrust nShield 5 supports from firmware 13.8+; Futurex achieved the first PCI HSM-validated PQC implementation (June 2025) covering PIN encryption with AES-256; Utimaco has PQC support in SecurityServer Se-Series. Critical finding: most HSM deployments in banks are running older firmware and will require scheduled maintenance windows for updates — some older hardware cannot be updated and will require physical replacement. FIPS 140-3 PQC validation is still in progress for most vendors — check CMVP database for current status. Scanner should flag HSM firmware version and whether the vendor has a published PQC support roadmap.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Feb 2026</span><span class="badge badge-high">HSM</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- European Authorities -->
+    <div class="org-block">
+      <div class="org-header">
+        <div class="org-name">European Authorities</div>
+        <div class="org-flag">ENISA · ETSI · BSI · ANSSI · NCSC UK</div>
+      </div>
+      <div class="doc-list">
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TG02102/BSI-TR-02102-1.pdf" target="_blank">BSI TR-02102-1 — Technical Guideline: Cryptographic Mechanisms</a></div>
+            <div class="doc-item-desc">Most technically detailed on hybrid key derivation, minimum key sizes, approved cipher combinations, and legacy algorithm coexistence during migration. Priority #5.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Germany's authoritative technical specification for cryptographic algorithm selection, updated annually. Current version (2026-01) sets a minimum security level of 120 bits for all new systems — higher than the US 112-bit baseline. Key recommendations: (1) Symmetric encryption — AES-256 required for long-term data protection; AES-128 still acceptable for short-term; (2) Asymmetric/PQC — recommends ML-KEM and ML-DSA immediately; strongly recommends hybrid mode (classical+PQC simultaneously) during the transition period rather than replacing classical algorithms outright; (3) Key derivation — specifies approved HKDF constructions for hybrid key combination; (4) Hash functions — SHA-256 minimum, SHA-384/512 for long-term protection; (5) Legacy coexistence — provides explicit guidance on running classical and PQC schemes in parallel without weakening either. Protocol-specific recommendations are in companion documents TR-02102-2 (TLS), TR-02102-3 (IPsec), TR-02102-4 (SSH). Updated annually — check for current version before implementation decisions.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Updated 2024</span><span class="badge badge-critical">TECHNICAL</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.enisa.europa.eu/publications/post-quantum-cryptography-integration-study" target="_blank">ENISA — Post-Quantum Cryptography Integration Study</a></div>
+            <div class="doc-item-desc">EU-wide integration study covering protocol-level migration challenges across infrastructure types.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Analyzes PQC integration challenges across five protocol categories: TLS/HTTPS, SSH, S/MIME, IKE/IPsec, and PKI/X.509. Key findings: larger PQC key and signature sizes create performance issues in TLS handshakes and certificate chains; hybrid schemes are the recommended transition mechanism to maintain backward compatibility; PKI infrastructure (CAs, OCSP, CRLs) requires update before dependent systems can migrate. Provides EU-specific context on NIS2 compliance obligations and how PQC readiness maps to critical infrastructure requirements. Highlights that IoT and embedded systems are the hardest migration targets due to memory and compute constraints — relevant for ATM and branch hardware scanning.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Oct 2022</span><span class="badge badge-high">EU</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://certification.enisa.europa.eu/document/download/a845662b-aee0-484e-9191-890c4cfa7aaa_en" target="_blank">ECCG — Agreed Cryptographic Mechanisms Version 2</a></div>
+            <div class="doc-item-desc">May 2025. Guidance for developers and decision-makers; recommends hybrid classical+PQC approach. Endorsed by EU national cybersecurity certification authorities.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Endorsed by all EU member state national cybersecurity certification authorities (NCCAs). Formally adopts the hybrid approach as the EU standard for the transition period — meaning any EU-regulated financial institution should be implementing hybrid, not pure PQC. Recommends ML-KEM and ML-DSA as the primary PQC algorithms. Provides guidance for software developers on correctly implementing hybrid key exchange (combining X25519 with ML-KEM-768) and hybrid signatures (combining ECDSA with ML-DSA). Particularly relevant for cross-border EU banking operations and compliance with DORA (Digital Operational Resilience Act), which is increasingly referenced in PQC planning discussions.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">May 2025</span><span class="badge badge-high">EU</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.ncsc.gov.uk/news/pqc-migration-roadmap-unveiled" target="_blank">NCSC UK — PQC Migration Roadmap</a></div>
+            <div class="doc-item-desc">Three-phase timeline: Discover & Plan (by 2028) → Prioritize & Pilot (2028–2031) → Complete Adoption (2031–2035). Centrally-managed migration guidance.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Sets the authoritative UK government timeline that UK-regulated banks must follow: Phase 1 by 2028 (complete cryptographic inventory and migration plan), Phase 2 by 2031 (migrate high-priority systems, run pilots), Phase 3 by 2035 (full adoption). Supports hybrid classical+PQC cryptography during the transition. NCSC explicitly states the scale of effort means work must begin now. Recommends ML-KEM, ML-DSA, and SLH-DSA aligned with NIST standards. Provides separate guidance on PQC migration timelines for organizations of different sizes and sectors. For Indian banks with UK operations, this timeline governs their London-based systems.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Aug 2024</span><span class="badge badge-high">UK</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://cyber.gouv.fr/en/publications/anssi-views-post-quantum-cryptography-transition" target="_blank">ANSSI — Views on the PQC Transition</a></div>
+            <div class="doc-item-desc">French position: conservative approach, recommends hybrid schemes, detailed on algorithm selection rationale.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              France's national cybersecurity agency takes a notably conservative stance: recommends hybrid classical+PQC as mandatory (not optional) during the transition, because the long-term security of the new PQC algorithms has not yet been fully stress-tested in practice. Does not recommend deploying standalone PQC-only implementations yet. Provides a detailed technical rationale for why each of the NIST-selected algorithms was chosen and discusses remaining open questions about their security. Discusses migration challenges for protocols like TLS 1.3, IKEv2, and S/MIME. Relevant for understanding the rationale behind hybrid scheme requirements — useful when explaining your scanner's recommendation to implement hybrid rather than pure PQC.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2023</span><span class="badge badge-medium">FRANCE</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.etsi.org/deliver/etsi_tr/103600_103699/103619/01.01.01_60/tr_103619v010101p.pdf" target="_blank">ETSI TR 103 619 — Migration Strategies to Quantum Safe Schemes</a></div>
+            <div class="doc-item-desc">Migration strategy framework covering transition paths, hybrid approaches, and deployment considerations.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Provides a structured taxonomy of migration strategies: (1) Immediate replacement — swap vulnerable algorithm for PQC equivalent; (2) Hybrid mode — run classical and PQC in parallel; (3) Crypto agility — build systems that support algorithm negotiation and can switch without redeployment. Analyzes the trade-offs of each approach for different system types. Particularly useful for understanding how to categorize scanner findings by recommended remediation path — not every finding has the same fix. Covers deployment considerations for TLS, IPsec, and certificate infrastructure. Note: this is the 2020 version; ETSI has published more recent PQC standards (TR 103 949, 2025 key exchange standard) that supersede parts of this document.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2020</span><span class="badge badge-medium">ETSI</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Other National Bodies -->
+    <div class="org-block">
+      <div class="org-header">
+        <div class="org-name">Other National Bodies</div>
+        <div class="org-flag">Netherlands · Canada · Australia</div>
+      </div>
+      <div class="doc-list">
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://english.aivd.nl/binaries/aivd-en/documenten/publications/2024/12/3/the-pqc-migration-handbook/The+PQC+Migration+Handbook+.pdf" target="_blank">AIVD/CWI/TNO — The PQC Migration Handbook (2nd Edition)</a></div>
+            <div class="doc-item-desc">Netherlands. Practical, well-regarded field guide for executing a PQC migration. Covers inventory, risk assessment, migration execution in detail.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Widely regarded as one of the most practical migration guides available. Structured as a step-by-step handbook: (1) Preparation — define scope, assemble migration team, establish governance; (2) Inventory — identify all cryptographic assets using a combination of automated scanning and manual review; (3) Risk Assessment — classify assets by data sensitivity, exposure, and algorithm vulnerability using a concrete scoring matrix; (4) Migration Planning — prioritize by risk score, plan hybrid deployment, identify dependencies; (5) Execution — migrate in phases, starting with certificate infrastructure (PKI) as the foundation that other systems depend on. Particularly strong on the organizational and process aspects that technical documents often skip. Recommended as the operational companion to NIST SP 1800-38B.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Mar 2023</span><span class="badge badge-high">PRACTICAL</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.cyber.gc.ca/en/guidance/roadmap-migration-post-quantum-cryptography-government-canada-itsm40001" target="_blank">CCCS — Roadmap for Migration to PQC (ITSM.40.001)</a></div>
+            <div class="doc-item-desc">Canada. Government migration roadmap with prioritization guidance and phased implementation approach.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Canada's government migration roadmap, updated June 2025. Recommends NIST's FIPS 203, 204, 205 algorithms and mandates cryptographic inventory as the first step. Introduces a prioritization framework based on: data sensitivity, system exposure (internet-facing vs. internal), data longevity requirements, and system replaceability. Provides sector-specific guidance for government IT, critical infrastructure, and regulated industries. Notable for its explicit guidance on cloud migration — recommends ensuring cloud KMS providers have PQC-ready key management before migrating workloads. Useful reference for banks with Canadian operations.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Jun 2025</span><span class="badge badge-medium">CANADA</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.cyber.gov.au/business-government/secure-design/planning-for-post-quantum-cryptography" target="_blank">ASD — Planning for Post-Quantum Cryptography</a></div>
+            <div class="doc-item-desc">Australia. Practical planning guidance for organizations beginning their PQC migration journey.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Australia's Signals Directorate guidance for organizations at the start of their PQC journey. Takes a practical, non-technical tone aimed at decision-makers. Key messages: start with an inventory (you cannot protect what you cannot see), prioritize high-value and internet-facing systems, plan for vendor dependencies (most organizations cannot migrate faster than their vendors). Recommends a three-year rolling migration planning horizon. Aligns with NIST standards. Useful as a reference for board-level communication and for framing the scanner's output in business terms rather than technical terms.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Sep 2025</span><span class="badge badge-medium">AUSTRALIA</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://www.gsma.com/newsroom/wp-content/uploads//Post-Quantum-Government-Initiatives-by-Country-and-Region-02-Mar-2025-Clean.pdf" target="_blank">GSMA — PQC Government Initiatives by Country & Region</a></div>
+            <div class="doc-item-desc">Maps every country's current PQC stance, timeline, and guidelines. Useful for multinational banking operations to understand jurisdiction-specific requirements.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              A global mapping document covering PQC regulatory status across 40+ countries and regions as of March 2025. For each jurisdiction, records: whether PQC standards have been mandated or are recommended, which algorithms are approved, the enforcement timeline, and the relevant authority. Particularly useful for multinational banks that must satisfy regulators in multiple jurisdictions simultaneously — e.g., a bank operating in India, UK, and Singapore faces three different regulatory timelines. Notable finding: most major economies have now converged on NIST FIPS 203/204/205 as the baseline, though timelines vary from 2028 (most aggressive) to post-2035 (least aggressive). India-specific status: RBI has not yet published a formal PQC mandate as of March 2025 — worth checking for updates.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Mar 2025</span><span class="badge badge-medium">GLOBAL MAP</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Protocol & Technical -->
+    <div class="org-block">
+      <div class="org-header">
+        <div class="org-name">Protocol & Technical Level</div>
+        <div class="org-flag">IETF · Cryptographic Inventory Tools</div>
+      </div>
+      <div class="doc-list">
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://datatracker.ietf.org/doc/rfc9794/" target="_blank">RFC 9794 — Terminology for Post-Quantum Traditional Hybrid Schemes</a></div>
+            <div class="doc-item-desc">Defines standard terminology for hybrid classical+PQC schemes. Companion to the TLS hybrid design draft. Required reading for consistent vocabulary across scanner output.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Establishes standard terminology for describing hybrid classical+PQC cryptographic schemes, ensuring consistent vocabulary across protocols, standards, and scanner output. Defines key terms: "traditional algorithm" (RSA, ECDH, ECDSA), "post-quantum algorithm" (ML-KEM, ML-DSA), "hybrid scheme" (combining both), and "combiner" (the mechanism for combining secrets). This vocabulary is adopted by NIST, ETSI, NCSC, and IETF working groups — your scanner's reports should use this terminology to be interoperable with downstream GRC and compliance tools. The companion document for actual TLS hybrid key exchange implementation is draft-ietf-tls-hybrid-design.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2024</span><span class="badge badge-high">TLS</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://datatracker.ietf.org/doc/draft-ietf-tls-hybrid-design/" target="_blank">IETF — PQC Recommendations for TLS-Based Applications</a></div>
+            <div class="doc-item-desc">Guidance on deploying PQC in TLS contexts. Covers ML-KEM integration, hybrid construction, and backward compatibility considerations.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Working group draft providing operational guidance for deploying PQC in TLS 1.3 environments. Covers: how to construct hybrid key exchange shares in the ClientHello extension, server-side configuration to support both classical-only clients (backward compatibility) and hybrid clients simultaneously, certificate chain considerations when migrating server authentication certificates to ML-DSA, and performance benchmarks showing hybrid handshake overhead is typically under 2ms additional latency. Useful for translating scanner TLS findings into actionable configuration change recommendations for bank network and security teams.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Mar 2024</span><span class="badge badge-high">TLS</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://postquantum.com/post-quantum/cryptographic-inventory-vendors/" target="_blank">Cryptographic Inventory Vendors & Methodologies — Comparative Analysis</a></div>
+            <div class="doc-item-desc">Detailed comparison of SandboxAQ AQtive Guard, Keyfactor, Venafi, and others. Covers network analyzer, application analyzer, and filesystem analyzer modalities.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Compares the leading commercial cryptographic discovery tools across three scanning modalities: (1) Network analyzers (SandboxAQ AQtive Guard, Cisco) — passive packet capture to fingerprint TLS/SSH cipher suites; (2) Certificate/PKI managers (Keyfactor, Venafi, DigiCert) — discover and track X.509 certificates across the enterprise including expiry, algorithm, and key size; (3) Application/filesystem analyzers (IBM, InfoSec Global, ISARA) — scan source code, binaries, and cryptographic libraries for algorithm usage. Each tool has different coverage strengths — no single tool covers all three modalities. Directly informs the architecture of your scanning application: which modalities to build natively vs. integrate with existing tools. Also covers output format compatibility with CBOM/CycloneDX and SIEM integration.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">Jun 2025</span><span class="badge badge-high">TOOLING</span></div>
+        </div>
+        <div class="doc-item">
+          <div>
+            <div class="doc-item-title"><a href="https://qramm.org/learn/cryptographic-inventory-guide.html" target="_blank">QRAMM — Cryptographic Inventory Guide (CBOM)</a></div>
+            <div class="doc-item-desc">Step-by-step guide to building a Cryptography Bill of Materials (CBOM). Covers NMAP, SSLyze, static analysis tools, and CycloneDX CBOM format.</div>
+            <div class="doc-summary">
+              <strong>Key Points</strong>
+              Practical step-by-step guide to building a Cryptography Bill of Materials (CBOM) using a combination of open-source tools. Tool stack covered: Nmap for network service discovery, SSLyze and testssl.sh for TLS cipher suite enumeration, ssh-audit for SSH configuration, Semgrep with crypto-specific rulesets for source code scanning, and CycloneDX for generating the CBOM output format. Explains how to structure the CBOM schema — each crypto asset record includes algorithm, key size, usage context (TLS, signing, encryption), location, and owning system. The CycloneDX CBOM format is the emerging standard that your scanning application should output to ensure compatibility with downstream GRC and risk management tools. Useful as a reference for building the output layer of your scanner.
+            </div>
+          </div>
+          <div class="doc-item-meta"><span class="doc-year">2024</span><span class="badge badge-medium">CBOM</span></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <footer>
+    <span>PQC Literature Reference Guide · Banking Application Research · May 2026</span>
+    <span>Sources: NIST, FS-ISAC, CMORG, BSI, ENISA, NCSC, ETSI, CISA</span>
+  </footer>
+
+</div>
+</body>
+</html>

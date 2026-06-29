@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC Scanner Market Landscape 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  
+  :root {
+    --bg: #f5f7fb;
+    --surface: #ffffff;
+    --surface2: #eef2f7;
+    --border: #dbe3ee;
+    --border2: #c7d2e0;
+    --text: #172033;
+    --muted: #5f6b7a;
+    --accent: #2563eb;
+    --accent-dim: #1d4ed8;
+    --green: #15803d;
+    --yellow: #b45309;
+    --red: #b91c1c;
+    --orange: #ea580c;
+    --purple: #7c3aed;
+    --cyan: #0891b2;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Instrument Serif', serif;
+    --sans: 'Syne', sans-serif;
+  }
+
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* GRID BG */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(37,99,235,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  .site-header {
+    padding: 72px 0 56px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(59,130,246,0.3);
+    background: rgba(37,99,235,0.08);
+    padding: 6px 14px;
+    margin-bottom: 28px;
+  }
+
+  .header-chip::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(40px, 5vw, 68px);
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.05;
+    color: #111827;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+
+  h1 strong {
+    font-style: normal;
+    font-weight: 400;
+    color: var(--accent);
+  }
+
+  .header-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  /* STICKY NAV */
+  .sticky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(245,247,251,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+  }
+
+  .nav-inner {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav-inner::-webkit-scrollbar { display: none; }
+
+  .nav-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 16px 22px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+
+  .nav-btn:hover { color: var(--text); }
+  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* TAB PANELS */
+  .tab-panel { display: none; padding: 56px 0 80px; }
+  .tab-panel.active { display: block; animation: fadeUp 0.3s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SECTION */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-family: var(--display);
+    font-size: 32px;
+    font-style: italic;
+    color: #111827;
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+
+  .section-desc {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 40px;
+    max-width: 700px;
+  }
+
+  /* PRODUCT CARDS — OVERVIEW */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 2px;
+    margin-bottom: 48px;
+  }
+
+  .product-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    padding: 28px;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--card-color, var(--accent)), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .product-card:hover {
+    border-color: var(--card-color, var(--accent));
+    background: var(--surface2);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  }
+
+  .product-card:hover::before { opacity: 1; }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .card-name {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 3px;
+  }
+
+  .card-vendor {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .card-type {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .type-commercial { color: var(--yellow); border-color: rgba(234,179,8,0.4); background: rgba(245,158,11,0.08); }
+  .type-opensource { color: var(--green); border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.05); }
+  .type-hybrid { color: var(--purple); border-color: rgba(168,85,247,0.4); background: rgba(168,85,247,0.05); }
+
+  .card-desc {
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    color: var(--muted);
+  }
+
+  .card-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .metric {
+    background: var(--surface);
+    padding: 10px 12px;
+    text-align: center;
+  }
+
+  .metric-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--card-color, var(--accent));
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* FEATURE MATRIX */
+  .matrix-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border2);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    margin-bottom: 48px;
+  }
+
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 1100px;
+  }
+
+  .matrix-table thead tr {
+    background: #dfe7f2;
+  }
+
+  .matrix-table thead th {
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #334155;
+    text-align: left;
+    border-bottom: 1px solid #b8c5d6;
+    white-space: nowrap;
+  }
+
+  .matrix-table thead th:first-child {
+    color: var(--text);
+    font-size: 10px;
+    min-width: 160px;
+    position: sticky;
+    left: 0;
+    background: var(--surface2);
+    z-index: 2;
+  }
+
+  .matrix-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .matrix-table tbody tr:hover { background: var(--surface2); }
+
+  .matrix-table tbody td {
+    padding: 11px 14px;
+    color: #4b5563;
+    vertical-align: middle;
+    border-right: 1px solid var(--border);
+  }
+
+  .matrix-table tbody td:first-child {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    font-weight: 500;
+    position: sticky;
+    left: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+
+  .matrix-table tbody tr:hover td:first-child { background: var(--surface2); }
+
+  .check { color: var(--green); font-size: 14px; }
+  .cross { color: var(--red); opacity: 0.5; font-size: 12px; }
+  .partial { color: var(--yellow); font-size: 12px; }
+  .na { color: var(--border2); font-size: 11px; }
+
+  .col-header-name {
+    font-size: 11px !important;
+    color: #0f172a !important;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
+  .col-header-sub {
+    display: block;
+    font-size: 9px;
+    color: #475569 !important;
+    font-weight: 600;
+    margin-top: 3px;
+  }
+
+  /* ROW CATEGORY */
+  .category-row td {
+    background: var(--bg) !important;
+    color: var(--accent) !important;
+    font-family: var(--mono) !important;
+    font-size: 9px !important;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 8px 14px !important;
+    border-bottom: 1px solid var(--border2) !important;
+  }
+
+  /* COMMERCIAL ANALYSIS */
+  .commercial-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-bottom: 48px;
+  }
+
+  .comm-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    padding: 28px;
+  }
+
+  .comm-card-title {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4px;
+  }
+
+  .comm-card-vendor {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+
+  .price-row:last-child { border-bottom: none; }
+
+  .price-label { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+  .price-val { color: var(--text); font-family: var(--mono); font-size: 11px; }
+  .price-val.green { color: var(--green); }
+  .price-val.yellow { color: var(--yellow); }
+  .price-val.red { color: var(--red); }
+  .price-val.muted { color: var(--muted); }
+
+  /* GAP ANALYSIS */
+  .gap-block {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-bottom: 48px;
+  }
+
+  .gap-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    padding: 28px;
+  }
+
+  .gap-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .gap-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: 1px solid var(--border2);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    flex-shrink: 0;
+  }
+
+  .gap-card-title {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 14px;
+    color: #111827;
+  }
+
+  .gap-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .gap-list li {
+    display: flex;
+    gap: 10px;
+    font-size: 12.5px;
+    color: #4b5563;
+    line-height: 1.5;
+  }
+
+  .gap-list li::before {
+    content: '→';
+    color: var(--accent);
+    font-family: var(--mono);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* OPPORTUNITY TABLE */
+  .opp-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border2);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    margin-bottom: 48px;
+  }
+
+  .opp-table thead th {
+    background: var(--surface2);
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .opp-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+    color: #4b5563;
+    vertical-align: top;
+  }
+
+  .opp-table tbody tr:hover { background: var(--surface2); }
+
+  .opp-table tbody td:first-child {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  .signal {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 8px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .signal-high { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .signal-med { background: rgba(234,179,8,0.1); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+  .signal-low { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+
+  /* INFOBOX */
+  .infobox {
+    background: rgba(37,99,235,0.08);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #93c5fd;
+    line-height: 1.65;
+    margin-bottom: 32px;
+  }
+
+  .infobox strong { color: #bfdbfe; display: block; margin-bottom: 4px; }
+
+  .warnbox {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(234,179,8,0.2);
+    border-left: 3px solid var(--yellow);
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #fde68a;
+    line-height: 1.65;
+    margin-bottom: 32px;
+  }
+
+  .warnbox strong { color: #fef08a; display: block; margin-bottom: 4px; }
+
+  /* PROSE */
+  .prose {
+    font-size: 13.5px;
+    color: #4b5563;
+    line-height: 1.75;
+    max-width: 820px;
+    margin-bottom: 32px;
+  }
+
+  .prose strong { color: var(--text); }
+
+  /* H2 */
+  .h2 {
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+    margin: 48px 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .h2:first-child { margin-top: 0; }
+
+  /* VERDICT BOX */
+  .verdict-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-bottom: 48px;
+  }
+
+  .verdict-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    padding: 24px;
+  }
+
+  .verdict-rank {
+    font-family: var(--display);
+    font-size: 48px;
+    font-style: italic;
+    color: var(--border2);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .verdict-name {
+    font-weight: 700;
+    font-size: 15px;
+    color: #111827;
+    margin-bottom: 4px;
+  }
+
+  .verdict-who {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .verdict-body {
+    font-size: 12.5px;
+    color: #4b5563;
+    line-height: 1.6;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .wrap { padding: 0 20px; }
+    .product-grid { grid-template-columns: 1fr; }
+    .commercial-grid, .gap-block, .verdict-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <div class="header-chip">Competitive Intelligence · May 2026</div>
+    <h1>PQC Scanner<br><strong>Market Landscape</strong></h1>
+    <div class="header-sub">
+      <span>11 Products Analysed</span>
+      <span>·</span>
+      <span>Open Source + Commercial</span>
+      <span>·</span>
+      <span>Feature · Gap · Commercial Analysis</span>
+    </div>
+  </div>
+</header>
+
+<nav class="sticky-nav">
+  <div class="wrap">
+    <div class="nav-inner">
+      <button class="nav-btn active" onclick="showTab('tab-overview', this)">01 · Product Overview</button>
+      <button class="nav-btn" onclick="showTab('tab-features', this)">02 · Feature Matrix</button>
+      <button class="nav-btn" onclick="showTab('tab-commercial', this)">03 · Commercial Analysis</button>
+      <button class="nav-btn" onclick="showTab('tab-gaps', this)">04 · Gap Analysis</button>
+      <button class="nav-btn" onclick="showTab('tab-verdict', this)">05 · Verdict & Opportunity</button>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+
+    <!-- =================== TAB 1: OVERVIEW =================== -->
+    <div id="tab-overview" class="tab-panel active">
+
+      <div class="section-label">01 — Product Overview</div>
+      <div class="section-title">All Products in the Market</div>
+      <p class="section-desc">11 products across the PQC cryptographic discovery and scanning landscape — from open-source hobby tools to $5.75B enterprise platforms.</p>
+
+      <!-- OPEN SOURCE -->
+      <div class="h2">Open Source</div>
+
+      <div class="product-grid">
+
+        <div class="product-card" style="--card-color: #22c55e;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">pqcscan</div>
+              <div class="card-vendor">anvilsecure · Rust · 115 Stars</div>
+            </div>
+            <div class="card-type type-opensource">Open Source</div>
+          </div>
+          <div class="card-desc">Small, focused Rust utility that scans SSH and TLS servers for PQC support. Checks what algorithms a server advertises — not what's vulnerable. Produces JSON output + HTML report. No risk scoring, no CBOM, no agent, no depth beyond network handshake.</div>
+          <div class="card-tags">
+            <span class="tag">TLS Handshake</span>
+            <span class="tag">SSH KEX</span>
+            <span class="tag">JSON Output</span>
+            <span class="tag">HTML Report</span>
+            <span class="tag">Rust Binary</span>
+            <span class="tag">Agentless</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">TLS+SSH</span><span class="metric-label">Protocols</span></div>
+            <div class="metric"><span class="metric-val">Free</span><span class="metric-label">Cost</span></div>
+            <div class="metric"><span class="metric-val">1/7</span><span class="metric-label">Layers</span></div>
+          </div>
+        </div>
+
+        <div class="product-card" style="--card-color: #22c55e;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">PQC-Scanner (cyberjez)</div>
+              <div class="card-vendor">cyberjez · Python · 15 Stars</div>
+            </div>
+            <div class="card-type type-opensource">Open Source</div>
+          </div>
+          <div class="card-desc">Python TLS/SSL certificate scanner with quantum-aware lens. Inspects certificate chains, evaluates key types/sizes, detects PQC OIDs, hybrid key-exchange (X25519+Kyber). Includes IDS/IPS evasion in v2 (slow+randomised scanning). Device identification from cert metadata. Windows .exe + Python script.</div>
+          <div class="card-tags">
+            <span class="tag">TLS Deep Inspect</span>
+            <span class="tag">Cert Chain</span>
+            <span class="tag">PQC OID Detection</span>
+            <span class="tag">Device Classification</span>
+            <span class="tag">IDS Evasion</span>
+            <span class="tag">Python</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">TLS+Cert</span><span class="metric-label">Protocols</span></div>
+            <div class="metric"><span class="metric-val">Free</span><span class="metric-label">Cost</span></div>
+            <div class="metric"><span class="metric-val">1-2/7</span><span class="metric-label">Layers</span></div>
+          </div>
+        </div>
+
+        <div class="product-card" style="--card-color: #22c55e;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">SSLyze / testssl.sh / ssh-audit</div>
+              <div class="card-vendor">Multiple Authors · Python/Shell · Community</div>
+            </div>
+            <div class="card-type type-opensource">Open Source Tools</div>
+          </div>
+          <div class="card-desc">Established open-source TLS/SSH assessment tools. SSLyze (Python) is the most comprehensive TLS scanner — cipher suite, cert chain, OCSP. testssl.sh is shell-based. ssh-audit covers SSH server config. None were built for PQC specifically but are widely used as components inside PQC scanning pipelines (NIST SP 1800-38B references them).</div>
+          <div class="card-tags">
+            <span class="tag">TLS Assessment</span>
+            <span class="tag">SSH Audit</span>
+            <span class="tag">Cipher Suites</span>
+            <span class="tag">CBOM Component</span>
+            <span class="tag">NIST Referenced</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">TLS+SSH</span><span class="metric-label">Protocols</span></div>
+            <div class="metric"><span class="metric-val">Free</span><span class="metric-label">Cost</span></div>
+            <div class="metric"><span class="metric-val">1/7</span><span class="metric-label">Layers</span></div>
+          </div>
+        </div>
+
+        <div class="product-card" style="--card-color: #22c55e;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">IBM Quantum Safe Explorer (QSE)</div>
+              <div class="card-vendor">IBM · Open Source Core · Community</div>
+            </div>
+            <div class="card-type type-hybrid">Open Core</div>
+          </div>
+          <div class="card-desc">Source code scanner that performs static analysis to find cryptographic artifacts in application code. Generates CBOM output (CycloneDX). The open source scanner + CBOM toolkit is free; the IBM Quantum Safe Advisor (runtime/network layer) is commercial consulting. The only open tool with native CBOM generation.</div>
+          <div class="card-tags">
+            <span class="tag">SAST</span>
+            <span class="tag">CBOM Output</span>
+            <span class="tag">CycloneDX</span>
+            <span class="tag">Code Analysis</span>
+            <span class="tag">Java/C/Python</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">Code+Libs</span><span class="metric-label">Scope</span></div>
+            <div class="metric"><span class="metric-val">Free (core)</span><span class="metric-label">Cost</span></div>
+            <div class="metric"><span class="metric-val">4/7</span><span class="metric-label">Layers</span></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- COMMERCIAL -->
+      <div class="h2">Commercial — Enterprise</div>
+
+      <div class="product-grid">
+
+        <div class="product-card" style="--card-color: #3b82f6;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">SandboxAQ AQtive Guard</div>
+              <div class="card-vendor">SandboxAQ (Alphabet Spinout) · $5.75B Valuation</div>
+            </div>
+            <div class="card-type type-commercial">Commercial</div>
+          </div>
+          <div class="card-desc">Most comprehensive platform. Network scanning (passive + active), code scanning, PKI/cert management, AI posture management, and NHI (non-human identity) credential management. FedRAMP Ready. Deployed at US DoW (5-year contract), SoftBank, EU energy. Expanding into AI-SPM (AI security posture management) as a platform play beyond PQC.</div>
+          <div class="card-tags">
+            <span class="tag">Network Passive</span>
+            <span class="tag">Code Analysis</span>
+            <span class="tag">PKI/Cert</span>
+            <span class="tag">AI-SPM</span>
+            <span class="tag">NHI Management</span>
+            <span class="tag">FedRAMP</span>
+            <span class="tag">CBOM Output</span>
+            <span class="tag">SaaS+OnPrem</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">Full Stack</span><span class="metric-label">Scope</span></div>
+            <div class="metric"><span class="metric-val">$500K+/yr</span><span class="metric-label">Est. Cost</span></div>
+            <div class="metric"><span class="metric-val">5-6/7</span><span class="metric-label">Layers</span></div>
+          </div>
+        </div>
+
+        <div class="product-card" style="--card-color: #3b82f6;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">Keyfactor Command + AgileSec</div>
+              <div class="card-vendor">Keyfactor (acquired InfoSec Global + CipherInsights 2025)</div>
+            </div>
+            <div class="card-type type-commercial">Commercial</div>
+          </div>
+          <div class="card-desc">PKI and certificate lifecycle management platform that acquired InfoSec Global (agent-based host crypto scanning) and CipherInsights (passive network analysis) in 2025. Now covers code, host, network, and PKI in one platform. Strongest for certificate inventory and PKI migration. ABI Research ranked #1 overall in 2025 CLM market. PQC Lab free sandbox.</div>
+          <div class="card-tags">
+            <span class="tag">PKI/CLM Leader</span>
+            <span class="tag">Agent-Based Host</span>
+            <span class="tag">Passive Network</span>
+            <span class="tag">EJBCA CA</span>
+            <span class="tag">ML-DSA Certs</span>
+            <span class="tag">Hybrid Certs</span>
+            <span class="tag">On-Prem + SaaS</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">PKI+Host</span><span class="metric-label">Strength</span></div>
+            <div class="metric"><span class="metric-val">$75K–$200K</span><span class="metric-label">Est. Cost/yr</span></div>
+            <div class="metric"><span class="metric-val">4-5/7</span><span class="metric-label">Layers</span></div>
+          </div>
+        </div>
+
+        <div class="product-card" style="--card-color: #a855f7;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">Venafi (CyberArk) TLS Protect</div>
+              <div class="card-vendor">CyberArk (acquired Venafi 2023) · Enterprise CLM</div>
+            </div>
+            <div class="card-type type-commercial">Commercial</div>
+          </div>
+          <div class="card-desc">Largest CLM installed base. Now CyberArk Certificate Manager after rebrand. PQC discovery added in 2025 but lagging behind Keyfactor in depth. Strongest for certificate lifecycle automation at massive scale (>500K certs). Post-acquisition innovation slowdown reported by users. Price premium over Keyfactor at similar scale.</div>
+          <div class="card-tags">
+            <span class="tag">Cert Lifecycle</span>
+            <span class="tag">Massive Scale</span>
+            <span class="tag">PQC Inventory</span>
+            <span class="tag">Workflow Engine</span>
+            <span class="tag">DevOps Integrations</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">CLM Scale</span><span class="metric-label">Strength</span></div>
+            <div class="metric"><span class="metric-val">$250K+/yr</span><span class="metric-label">Est. Cost/yr</span></div>
+            <div class="metric"><span class="metric-val">2-3/7</span><span class="metric-label">Layers (PQC)</span></div>
+          </div>
+        </div>
+
+        <div class="product-card" style="--card-color: #06b6d4;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">CryptoNext COMPASS</div>
+              <div class="card-vendor">CryptoNext Security · Paris, France · €12M raised</div>
+            </div>
+            <div class="card-type type-commercial">Commercial</div>
+          </div>
+          <div class="card-desc">Purpose-built PQC discovery and inventory platform. Three components: COMPASS Discovery (open/free scanning layer), COMPASS Network Probe (passive high-rate packet capture), COMPASS Analytics (aggregation dashboard with CBOM). Deployed at Banque de France and Allianz. European-first approach, aligned with ENISA and EU Commission PQC guidance. Strong financial sector reference base.</div>
+          <div class="card-tags">
+            <span class="tag">Passive Network Probe</span>
+            <span class="tag">CBOM Aggregation</span>
+            <span class="tag">Open Discovery Layer</span>
+            <span class="tag">Banking Clients</span>
+            <span class="tag">ENISA Aligned</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">Network+PKI</span><span class="metric-label">Strength</span></div>
+            <div class="metric"><span class="metric-val">€100K–€300K</span><span class="metric-label">Est. Cost/yr</span></div>
+            <div class="metric"><span class="metric-val">3-4/7</span><span class="metric-label">Layers</span></div>
+          </div>
+        </div>
+
+        <div class="product-card" style="--card-color: #f97316;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">AppViewX AVX ONE PQC Tool</div>
+              <div class="card-vendor">AppViewX · SaaS · CLM + PQC Assessment</div>
+            </div>
+            <div class="card-type type-commercial">Commercial</div>
+          </div>
+          <div class="card-desc">Certificate lifecycle management platform that added a PQC Assessment Tool in 2025. Scans code repositories (SAST), dependencies, configurations, and certificates across hybrid multi-cloud and CI/CD pipelines. Also offers quantum-ready PKIaaS. 5 Global InfoSec Award winner at RSAC 2025. Strong CI/CD and DevSecOps positioning.</div>
+          <div class="card-tags">
+            <span class="tag">SAST Code Scan</span>
+            <span class="tag">Dependency Scan</span>
+            <span class="tag">Cert Inventory</span>
+            <span class="tag">PKIaaS</span>
+            <span class="tag">CI/CD Pipeline</span>
+            <span class="tag">Kubernetes</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">Code+Cert</span><span class="metric-label">Strength</span></div>
+            <div class="metric"><span class="metric-val">$50K–$150K</span><span class="metric-label">Est. Cost/yr</span></div>
+            <div class="metric"><span class="metric-val">3-4/7</span><span class="metric-label">Layers</span></div>
+          </div>
+        </div>
+
+        <div class="product-card" style="--card-color: #eab308;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">ISARA Advance</div>
+              <div class="card-vendor">ISARA Corporation · Canada · Enterprise</div>
+            </div>
+            <div class="card-type type-commercial">Commercial</div>
+          </div>
+          <div class="card-desc">Cryptographic inventory and posture management platform. Integrates with existing EDR/vuln management tools (Tanium, CrowdStrike) rather than deploying its own agents. Aggregates findings into a single crypto posture dashboard. Translates discovery into prioritized remediation steps. Best as an aggregation layer over existing tooling, not a standalone scanner.</div>
+          <div class="card-tags">
+            <span class="tag">EDR Integration</span>
+            <span class="tag">Tanium/CrowdStrike</span>
+            <span class="tag">Posture Dashboard</span>
+            <span class="tag">Remediation Workflow</span>
+            <span class="tag">OT/IT Coverage</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">Aggregation</span><span class="metric-label">Strength</span></div>
+            <div class="metric"><span class="metric-val">Contact Sales</span><span class="metric-label">Cost</span></div>
+            <div class="metric"><span class="metric-val">3-4/7</span><span class="metric-label">Layers</span></div>
+          </div>
+        </div>
+
+        <div class="product-card" style="--card-color: #3b82f6;">
+          <div class="card-top">
+            <div>
+              <div class="card-name">Tychon ACDI (Quantum Command)</div>
+              <div class="card-vendor">Tychon · US Government Focus · Endpoint</div>
+            </div>
+            <div class="card-type type-commercial">Commercial</div>
+          </div>
+          <div class="card-desc">Endpoint-centric ACDI module. Scans endpoints for vulnerable crypto (RSA, deprecated TLS, weak ciphers). Generates compliance-ready reports for H.R. 7535, OMB M-23-02. Integrates with SIEM (Splunk dashboard). More of a compliance reporting tool than a deep scanner — good for triage and ongoing monitoring but misses network/HSM/code layers.</div>
+          <div class="card-tags">
+            <span class="tag">Endpoint Scan</span>
+            <span class="tag">H.R. 7535 Compliance</span>
+            <span class="tag">SIEM Integration</span>
+            <span class="tag">Splunk Dashboard</span>
+            <span class="tag">Audit Reports</span>
+          </div>
+          <div class="card-metrics">
+            <div class="metric"><span class="metric-val">Endpoint</span><span class="metric-label">Strength</span></div>
+            <div class="metric"><span class="metric-val">Contact Sales</span><span class="metric-label">Cost</span></div>
+            <div class="metric"><span class="metric-val">2-3/7</span><span class="metric-label">Layers</span></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- /tab-overview -->
+
+
+    <!-- =================== TAB 2: FEATURE MATRIX =================== -->
+    <div id="tab-features" class="tab-panel">
+
+      <div class="section-label">02 — Feature Matrix</div>
+      <div class="section-title">Side-by-Side Comparison</div>
+      <p class="section-desc">Every significant capability across all 9 products. ✓ = Full support · ~ = Partial/Limited · ✗ = Not supported · — = Not applicable.</p>
+
+      <div class="matrix-wrap">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th><span class="col-header-name">pqcscan</span><span class="col-header-sub">Open Source</span></th>
+              <th><span class="col-header-name">PQC-Scanner</span><span class="col-header-sub">Open Source</span></th>
+              <th><span class="col-header-name">SSLyze/ssh-audit</span><span class="col-header-sub">Open Source</span></th>
+              <th><span class="col-header-name">IBM QSE</span><span class="col-header-sub">Open Core</span></th>
+              <th><span class="col-header-name">AQtive Guard</span><span class="col-header-sub">SandboxAQ</span></th>
+              <th><span class="col-header-name">Keyfactor</span><span class="col-header-sub">Command+AgileSec</span></th>
+              <th><span class="col-header-name">CryptoNext</span><span class="col-header-sub">COMPASS</span></th>
+              <th><span class="col-header-name">AppViewX</span><span class="col-header-sub">AVX ONE</span></th>
+              <th><span class="col-header-name">ISARA Advance</span><span class="col-header-sub">Commercial</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- NETWORK -->
+            <tr class="category-row"><td colspan="10">Network & Transport Layer</td></tr>
+            <tr>
+              <td>TLS Active Handshake Scan</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="partial">~</span></td>
+            </tr>
+            <tr>
+              <td>SSH KEX Algorithm Detection</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+            </tr>
+            <tr>
+              <td>Passive Network Tap / SPAN</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>VPN / IKEv2 / IPsec Scan</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>PQC / Hybrid Algorithm Detection (ML-KEM, X25519+Kyber)</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="partial">~</span></td>
+            </tr>
+            <tr>
+              <td>DNSSEC Signing Algorithm Check</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+
+            <!-- PKI -->
+            <tr class="category-row"><td colspan="10">PKI & Certificate Layer</td></tr>
+            <tr>
+              <td>Certificate Chain Analysis</td>
+              <td><span class="partial">~</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Full PKI / CA Inventory (ADCS/LDAP)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+            </tr>
+            <tr>
+              <td>Cert Lifecycle Management + Auto-Renewal</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>Issue Hybrid / PQC Certificates (ML-DSA)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+
+            <!-- HSM -->
+            <tr class="category-row"><td colspan="10">HSM & Key Management Layer</td></tr>
+            <tr>
+              <td>HSM Enumeration (PKCS#11)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>KMS Scan (AWS/Azure/GCP + KMIP)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>HSM Firmware PQC Readiness (Thales/Entrust)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+
+            <!-- APPLICATION -->
+            <tr class="category-row"><td colspan="10">Application & Code Layer</td></tr>
+            <tr>
+              <td>SAST — Source Code Crypto Scanning</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+            </tr>
+            <tr>
+              <td>Dependency / SBOM Crypto Library Scan</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>Container Image Crypto Scan</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>JWT / OAuth Token Signing Algorithm Check</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+
+            <!-- INFRASTRUCTURE -->
+            <tr class="category-row"><td colspan="10">Infrastructure & Host Layer</td></tr>
+            <tr>
+              <td>Linux Host Agent (SSH remote exec)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Windows Host Agent (WinRM/PowerShell)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Kubernetes / etcd Crypto Scan</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>Database TDE Scan (Oracle / MSSQL)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+
+            <!-- OUTPUT & RISK -->
+            <tr class="category-row"><td colspan="10">Risk, Output & Compliance</td></tr>
+            <tr>
+              <td>CBOM Output (CycloneDX JSON)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="partial">~</span></td>
+            </tr>
+            <tr>
+              <td>Composite Risk Scoring (multi-dimension)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>HNDL / Data Longevity Risk Model</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>NIST IR 8547 Deprecation Deadline Classification</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Executive Dashboard + Visual Reporting</td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>PDF / Regulatory Report Export</td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>On-Prem / Air-Gap Deployment</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+
+            <!-- BANKING SPECIFIC -->
+            <tr class="category-row"><td colspan="10">Banking-Specific Coverage</td></tr>
+            <tr>
+              <td>SWIFT Interface / SWIFTNet TLS Scan</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="partial">~</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>Payment HSM / 3DES Disallowance Check</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>Core Banking System (Finacle/Temenos) Crypto Scan</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>ATM / POS Hardware Crypto Assessment</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+            <tr>
+              <td>RBI / NPCI Interface Coverage</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="cross">✗</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="warnbox">
+        <strong>Critical Finding — Banking Layer Is Completely Uncovered</strong>
+        Zero products in the market cover payment HSM 3DES checks, core banking system crypto scanning, ATM/POS hardware assessment, or RBI/NPCI interface coverage. The banking-specific layer represents a complete gap across all existing tools — both open source and commercial.
+      </div>
+
+    </div><!-- /tab-features -->
+
+
+    <!-- =================== TAB 3: COMMERCIAL ANALYSIS =================== -->
+    <div id="tab-commercial" class="tab-panel">
+
+      <div class="section-label">03 — Commercial Analysis</div>
+      <div class="section-title">Pricing, Positioning & Market</div>
+      <p class="section-desc">Commercial reality of the PQC scanning market — pricing estimates, business models, and target customer profiles.</p>
+
+      <div class="h2">Pricing Benchmarks</div>
+
+      <div class="commercial-grid">
+
+        <div class="comm-card">
+          <div class="comm-card-title">SandboxAQ AQtive Guard</div>
+          <div class="comm-card-vendor">Contact Sales · Enterprise Only</div>
+          <div class="price-row"><span class="price-label">Entry Point</span><span class="price-val yellow">~$200K–$500K/yr</span></div>
+          <div class="price-row"><span class="price-label">Large Enterprise</span><span class="price-val red">$500K–$2M+/yr</span></div>
+          <div class="price-row"><span class="price-label">Government (DoW 5yr deal)</span><span class="price-val red">$1M+/yr est.</span></div>
+          <div class="price-row"><span class="price-label">Pricing Model</span><span class="price-val muted">Assets under management</span></div>
+          <div class="price-row"><span class="price-label">Free Tier</span><span class="price-val muted">None</span></div>
+          <div class="price-row"><span class="price-label">Trial</span><span class="price-val muted">Demo only</span></div>
+        </div>
+
+        <div class="comm-card">
+          <div class="comm-card-title">Keyfactor Command + AgileSec</div>
+          <div class="comm-card-vendor">Subscription · On-Prem or SaaS</div>
+          <div class="price-row"><span class="price-label">SME Entry (10K certs)</span><span class="price-val yellow">~$75K/yr</span></div>
+          <div class="price-row"><span class="price-label">Mid Enterprise (100K certs)</span><span class="price-val yellow">~$150K–$200K/yr</span></div>
+          <div class="price-row"><span class="price-label">Large Enterprise (500K+ certs)</span><span class="price-val red">$200K–$500K/yr</span></div>
+          <div class="price-row"><span class="price-label">Pricing Model</span><span class="price-val muted">Per certificate / node</span></div>
+          <div class="price-row"><span class="price-label">Free Tier</span><span class="price-val green">PQC Lab (sandbox)</span></div>
+          <div class="price-row"><span class="price-label">Trial</span><span class="price-val green">30-day Azure trial</span></div>
+        </div>
+
+        <div class="comm-card">
+          <div class="comm-card-title">Venafi / CyberArk Certificate Manager</div>
+          <div class="comm-card-vendor">Subscription · Cloud or On-Prem</div>
+          <div class="price-row"><span class="price-label">Entry Point</span><span class="price-val red">~$250K/yr</span></div>
+          <div class="price-row"><span class="price-label">Large Enterprise</span><span class="price-val red">$500K–$1M+/yr</span></div>
+          <div class="price-row"><span class="price-label">vs Keyfactor at scale</span><span class="price-val red">60–70% more expensive</span></div>
+          <div class="price-row"><span class="price-label">Pricing Model</span><span class="price-val muted">Per certificate / device</span></div>
+          <div class="price-row"><span class="price-label">Free Tier</span><span class="price-val muted">None</span></div>
+          <div class="price-row"><span class="price-label">Differentiator</span><span class="price-val muted">Scale (>500K certs)</span></div>
+        </div>
+
+        <div class="comm-card">
+          <div class="comm-card-title">CryptoNext COMPASS</div>
+          <div class="comm-card-vendor">License + Professional Services · EU Focus</div>
+          <div class="price-row"><span class="price-label">COMPASS Discovery</span><span class="price-val green">Open / Free</span></div>
+          <div class="price-row"><span class="price-label">Network Probe + Analytics</span><span class="price-val yellow">€100K–€300K/yr</span></div>
+          <div class="price-row"><span class="price-label">Full Suite (Banking)</span><span class="price-val yellow">€200K–€500K/yr</span></div>
+          <div class="price-row"><span class="price-label">Pricing Model</span><span class="price-val muted">License + PS engagement</span></div>
+          <div class="price-row"><span class="price-label">Free Tier</span><span class="price-val green">COMPASS Discovery</span></div>
+          <div class="price-row"><span class="price-label">Market</span><span class="price-val muted">EU/France primary</span></div>
+        </div>
+
+        <div class="comm-card">
+          <div class="comm-card-title">AppViewX AVX ONE</div>
+          <div class="comm-card-vendor">SaaS · Certificate lifecycle + PQC assessment</div>
+          <div class="price-row"><span class="price-label">SME Entry</span><span class="price-val green">~$50K/yr</span></div>
+          <div class="price-row"><span class="price-label">Mid Enterprise</span><span class="price-val yellow">$100K–$150K/yr</span></div>
+          <div class="price-row"><span class="price-label">Pricing Model</span><span class="price-val muted">Per certificate managed</span></div>
+          <div class="price-row"><span class="price-label">On-Prem Deployment</span><span class="price-val muted">Not available (SaaS only)</span></div>
+          <div class="price-row"><span class="price-label">Free Tier</span><span class="price-val muted">Trial on request</span></div>
+          <div class="price-row"><span class="price-label">Differentiator</span><span class="price-val muted">DevSecOps / CI/CD native</span></div>
+        </div>
+
+        <div class="comm-card">
+          <div class="comm-card-title">Open Source Stack (pqcscan + SSLyze + IBM QSE)</div>
+          <div class="comm-card-vendor">Community · Self-managed</div>
+          <div class="price-row"><span class="price-label">Licensing</span><span class="price-val green">Free</span></div>
+          <div class="price-row"><span class="price-label">Engineering Time (setup)</span><span class="price-val yellow">2–4 weeks eng time</span></div>
+          <div class="price-row"><span class="price-label">Ongoing Maintenance</span><span class="price-val yellow">0.5 FTE/yr est.</span></div>
+          <div class="price-row"><span class="price-label">Coverage</span><span class="price-val red">1–2 layers only</span></div>
+          <div class="price-row"><span class="price-label">Reporting</span><span class="price-val red">Manual / DIY</span></div>
+          <div class="price-row"><span class="price-label">Banking Compliance</span><span class="price-val red">Not supported</span></div>
+        </div>
+
+      </div>
+
+      <div class="h2">Market Structure & Business Models</div>
+
+      <table class="opp-table">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Current State</th>
+            <th>Implication</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Market Stage</td>
+            <td>Early — most enterprise buyers still in "awareness" phase. NIST 2030 deadline is now creating urgency. Major consolidation via M&A already happening (Keyfactor acquired InfoSec Global + CipherInsights in 2025; CyberArk acquired Venafi in 2023).</td>
+            <td>Window to enter is 2025–2027. After 2027, market will consolidate around 2–3 dominant platforms.</td>
+          </tr>
+          <tr>
+            <td>Pricing Model Dominant</td>
+            <td>"Contact Sales" / opaque pricing is universal for commercial tools. No vendor publishes pricing. Buyers negotiate based on asset count (certificates, nodes, endpoints). Lock-in is high once deployed.</td>
+            <td>Transparent pricing and a free on-prem tier would be a meaningful differentiator in enterprise procurement.</td>
+          </tr>
+          <tr>
+            <td>Banking Buyer Budget</td>
+            <td>Large Indian banks (SBI, HDFC, ICICI) have IT security budgets of ₹500Cr+ ($60M+/yr). PQC is a new budget line — not yet carved out specifically. CISOs are seeking education + tooling simultaneously.</td>
+            <td>₹2–5Cr ($240K–$600K) per deployment is achievable for a bank-specific PQC scanner with regulatory alignment.</td>
+          </tr>
+          <tr>
+            <td>Deployment Preference</td>
+            <td>Indian banks will not send data outside their network perimeter. RBI data localisation requirements reinforce this. No existing commercial tool is purpose-built for Indian banking regulatory context (RBI, NPCI, SEBI).</td>
+            <td>On-prem only deployment + RBI alignment is a requirement, not a nice-to-have. Creates moat vs. SaaS-first players.</td>
+          </tr>
+          <tr>
+            <td>Professional Services</td>
+            <td>All commercial vendors bundle PS (professional services) engagement at 30–50% of product cost. Banks prefer pre-packaged tools over lengthy engagements.</td>
+            <td>Self-service deployment with clear documentation is a differentiation point vs. IBM ($500K+ consulting engagement) and SandboxAQ.</td>
+          </tr>
+          <tr>
+            <td>Regulatory Alignment</td>
+            <td>No existing product aligns with RBI guidelines, NPCI security requirements, or Indian banking compliance frameworks. All existing tools align with NIST/CISA (US), NCSC (UK), or ENISA (EU).</td>
+            <td>First mover with RBI-aligned output creates a defensible local market position. Regulatory language in reports matters to Indian banking CISOs.</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div><!-- /tab-commercial -->
+
+
+    <!-- =================== TAB 4: GAP ANALYSIS =================== -->
+    <div id="tab-gaps" class="tab-panel">
+
+      <div class="section-label">04 — Gap Analysis</div>
+      <div class="section-title">What the Market Doesn't Cover</div>
+      <p class="section-desc">The white space your product needs to own. Gaps are categorised into: total gaps (no product covers this), partial gaps (covered inadequately), and commercial gaps (covered but inaccessible to your target market).</p>
+
+      <div class="gap-block">
+
+        <div class="gap-card">
+          <div class="gap-card-header">
+            <div class="gap-icon">🏦</div>
+            <div class="gap-card-title">Banking Infrastructure — Total Gap</div>
+          </div>
+          <ul class="gap-list">
+            <li>Payment HSM 3DES disallowance check — zero products flag this. 3DES is already disallowed yet many banks still run it on payShield/Futurex.</li>
+            <li>Core banking system crypto scanning (Finacle, Temenos, Flexcube) — no product has connectors for CBS vendor APIs or schema.</li>
+            <li>SWIFT LAU key + SWIFTNet TLS combined assessment — only partially addressed by CryptoNext/SandboxAQ, neither are banking-complete.</li>
+            <li>ATM EPP firmware algorithm check — entirely absent from all products. Long hardware replacement cycle means this must be flagged now.</li>
+            <li>RBI / NPCI interface TLS compliance — no product maps findings to Indian regulatory requirements.</li>
+            <li>ISO-0/ISO-3 → ISO-4 PIN block migration tracking — absent from all tools.</li>
+          </ul>
+        </div>
+
+        <div class="gap-card">
+          <div class="gap-card-header">
+            <div class="gap-icon">🔐</div>
+            <div class="gap-card-title">HSM & Key Management — Total Gap</div>
+          </div>
+          <ul class="gap-list">
+            <li>PKCS#11 enumeration is only partially present in AQtive Guard and Keyfactor — no product does deep HSM firmware PQC readiness checks (Thales Luna firmware version vs. PQC support matrix).</li>
+            <li>KMIP protocol-based KMS scanning is absent in all tools except AQtive Guard (partial).</li>
+            <li>Key hierarchy mapping (master key → zone key → session key) is mentioned in CBOM spec but not implemented by any tool.</li>
+            <li>Offline / air-gapped root CA assessment — no tool addresses this. Root CA migration is the highest-priority step and hardest to assess.</li>
+            <li>Database TDE algorithm scanning (Oracle, MSSQL) — only AQtive Guard has partial support, no others.</li>
+          </ul>
+        </div>
+
+        <div class="gap-card">
+          <div class="gap-card-header">
+            <div class="gap-icon">📊</div>
+            <div class="gap-card-title">Risk Scoring — Partial Gap</div>
+          </div>
+          <ul class="gap-list">
+            <li>No open-source tool does any risk scoring — all output raw findings with no prioritisation.</li>
+            <li>Commercial tools score risk but none implement Mosca's Theorem (data longevity vs. quantum timeline) as a first-class calculation visible to the user.</li>
+            <li>HNDL (harvest now, decrypt later) risk is mentioned in documentation but not surfaced as a calculated metric per asset in any tool's dashboard.</li>
+            <li>5-dimension composite scoring (algorithm + sensitivity + exposure + replaceability + regulatory) exists only in SandboxAQ. All others are 1–2 dimension at best.</li>
+            <li>Migration priority queue — no tool produces an ordered remediation backlog sorted by composite risk score that a team can directly execute against.</li>
+          </ul>
+        </div>
+
+        <div class="gap-card">
+          <div class="gap-card-header">
+            <div class="gap-icon">🇮🇳</div>
+            <div class="gap-card-title">Indian Market — Commercial Gap</div>
+          </div>
+          <ul class="gap-list">
+            <li>All commercial tools are SaaS-first or require significant cloud touchpoints — non-starter for RBI-regulated institutions where data cannot leave the bank's perimeter.</li>
+            <li>Pricing is $200K–$2M/yr USD — beyond the procurement comfort zone of mid-size Indian PSBs (public sector banks) and NBFCs.</li>
+            <li>No tool produces reports aligned with RBI IT Framework, SEBI Cyber Security guidelines, or IDRBT guidance language — compliance teams cannot use them directly.</li>
+            <li>No vendor has India-based support or data residency guarantees — procurement blocker for regulated entities.</li>
+            <li>Implementation timelines (3–6 months for Venafi, IBM) conflict with RBI audit cycles. Banks need a tool they can deploy and produce findings from within weeks.</li>
+          </ul>
+        </div>
+
+        <div class="gap-card">
+          <div class="gap-card-header">
+            <div class="gap-icon">📦</div>
+            <div class="gap-card-title">Deployment Model — Commercial Gap</div>
+          </div>
+          <ul class="gap-list">
+            <li>No tool offers a single-container on-prem deployment with zero external dependencies. IBM requires Kubernetes. SandboxAQ requires cloud connectivity. Keyfactor requires 8–12 week implementation.</li>
+            <li>No tool has a "run once, get results" mode — all require multi-week configuration before first findings.</li>
+            <li>Open-source tools require significant engineering assembly — no one has combined sslyze + ssh-audit + IBM QSE + CBOM builder into a working pipeline anyone can deploy.</li>
+            <li>Agent deployment approval is a procurement hurdle — no tool offers a genuinely agentless path for all 7 infrastructure layers.</li>
+          </ul>
+        </div>
+
+        <div class="gap-card">
+          <div class="gap-card-header">
+            <div class="gap-icon">🔄</div>
+            <div class="gap-card-title">Remediation Workflow — Partial Gap</div>
+          </div>
+          <ul class="gap-list">
+            <li>All tools stop at "here is what is vulnerable." None provide a structured remediation workflow with ticketing integration, owner assignment, and SLA tracking built in.</li>
+            <li>No tool tracks migration progress over time — banks have no way to measure % of assets migrated vs. the 2030/2035 deadline without building their own tracking.</li>
+            <li>Crypto agility recommendations (how to replace vs. which algorithm to use) are absent from open-source tools and superficial in commercial ones.</li>
+            <li>Vendor readiness assessment (is my Temenos version PQC-capable?) is unaddressed by all products.</li>
+          </ul>
+        </div>
+
+      </div>
+
+    </div><!-- /tab-gaps -->
+
+
+    <!-- =================== TAB 5: VERDICT =================== -->
+    <div id="tab-verdict" class="tab-panel">
+
+      <div class="section-label">05 — Verdict & Opportunity</div>
+      <div class="section-title">Competitive Position & What to Build</div>
+      <p class="section-desc">Synthesis of the market analysis into actionable conclusions for your product.</p>
+
+      <div class="h2">Product Verdicts — What Each Is Good For</div>
+
+      <div class="verdict-grid">
+
+        <div class="verdict-card">
+          <div class="verdict-rank">01</div>
+          <div class="verdict-name">Use pqcscan / SSLyze as components</div>
+          <div class="verdict-who">Inside your scanner engine</div>
+          <div class="verdict-body">Don't rebuild TLS/SSH handshake scanning from scratch. Both are well-tested, open-source, and output structured JSON. Integrate them as modules inside your orchestrator. pqcscan gives you SSH + TLS PQC detection. SSLyze gives you deep TLS analysis. IBM QSE gives you source code CBOM. Assemble, don't replicate.</div>
+        </div>
+
+        <div class="verdict-card">
+          <div class="verdict-rank">02</div>
+          <div class="verdict-name">You cannot compete with SandboxAQ / Keyfactor head-on</div>
+          <div class="verdict-who">On their turf</div>
+          <div class="verdict-body">$5.75B valuation, DoD contracts, 5-year enterprise deals. Don't compete on general enterprise PQC scanning. Compete on the vertical they have ignored: Indian banking infrastructure, RBI-aligned compliance output, payment HSMs, core banking systems, ATM/POS layer, and on-prem-only deployment. That's your moat.</div>
+        </div>
+
+        <div class="verdict-card">
+          <div class="verdict-rank">03</div>
+          <div class="verdict-name">CryptoNext is the closest architectural reference</div>
+          <div class="verdict-who">Study, don't replicate</div>
+          <div class="verdict-body">COMPASS's modular architecture (open discovery layer + passive probe + analytics aggregation) is the closest to what you're building. Their COMPASS Discovery layer is open source — study the architecture. They have Banque de France as a reference — you want RBI-aligned equivalents. Their weakness: EU-only, no Indian market presence, no banking-specific modules.</div>
+        </div>
+
+      </div>
+
+      <div class="h2">Your Differentiation — What No One Builds</div>
+
+      <table class="opp-table">
+        <thead>
+          <tr>
+            <th>Differentiator</th>
+            <th>What It Means in Practice</th>
+            <th>Market Signal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Banking-Specific Asset Modules</td>
+            <td>Connectors for payShield HSM, Finacle/Temenos API, NPCI/RBI interfaces, SWIFT LAU + TLS combined check, ISO PIN block format detection. No existing product has any of these.</td>
+            <td><span class="signal signal-high">Total Gap</span></td>
+          </tr>
+          <tr>
+            <td>RBI-Aligned Compliance Output</td>
+            <td>Reports that use RBI IT Framework language, map findings to SEBI Cyber Security guidelines, and produce output a bank's compliance team can submit to an auditor without translation.</td>
+            <td><span class="signal signal-high">Total Gap</span></td>
+          </tr>
+          <tr>
+            <td>Single docker-compose On-Prem Deploy</td>
+            <td>Zero external dependencies, no cloud phone-home, runs entirely inside the bank's perimeter. Competing products require 8–12 weeks of implementation services. You should be running in 1 day.</td>
+            <td><span class="signal signal-high">Total Gap</span></td>
+          </tr>
+          <tr>
+            <td>Mosca's Theorem Risk Calculator</td>
+            <td>Per-asset calculation: migration time + data longevity vs. quantum timeline. Surfaces as a visual metric in the dashboard. No existing tool shows this as a calculated, interactive metric.</td>
+            <td><span class="signal signal-med">Partial Gap</span></td>
+          </tr>
+          <tr>
+            <td>HNDL Risk Per Asset</td>
+            <td>Every finding shows: "this data is exposed to HNDL for X more years." Calculated from data type, encryption, and exposure classification. Not implemented by any tool today.</td>
+            <td><span class="signal signal-med">Partial Gap</span></td>
+          </tr>
+          <tr>
+            <td>Migration Progress Tracking</td>
+            <td>Scan history + migration % dashboard. Track progress toward 2030/2035. Show which assets have been remediated and which are outstanding. None of the 11 products track this.</td>
+            <td><span class="signal signal-med">Partial Gap</span></td>
+          </tr>
+          <tr>
+            <td>Accessible Pricing for Indian Market</td>
+            <td>₹1–3Cr/yr ($120K–$360K) for large bank tier. ₹25–50L ($30K–$60K) for mid-size bank tier. No existing commercial tool is priced for Indian procurement. Open source requires too much engineering.</td>
+            <td><span class="signal signal-low">Commercial Gap</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="infobox">
+        <strong>Strategic Conclusion</strong>
+        The market has two ends: free open-source tools with no risk scoring, no depth, no banking coverage — and $500K+/yr enterprise platforms built for US/EU government and Fortune 500. The entire middle is empty. A banking-specific, on-prem, RBI-aligned PQC scanner priced for Indian financial institutions has zero direct competition today. The window is 2025–2028 before the large platforms add Indian market coverage.
+      </div>
+
+      <div class="h2">Open Source Components to Integrate (Don't Build)</div>
+
+      <table class="opp-table">
+        <thead>
+          <tr><th>Component</th><th>Tool</th><th>What It Gives You</th><th>Effort to Integrate</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>TLS Handshake Scan</td>
+            <td>sslyze (Python)</td>
+            <td>Cipher suites, cert chain, OCSP, key exchange — structured JSON output</td>
+            <td><span class="signal signal-low">1–2 days</span></td>
+          </tr>
+          <tr>
+            <td>PQC/Hybrid TLS Detection</td>
+            <td>pqcscan (Rust binary)</td>
+            <td>ML-KEM, hybrid named groups, PQC OID detection in TLS/SSH</td>
+            <td><span class="signal signal-low">1 day (subprocess call)</span></td>
+          </tr>
+          <tr>
+            <td>SSH KEX Audit</td>
+            <td>ssh-audit (Python)</td>
+            <td>Host key algorithms, KEX algorithms, MAC algorithms — structured output</td>
+            <td><span class="signal signal-low">1 day</span></td>
+          </tr>
+          <tr>
+            <td>Source Code SAST</td>
+            <td>IBM QSE + Semgrep</td>
+            <td>Crypto API calls in source, hardcoded algorithms, CBOM generation</td>
+            <td><span class="signal signal-med">3–5 days</span></td>
+          </tr>
+          <tr>
+            <td>CBOM Output Format</td>
+            <td>cyclonedx-python library</td>
+            <td>Standard CycloneDX CBOM JSON/XML generation — NIST endorsed format</td>
+            <td><span class="signal signal-low">1–2 days</span></td>
+          </tr>
+          <tr>
+            <td>Cert Parsing</td>
+            <td>Python cryptography library</td>
+            <td>Full X.509 cert parsing — algorithm, key size, SAN, issuer, expiry</td>
+            <td><span class="signal signal-low">1 day</span></td>
+          </tr>
+          <tr>
+            <td>Network Packet Analysis</td>
+            <td>pyshark / Zeek</td>
+            <td>Passive TLS ClientHello/ServerHello parsing from SPAN port</td>
+            <td><span class="signal signal-med">3–4 days</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div><!-- /tab-verdict -->
+
+  </div><!-- /wrap -->
+</main>
+
+<div class="wrap">
+  <footer>
+    <span>PQC Market Landscape Analysis · Banking Scanner Research · May 2026</span>
+    <span>11 Products · Open Source + Commercial · Feature + Commercial + Gap Analysis</span>
+  </footer>
+</div>
+
+<script>
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

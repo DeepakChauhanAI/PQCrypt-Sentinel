@@ -1,0 +1,2214 @@
+{
+  "components": [
+    {
+      "bom-ref": "asset-5f22451e-ad56-447a-bbb4-b2e071879adf",
+      "name": "104.154.89.105:443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": "badssl.com"
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": "104.154.89.105"
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-10b95432-136e-4338-bda4-89f341c2c000",
+      "name": "104.16.133.229:443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": ""
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": ""
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-5391c306-7e69-4c9d-b32e-2ec430a3516f",
+      "name": "104.16.133.229:8443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": ""
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": ""
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-440c19e3-39e8-4be2-9728-705054d7d9ec",
+      "name": "142.251.151.119:443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": ""
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": ""
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-280e224e-df2d-4af7-b46d-fff62012088e",
+      "name": "142.251.152.119:443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": ""
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": ""
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-19cef32c-141d-473c-8dd8-dbdf987f2f2a",
+      "name": "142.251.154.119:443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": ""
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": ""
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-9be9aefe-612b-4f0f-bf03-e130f6204a19",
+      "name": "142.251.155.119:443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": ""
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": ""
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-fa29b77a-4b44-4e8b-bdd9-95dbfde5aca1",
+      "name": "163.70.145.35:443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": ""
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": ""
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-55b27896-1e88-4354-b67b-201a69635fb2",
+      "name": "192.168.1.1:443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": ""
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": "192.168.1.1"
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-186824bc-72ad-4084-81ab-084239e8e930",
+      "name": "192.168.1.2:443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": ""
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": "192.168.1.2"
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-47bab1d6-4683-4089-8369-da8972e33218",
+      "name": "192.168.1.98:443",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": ""
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": "192.168.1.98"
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "asset-61cfc767-45e0-4a97-8f42-6b8f55baccd7",
+      "name": "45.33.32.156:22 (SSH)",
+      "properties": [
+        {
+          "name": "pqc:asset_type",
+          "value": "server"
+        },
+        {
+          "name": "pqc:environment",
+          "value": "production"
+        },
+        {
+          "name": "pqc:fqdn",
+          "value": "scanme.nmap.org"
+        },
+        {
+          "name": "pqc:ip_address",
+          "value": "45.33.32.156"
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "bom-ref": "algo-c99f614e-18df-4e3f-842c-eb475682eeb0",
+      "name": "Algorithm curve25519-sha256@libssh.org",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "curve25519-sha256@libssh.org"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "key_exchange"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "algorithmProperties": {
+          "primitive": "kem",
+          "variant": "curve25519-sha256@libssh.org",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "curve25519-sha256@libssh.org"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-d10478da-639d-46e8-9248-1120d5132070",
+      "name": "Algorithm curve25519-sha256@libssh.org",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "curve25519-sha256@libssh.org"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "key_exchange"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "algorithmProperties": {
+          "primitive": "kem",
+          "variant": "curve25519-sha256@libssh.org",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "curve25519-sha256@libssh.org"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-23cfe38f-2443-439a-9c91-834c3ee3a5de",
+      "name": "Algorithm diffie-hellman-group-exchange-sha256",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "diffie-hellman-group-exchange-sha256"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "key_exchange"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "algorithmProperties": {
+          "primitive": "kem",
+          "variant": "diffie-hellman-group-exchange-sha256",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "diffie-hellman-group-exchange-sha256"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-d6504115-6bed-4d0e-a929-807d300d4b75",
+      "name": "Algorithm diffie-hellman-group-exchange-sha256",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "diffie-hellman-group-exchange-sha256"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "key_exchange"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "algorithmProperties": {
+          "primitive": "kem",
+          "variant": "diffie-hellman-group-exchange-sha256",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "diffie-hellman-group-exchange-sha256"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-500da714-1272-4897-bc45-c617aba19ac4",
+      "name": "Algorithm ecdh-sha2-nistp256",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "ecdh-sha2-nistp256"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "key_exchange"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "algorithmProperties": {
+          "primitive": "kem",
+          "variant": "ecdh-sha2-nistp256",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "ecdh-sha2-nistp256"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-ef02e48d-d8de-4262-bed9-96d1609204ab",
+      "name": "Algorithm ecdh-sha2-nistp256",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "ecdh-sha2-nistp256"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "key_exchange"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "algorithmProperties": {
+          "primitive": "kem",
+          "variant": "ecdh-sha2-nistp256",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "ecdh-sha2-nistp256"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-30e18a87-ca43-438a-bc10-bee0dea19e55",
+      "name": "Algorithm ecdh-sha2-nistp384",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "ecdh-sha2-nistp384"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "key_exchange"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "algorithmProperties": {
+          "primitive": "kem",
+          "variant": "ecdh-sha2-nistp384",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "ecdh-sha2-nistp384"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-bbc58f36-19e0-4b98-90c2-a1ba84a70379",
+      "name": "Algorithm ecdh-sha2-nistp384",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "ecdh-sha2-nistp384"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "key_exchange"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "algorithmProperties": {
+          "primitive": "kem",
+          "variant": "ecdh-sha2-nistp384",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "ecdh-sha2-nistp384"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-0c80e358-cd2b-4fa7-9bf6-873c2b7fa4b9",
+      "name": "Algorithm ecdh-sha2-nistp521",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "ecdh-sha2-nistp521"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "key_exchange"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "algorithmProperties": {
+          "primitive": "kem",
+          "variant": "ecdh-sha2-nistp521",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "ecdh-sha2-nistp521"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-cf95742f-c17f-4df2-af1e-034c25093a7c",
+      "name": "Algorithm ecdh-sha2-nistp521",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "ecdh-sha2-nistp521"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "key_exchange"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "algorithmProperties": {
+          "primitive": "kem",
+          "variant": "ecdh-sha2-nistp521",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "ecdh-sha2-nistp521"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-0405d82b-4cde-4c70-81cf-14875e526ebb",
+      "name": "Algorithm ecdsa-with-SHA256",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "ecdsa-with-SHA256"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "ecdsa-with-sha256",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "ecdsa-with-sha256"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-fdc84e97-65a8-498a-af8e-a4880c2f5dd5",
+      "name": "Algorithm ecdsa-with-SHA256",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "ecdsa-with-SHA256"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "ecdsa-with-sha256",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "ecdsa-with-sha256"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-04e4b73b-d83a-4167-8fa3-6a2862ce84e7",
+      "name": "Algorithm sha1WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha1WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha1withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha1withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-a142ab11-a948-453b-9187-5aa60460e718",
+      "name": "Algorithm sha1WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha1WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha1withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha1withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-077f5905-4363-4f90-a0bc-d9f2b4323a9e",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-0a9ea3e3-bb9b-4730-a4f8-91517e0e691c",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-0e5b6ec9-ef78-461b-9b8d-dd6f675cb593",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-27a8921e-e5dd-42d2-9382-318dedeb4d1a",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-4a590bde-83b0-421e-8765-d8b70f630047",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-4f9f0585-1dbe-4da5-b61b-aedf3aa3fe90",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-576cd9de-98ff-48d4-a99b-601019e703ad",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-7ff4232d-d56a-4d91-9782-afd79922d8e4",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-88373d2c-3cd3-4b57-8df6-11cf8686fd8a",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-991d7586-e737-4965-99ee-c3d0b44f20b4",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-b645f44f-0bc0-4e8d-9701-caedc9f3fa1d",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-d1e5f632-f867-433c-85da-cbbdf2c1e923",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "algo-e167d04d-d3dc-4913-b260-42a9682dffcd",
+      "name": "Algorithm sha256WithRSAEncryption",
+      "properties": [
+        {
+          "name": "pqc:algorithm_name",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:algorithm_type",
+          "value": "signature"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "algorithm",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "sha256withrsaencryption",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "sha256withrsaencryption"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "cert-f4ea846a-812e-4f9d-baf3-797d56adfdae",
+      "name": "Certificate 01697338",
+      "properties": [
+        {
+          "name": "pqc:algorithm",
+          "value": "sha1WithRSAEncryption"
+        },
+        {
+          "name": "pqc:key_size",
+          "value": "1024"
+        },
+        {
+          "name": "pqc:not_after",
+          "value": "2019-11-08T23:48:47+00:00"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "certificate",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "RSASSA-PKCS1-v1_5-1024",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 80,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "RSASSA-PKCS1-v1_5-1024",
+          "relatedCryptoMaterial": [
+            {
+              "ref": "key-f4ea846a-812e-4f9d-baf3-797d56adfdae",
+              "relationship": "subjectPublicKeyRef"
+            }
+          ]
+        },
+        "certificateProperties": {
+          "subjectName": "CN=localhost",
+          "issuerName": "CN=localhost",
+          "serialNumber": "13098529066745705731",
+          "certificateFormat": "PEM",
+          "notBefore": "2009-11-10T23:48:47+00:00",
+          "notAfter": "2019-11-08T23:48:47+00:00"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "cert-3f224fb2-6992-48e8-a3a5-4e6b9323dedf",
+      "name": "Certificate 2587197d",
+      "properties": [
+        {
+          "name": "pqc:algorithm",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:key_size",
+          "value": "256"
+        },
+        {
+          "name": "pqc:not_after",
+          "value": "2026-06-11T23:59:59+00:00"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "certificate",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "RSASSA-PKCS1-v1_5-256",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 0,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "RSASSA-PKCS1-v1_5-256",
+          "relatedCryptoMaterial": [
+            {
+              "ref": "key-3f224fb2-6992-48e8-a3a5-4e6b9323dedf",
+              "relationship": "subjectPublicKeyRef"
+            }
+          ]
+        },
+        "certificateProperties": {
+          "subjectName": "CN=*.facebook.com,O=Meta Platforms\\, Inc.,L=Menlo Park,ST=California,C=US",
+          "issuerName": "CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1,O=DigiCert Inc,C=US",
+          "serialNumber": "8081132374011167312503124526952839427",
+          "certificateFormat": "PEM",
+          "notBefore": "2026-03-13T00:00:00+00:00",
+          "notAfter": "2026-06-11T23:59:59+00:00"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "cert-e23e6194-f4d7-403b-ba9b-27c35064f7c9",
+      "name": "Certificate 363808fa",
+      "properties": [
+        {
+          "name": "pqc:algorithm",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:key_size",
+          "value": "2048"
+        },
+        {
+          "name": "pqc:not_after",
+          "value": "2036-09-02T06:17:48+00:00"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "certificate",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "RSASSA-PKCS1-v1_5-2048",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 112,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "RSASSA-PKCS1-v1_5-2048",
+          "relatedCryptoMaterial": [
+            {
+              "ref": "key-e23e6194-f4d7-403b-ba9b-27c35064f7c9",
+              "relationship": "subjectPublicKeyRef"
+            }
+          ]
+        },
+        "certificateProperties": {
+          "subjectName": "CN=dsldevice.lan,OU=DHBU,O=NSB,ST=SH,C=CN",
+          "issuerName": "CN=Nokia DHBU Root CA,O=Nokia-DHBU,C=CN",
+          "serialNumber": "15820107739558318091",
+          "certificateFormat": "PEM",
+          "notBefore": "2016-09-07T06:17:48+00:00",
+          "notAfter": "2036-09-02T06:17:48+00:00"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "cert-39fa9c7b-34cc-4c17-957e-013bd4e273a5",
+      "name": "Certificate 4b0d86c4",
+      "properties": [
+        {
+          "name": "pqc:algorithm",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:key_size",
+          "value": "2048"
+        },
+        {
+          "name": "pqc:not_after",
+          "value": "2032-04-02T21:38:58+00:00"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "certificate",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "RSASSA-PKCS1-v1_5-2048",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 112,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "RSASSA-PKCS1-v1_5-2048",
+          "relatedCryptoMaterial": [
+            {
+              "ref": "key-39fa9c7b-34cc-4c17-957e-013bd4e273a5",
+              "relationship": "subjectPublicKeyRef"
+            }
+          ]
+        },
+        "certificateProperties": {
+          "subjectName": "CN=linksyssmartwifi.com,OU=Belkin International\\, Inc.,O=Belkin International\\, Inc.,ST=California,C=US",
+          "issuerName": "CN=linksyssmartwifi.com,OU=Belkin International\\, Inc.,O=Belkin International\\, Inc.,ST=California,C=US",
+          "serialNumber": "16098450928774976546",
+          "certificateFormat": "PEM",
+          "notBefore": "2022-04-05T21:38:58+00:00",
+          "notAfter": "2032-04-02T21:38:58+00:00"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "cert-e863d654-5571-48b2-b632-c386f44573ab",
+      "name": "Certificate d073b389",
+      "properties": [
+        {
+          "name": "pqc:algorithm",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:key_size",
+          "value": "2048"
+        },
+        {
+          "name": "pqc:not_after",
+          "value": "2018-08-08T21:17:05+00:00"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "certificate",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "RSASSA-PKCS1-v1_5-2048",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 112,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "RSASSA-PKCS1-v1_5-2048",
+          "relatedCryptoMaterial": [
+            {
+              "ref": "key-e863d654-5571-48b2-b632-c386f44573ab",
+              "relationship": "subjectPublicKeyRef"
+            }
+          ]
+        },
+        "certificateProperties": {
+          "subjectName": "CN=badssl-fallback-unknown-subdomain-or-no-sni,O=BadSSL Fallback. Unknown subdomain or no SNI.,L=San Francisco,ST=California,C=US",
+          "issuerName": "CN=BadSSL Intermediate Certificate Authority,O=BadSSL,L=San Francisco,ST=California,C=US",
+          "serialNumber": "14824823351240255409",
+          "certificateFormat": "PEM",
+          "notBefore": "2016-08-08T21:17:05+00:00",
+          "notAfter": "2018-08-08T21:17:05+00:00"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "cert-b60a0b97-6a8e-43bb-8f43-b4b58921c196",
+      "name": "Certificate d5129635",
+      "properties": [
+        {
+          "name": "pqc:algorithm",
+          "value": "sha256WithRSAEncryption"
+        },
+        {
+          "name": "pqc:key_size",
+          "value": "2048"
+        },
+        {
+          "name": "pqc:not_after",
+          "value": "2030-01-01T00:00:00+00:00"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "certificate",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "RSASSA-PKCS1-v1_5-2048",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 112,
+          "certificationLevel": "CA/Browser Forum",
+          "parameterSetIdentifier": "RSASSA-PKCS1-v1_5-2048",
+          "relatedCryptoMaterial": [
+            {
+              "ref": "key-b60a0b97-6a8e-43bb-8f43-b4b58921c196",
+              "relationship": "subjectPublicKeyRef"
+            }
+          ]
+        },
+        "certificateProperties": {
+          "subjectName": "CN=invalid2.invalid,OU=No SNI provided\\; please fix your client.",
+          "issuerName": "CN=invalid2.invalid,OU=No SNI provided\\; please fix your client.",
+          "serialNumber": "10409658328798172064",
+          "certificateFormat": "PEM",
+          "notBefore": "2015-01-01T00:00:00+00:00",
+          "notAfter": "2030-01-01T00:00:00+00:00"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "cert-2305a224-3f2e-45b3-ac68-0430c0b25f36",
+      "name": "Certificate dd599564",
+      "properties": [
+        {
+          "name": "pqc:algorithm",
+          "value": "ecdsa-with-SHA256"
+        },
+        {
+          "name": "pqc:key_size",
+          "value": "256"
+        },
+        {
+          "name": "pqc:not_after",
+          "value": "2026-08-08T22:14:02+00:00"
+        },
+        {
+          "name": "pqc:pqc_status",
+          "value": "vulnerable"
+        }
+      ],
+      "type": "cryptographic-asset",
+      "cryptoProperties": {
+        "assetType": "certificate",
+        "algorithmProperties": {
+          "primitive": "signature",
+          "variant": "ECDSA-P256",
+          "nistQuantumSecurityLevel": 0,
+          "classicalSecurityLevel": 128,
+          "certificationLevel": "none",
+          "parameterSetIdentifier": "ECDSA-P256",
+          "relatedCryptoMaterial": [
+            {
+              "ref": "key-2305a224-3f2e-45b3-ac68-0430c0b25f36",
+              "relationship": "subjectPublicKeyRef"
+            }
+          ]
+        },
+        "certificateProperties": {
+          "subjectName": "CN=cloudflare.com",
+          "issuerName": "CN=WE1,O=Google Trust Services,C=US",
+          "serialNumber": "218805193438942749473694781967976400005",
+          "certificateFormat": "PEM",
+          "notBefore": "2026-05-10T21:14:06+00:00",
+          "notAfter": "2026-08-08T22:14:02+00:00"
+        },
+        "executionEnvironment": "software",
+        "implementationPlatform": "x86_64/OS",
+        "pqcSafe": false
+      }
+    },
+    {
+      "bom-ref": "key-f4ea846a-812e-4f9d-baf3-797d56adfdae",
+      "type": "cryptographicAsset",
+      "name": "Public Key 01697338",
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "algorithmRef": "algo-f4ea846a-812e-4f9d-baf3-797d56adfdae",
+        "creationDate": "2009-11-10T23:48:47+00:00",
+        "expirationDate": "2019-11-08T23:48:47+00:00",
+        "format": "raw",
+        "relatedCryptoMaterialType": "publicKey",
+        "secured": true,
+        "size": 1024,
+        "state": "active"
+      }
+    },
+    {
+      "bom-ref": "key-3f224fb2-6992-48e8-a3a5-4e6b9323dedf",
+      "type": "cryptographicAsset",
+      "name": "Public Key 2587197d",
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "algorithmRef": "algo-3f224fb2-6992-48e8-a3a5-4e6b9323dedf",
+        "creationDate": "2026-03-13T00:00:00+00:00",
+        "expirationDate": "2026-06-11T23:59:59+00:00",
+        "format": "raw",
+        "relatedCryptoMaterialType": "publicKey",
+        "secured": true,
+        "size": 256,
+        "state": "active"
+      }
+    },
+    {
+      "bom-ref": "key-e23e6194-f4d7-403b-ba9b-27c35064f7c9",
+      "type": "cryptographicAsset",
+      "name": "Public Key 363808fa",
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "algorithmRef": "algo-e23e6194-f4d7-403b-ba9b-27c35064f7c9",
+        "creationDate": "2016-09-07T06:17:48+00:00",
+        "expirationDate": "2036-09-02T06:17:48+00:00",
+        "format": "raw",
+        "relatedCryptoMaterialType": "publicKey",
+        "secured": true,
+        "size": 2048,
+        "state": "active"
+      }
+    },
+    {
+      "bom-ref": "key-39fa9c7b-34cc-4c17-957e-013bd4e273a5",
+      "type": "cryptographicAsset",
+      "name": "Public Key 4b0d86c4",
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "algorithmRef": "algo-39fa9c7b-34cc-4c17-957e-013bd4e273a5",
+        "creationDate": "2022-04-05T21:38:58+00:00",
+        "expirationDate": "2032-04-02T21:38:58+00:00",
+        "format": "raw",
+        "relatedCryptoMaterialType": "publicKey",
+        "secured": true,
+        "size": 2048,
+        "state": "active"
+      }
+    },
+    {
+      "bom-ref": "key-e863d654-5571-48b2-b632-c386f44573ab",
+      "type": "cryptographicAsset",
+      "name": "Public Key d073b389",
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "algorithmRef": "algo-e863d654-5571-48b2-b632-c386f44573ab",
+        "creationDate": "2016-08-08T21:17:05+00:00",
+        "expirationDate": "2018-08-08T21:17:05+00:00",
+        "format": "raw",
+        "relatedCryptoMaterialType": "publicKey",
+        "secured": true,
+        "size": 2048,
+        "state": "active"
+      }
+    },
+    {
+      "bom-ref": "key-b60a0b97-6a8e-43bb-8f43-b4b58921c196",
+      "type": "cryptographicAsset",
+      "name": "Public Key d5129635",
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "algorithmRef": "algo-b60a0b97-6a8e-43bb-8f43-b4b58921c196",
+        "creationDate": "2015-01-01T00:00:00+00:00",
+        "expirationDate": "2030-01-01T00:00:00+00:00",
+        "format": "raw",
+        "relatedCryptoMaterialType": "publicKey",
+        "secured": true,
+        "size": 2048,
+        "state": "active"
+      }
+    },
+    {
+      "bom-ref": "key-2305a224-3f2e-45b3-ac68-0430c0b25f36",
+      "type": "cryptographicAsset",
+      "name": "Public Key dd599564",
+      "cryptoProperties": {
+        "assetType": "related-crypto-material",
+        "algorithmRef": "algo-2305a224-3f2e-45b3-ac68-0430c0b25f36",
+        "creationDate": "2026-05-10T21:14:06+00:00",
+        "expirationDate": "2026-08-08T22:14:02+00:00",
+        "format": "raw",
+        "relatedCryptoMaterialType": "publicKey",
+        "secured": true,
+        "size": 256,
+        "state": "active"
+      }
+    },
+    {
+      "bom-ref": "protocol-f4ea846a-812e-4f9d-baf3-797d56adfdae",
+      "type": "cryptographicAsset",
+      "name": "TLS Connection",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "cryptoRefArray": [
+          "algo-f4ea846a-812e-4f9d-baf3-797d56adfdae",
+          "key-f4ea846a-812e-4f9d-baf3-797d56adfdae"
+        ],
+        "cipherSuites": [
+          "TLS_AES_256_GCM_SHA384"
+        ],
+        "name": "TLS",
+        "relatedTo": "cert-f4ea846a-812e-4f9d-baf3-797d56adfdae",
+        "version": "TLSv1.3"
+      }
+    },
+    {
+      "bom-ref": "protocol-3f224fb2-6992-48e8-a3a5-4e6b9323dedf",
+      "type": "cryptographicAsset",
+      "name": "TLS Connection",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "cryptoRefArray": [
+          "algo-3f224fb2-6992-48e8-a3a5-4e6b9323dedf",
+          "key-3f224fb2-6992-48e8-a3a5-4e6b9323dedf"
+        ],
+        "cipherSuites": [
+          "TLS_CHACHA20_POLY1305_SHA256"
+        ],
+        "name": "TLS",
+        "relatedTo": "cert-3f224fb2-6992-48e8-a3a5-4e6b9323dedf",
+        "version": "TLSv1.3"
+      }
+    },
+    {
+      "bom-ref": "protocol-e23e6194-f4d7-403b-ba9b-27c35064f7c9",
+      "type": "cryptographicAsset",
+      "name": "TLS Connection",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "cryptoRefArray": [
+          "algo-e23e6194-f4d7-403b-ba9b-27c35064f7c9",
+          "key-e23e6194-f4d7-403b-ba9b-27c35064f7c9"
+        ],
+        "cipherSuites": [
+          "TLS_AES_256_GCM_SHA384"
+        ],
+        "name": "TLS",
+        "relatedTo": "cert-e23e6194-f4d7-403b-ba9b-27c35064f7c9",
+        "version": "TLSv1.3"
+      }
+    },
+    {
+      "bom-ref": "protocol-39fa9c7b-34cc-4c17-957e-013bd4e273a5",
+      "type": "cryptographicAsset",
+      "name": "TLS Connection",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "cryptoRefArray": [
+          "algo-39fa9c7b-34cc-4c17-957e-013bd4e273a5",
+          "key-39fa9c7b-34cc-4c17-957e-013bd4e273a5"
+        ],
+        "cipherSuites": [
+          "ECDHE-RSA-AES256-GCM-SHA384"
+        ],
+        "name": "TLS",
+        "relatedTo": "cert-39fa9c7b-34cc-4c17-957e-013bd4e273a5",
+        "version": "TLSv1.2"
+      }
+    },
+    {
+      "bom-ref": "protocol-e863d654-5571-48b2-b632-c386f44573ab",
+      "type": "cryptographicAsset",
+      "name": "TLS Connection",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "cryptoRefArray": [
+          "algo-e863d654-5571-48b2-b632-c386f44573ab",
+          "key-e863d654-5571-48b2-b632-c386f44573ab"
+        ],
+        "cipherSuites": [
+          "ECDHE-RSA-AES128-GCM-SHA256"
+        ],
+        "name": "TLS",
+        "relatedTo": "cert-e863d654-5571-48b2-b632-c386f44573ab",
+        "version": "TLSv1.2"
+      }
+    },
+    {
+      "bom-ref": "protocol-b60a0b97-6a8e-43bb-8f43-b4b58921c196",
+      "type": "cryptographicAsset",
+      "name": "TLS Connection",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "cryptoRefArray": [
+          "algo-b60a0b97-6a8e-43bb-8f43-b4b58921c196",
+          "key-b60a0b97-6a8e-43bb-8f43-b4b58921c196"
+        ],
+        "cipherSuites": [
+          "TLS_AES_256_GCM_SHA384"
+        ],
+        "name": "TLS",
+        "relatedTo": "cert-b60a0b97-6a8e-43bb-8f43-b4b58921c196",
+        "version": "TLSv1.3"
+      }
+    },
+    {
+      "bom-ref": "protocol-2305a224-3f2e-45b3-ac68-0430c0b25f36",
+      "type": "cryptographicAsset",
+      "name": "TLS Connection",
+      "cryptoProperties": {
+        "assetType": "protocol",
+        "cryptoRefArray": [
+          "algo-2305a224-3f2e-45b3-ac68-0430c0b25f36",
+          "key-2305a224-3f2e-45b3-ac68-0430c0b25f36"
+        ],
+        "cipherSuites": [
+          "TLS_AES_256_GCM_SHA384"
+        ],
+        "name": "TLS",
+        "relatedTo": "cert-2305a224-3f2e-45b3-ac68-0430c0b25f36",
+        "version": "TLSv1.3"
+      }
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "algo-0405d82b-4cde-4c70-81cf-14875e526ebb",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-04e4b73b-d83a-4167-8fa3-6a2862ce84e7",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-077f5905-4363-4f90-a0bc-d9f2b4323a9e",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-0a9ea3e3-bb9b-4730-a4f8-91517e0e691c",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-0c80e358-cd2b-4fa7-9bf6-873c2b7fa4b9",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-0e5b6ec9-ef78-461b-9b8d-dd6f675cb593",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-23cfe38f-2443-439a-9c91-834c3ee3a5de",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-27a8921e-e5dd-42d2-9382-318dedeb4d1a",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-30e18a87-ca43-438a-bc10-bee0dea19e55",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-4a590bde-83b0-421e-8765-d8b70f630047",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-4f9f0585-1dbe-4da5-b61b-aedf3aa3fe90",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-500da714-1272-4897-bc45-c617aba19ac4",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-576cd9de-98ff-48d4-a99b-601019e703ad",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-7ff4232d-d56a-4d91-9782-afd79922d8e4",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-88373d2c-3cd3-4b57-8df6-11cf8686fd8a",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-991d7586-e737-4965-99ee-c3d0b44f20b4",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-a142ab11-a948-453b-9187-5aa60460e718",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-b645f44f-0bc0-4e8d-9701-caedc9f3fa1d",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-bbc58f36-19e0-4b98-90c2-a1ba84a70379",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-c99f614e-18df-4e3f-842c-eb475682eeb0",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-cf95742f-c17f-4df2-af1e-034c25093a7c",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-d10478da-639d-46e8-9248-1120d5132070",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-d1e5f632-f867-433c-85da-cbbdf2c1e923",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-d6504115-6bed-4d0e-a929-807d300d4b75",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-e167d04d-d3dc-4913-b260-42a9682dffcd",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-ef02e48d-d8de-4262-bed9-96d1609204ab",
+      "dependsOn": []
+    },
+    {
+      "ref": "algo-fdc84e97-65a8-498a-af8e-a4880c2f5dd5",
+      "dependsOn": []
+    },
+    {
+      "dependsOn": [
+        {
+          "ref": "algo-0405d82b-4cde-4c70-81cf-14875e526ebb",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "cert-2305a224-3f2e-45b3-ac68-0430c0b25f36",
+          "provides": [
+            "certificate"
+          ],
+          "dependencyType": "provided"
+        }
+      ],
+      "ref": "asset-10b95432-136e-4338-bda4-89f341c2c000"
+    },
+    {
+      "dependsOn": [
+        {
+          "ref": "algo-0a9ea3e3-bb9b-4730-a4f8-91517e0e691c",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-576cd9de-98ff-48d4-a99b-601019e703ad",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-88373d2c-3cd3-4b57-8df6-11cf8686fd8a",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-d1e5f632-f867-433c-85da-cbbdf2c1e923",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "cert-39fa9c7b-34cc-4c17-957e-013bd4e273a5",
+          "provides": [
+            "certificate"
+          ],
+          "dependencyType": "provided"
+        }
+      ],
+      "ref": "asset-186824bc-72ad-4084-81ab-084239e8e930"
+    },
+    {
+      "dependsOn": [
+        {
+          "ref": "algo-27a8921e-e5dd-42d2-9382-318dedeb4d1a",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        }
+      ],
+      "ref": "asset-19cef32c-141d-473c-8dd8-dbdf987f2f2a"
+    },
+    {
+      "dependsOn": [
+        {
+          "ref": "cert-b60a0b97-6a8e-43bb-8f43-b4b58921c196",
+          "provides": [
+            "certificate"
+          ],
+          "dependencyType": "provided"
+        }
+      ],
+      "ref": "asset-280e224e-df2d-4af7-b46d-fff62012088e"
+    },
+    {
+      "ref": "asset-440c19e3-39e8-4be2-9728-705054d7d9ec",
+      "dependsOn": []
+    },
+    {
+      "dependsOn": [
+        {
+          "ref": "algo-04e4b73b-d83a-4167-8fa3-6a2862ce84e7",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-a142ab11-a948-453b-9187-5aa60460e718",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "cert-f4ea846a-812e-4f9d-baf3-797d56adfdae",
+          "provides": [
+            "certificate"
+          ],
+          "dependencyType": "provided"
+        }
+      ],
+      "ref": "asset-47bab1d6-4683-4089-8369-da8972e33218"
+    },
+    {
+      "dependsOn": [
+        {
+          "ref": "algo-fdc84e97-65a8-498a-af8e-a4880c2f5dd5",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        }
+      ],
+      "ref": "asset-5391c306-7e69-4c9d-b32e-2ec430a3516f"
+    },
+    {
+      "dependsOn": [
+        {
+          "ref": "algo-0e5b6ec9-ef78-461b-9b8d-dd6f675cb593",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-4f9f0585-1dbe-4da5-b61b-aedf3aa3fe90",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-7ff4232d-d56a-4d91-9782-afd79922d8e4",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-991d7586-e737-4965-99ee-c3d0b44f20b4",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-b645f44f-0bc0-4e8d-9701-caedc9f3fa1d",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-e167d04d-d3dc-4913-b260-42a9682dffcd",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "cert-e23e6194-f4d7-403b-ba9b-27c35064f7c9",
+          "provides": [
+            "certificate"
+          ],
+          "dependencyType": "provided"
+        }
+      ],
+      "ref": "asset-55b27896-1e88-4354-b67b-201a69635fb2"
+    },
+    {
+      "dependsOn": [
+        {
+          "ref": "algo-077f5905-4363-4f90-a0bc-d9f2b4323a9e",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "cert-e863d654-5571-48b2-b632-c386f44573ab",
+          "provides": [
+            "certificate"
+          ],
+          "dependencyType": "provided"
+        }
+      ],
+      "ref": "asset-5f22451e-ad56-447a-bbb4-b2e071879adf"
+    },
+    {
+      "dependsOn": [
+        {
+          "ref": "algo-0c80e358-cd2b-4fa7-9bf6-873c2b7fa4b9",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-23cfe38f-2443-439a-9c91-834c3ee3a5de",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-30e18a87-ca43-438a-bc10-bee0dea19e55",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-500da714-1272-4897-bc45-c617aba19ac4",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-bbc58f36-19e0-4b98-90c2-a1ba84a70379",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-c99f614e-18df-4e3f-842c-eb475682eeb0",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-cf95742f-c17f-4df2-af1e-034c25093a7c",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-d10478da-639d-46e8-9248-1120d5132070",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-d6504115-6bed-4d0e-a929-807d300d4b75",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "algo-ef02e48d-d8de-4262-bed9-96d1609204ab",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        }
+      ],
+      "ref": "asset-61cfc767-45e0-4a97-8f42-6b8f55baccd7"
+    },
+    {
+      "ref": "asset-9be9aefe-612b-4f0f-bf03-e130f6204a19",
+      "dependsOn": []
+    },
+    {
+      "dependsOn": [
+        {
+          "ref": "algo-4a590bde-83b0-421e-8765-d8b70f630047",
+          "provides": [
+            "algorithm"
+          ],
+          "dependencyType": "required"
+        },
+        {
+          "ref": "cert-3f224fb2-6992-48e8-a3a5-4e6b9323dedf",
+          "provides": [
+            "certificate"
+          ],
+          "dependencyType": "provided"
+        }
+      ],
+      "ref": "asset-fa29b77a-4b44-4e8b-bdd9-95dbfde5aca1"
+    },
+    {
+      "ref": "cert-2305a224-3f2e-45b3-ac68-0430c0b25f36",
+      "dependsOn": []
+    },
+    {
+      "ref": "cert-39fa9c7b-34cc-4c17-957e-013bd4e273a5",
+      "dependsOn": []
+    },
+    {
+      "ref": "cert-3f224fb2-6992-48e8-a3a5-4e6b9323dedf",
+      "dependsOn": []
+    },
+    {
+      "ref": "cert-b60a0b97-6a8e-43bb-8f43-b4b58921c196",
+      "dependsOn": []
+    },
+    {
+      "ref": "cert-e23e6194-f4d7-403b-ba9b-27c35064f7c9",
+      "dependsOn": []
+    },
+    {
+      "ref": "cert-e863d654-5571-48b2-b632-c386f44573ab",
+      "dependsOn": []
+    },
+    {
+      "ref": "cert-f4ea846a-812e-4f9d-baf3-797d56adfdae",
+      "dependsOn": []
+    }
+  ],
+  "metadata": {
+    "timestamp": "2026-06-16T11:51:41.341210+00:00",
+    "tools": [
+      {
+        "name": "PQCrypt Sentinel",
+        "version": "1.0"
+      }
+    ]
+  },
+  "serialNumber": "urn:uuid:75fcbfe7-c9fd-4bfb-afdd-2a1f3366a92f",
+  "version": 1,
+  "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7"
+}

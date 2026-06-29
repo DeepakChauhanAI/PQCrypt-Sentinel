@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC Scanner — Deep Reference Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1eb; --surface: #faf8f3; --surface2: #ede9df;
+    --border: #d4cfc4; --border2: #c5bfb2;
+    --ink: #1c1a16; --ink2: #3d3a34; --muted: #7a7469;
+    --accent: #1a3a5c; --accent-light: #2c5f8a;
+    --red: #8b2a1a; --orange: #9a4a10; --yellow: #7a6010; --green: #1a5c35;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --display: 'Playfair Display', serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.65; }
+
+  .site-header { background: var(--accent); color: #fff; padding: 48px 0 40px; border-bottom: 3px solid #0d2240; }
+  .header-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+  .header-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .header-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.15); max-width: 200px; }
+  h1.site-title { font-family: var(--display); font-size: clamp(28px,4vw,48px); font-weight: 900; line-height: 1.1; letter-spacing: -0.02em; color: #fff; margin-bottom: 16px; }
+  h1.site-title span { color: #7ab3d4; }
+  .header-meta { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.45); display: flex; gap: 24px; flex-wrap: wrap; }
+
+  .tab-nav { background: var(--ink); position: sticky; top: 0; z-index: 100; border-bottom: 2px solid #0d0c0a; }
+  .tab-nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .tab-nav-inner::-webkit-scrollbar { display: none; }
+  .tab-btn { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.4); background: none; border: none; padding: 14px 18px; cursor: pointer; white-space: nowrap; transition: all 0.2s; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .tab-btn:hover { color: rgba(255,255,255,0.75); }
+  .tab-btn.active { color: #fff; border-bottom-color: #7ab3d4; }
+
+  .main { max-width: 1200px; margin: 0 auto; padding: 40px 40px 80px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeUp 0.3s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+  .section-title { font-family: var(--display); font-size: 26px; font-weight: 700; color: var(--accent); margin-bottom: 6px; margin-top: 44px; padding-bottom: 10px; border-bottom: 2px solid var(--accent); }
+  .section-title:first-child { margin-top: 0; }
+  .section-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 22px; }
+  .content-h2 { font-family: var(--display); font-size: 19px; font-weight: 700; color: var(--ink); margin: 36px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .content-h2:first-child { margin-top: 0; }
+  .content-h3 { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.12em; margin: 24px 0 8px; }
+
+  .prose { color: var(--ink2); font-size: 13.5px; line-height: 1.75; margin-bottom: 18px; max-width: 860px; }
+  .prose strong { color: var(--ink); }
+  .prose code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border: 1px solid var(--border); }
+
+  .infobox { background: #e8f0f8; border: 1px solid #b8cfe0; border-left: 4px solid var(--accent); padding: 14px 18px; margin-bottom: 20px; font-size: 13px; color: var(--accent); line-height: 1.6; }
+  .infobox strong { display: block; margin-bottom: 3px; font-weight: 600; }
+  .warnbox { background: #fdf5e0; border: 1px solid #e8d080; border-left: 4px solid var(--yellow); padding: 14px 18px; margin-bottom: 20px; font-size: 13px; color: #5a4a10; line-height: 1.6; }
+  .warnbox strong { display: block; margin-bottom: 3px; color: var(--yellow); font-weight: 600; }
+  .greenbox { background: #e6f4ea; border: 1px solid #a8dab5; border-left: 4px solid var(--green); padding: 14px 18px; margin-bottom: 20px; font-size: 13px; color: var(--green); line-height: 1.6; }
+  .greenbox strong { display: block; margin-bottom: 3px; font-weight: 600; }
+
+  .badge { display: inline-block; font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; font-weight: 600; white-space: nowrap; }
+  .badge-crit { background: #f5e0dd; color: var(--red); border: 1px solid #e8bdb8; }
+  .badge-high { background: #fce8d5; color: var(--orange); border: 1px solid #f0c8a0; }
+  .badge-med  { background: #fdf5d8; color: var(--yellow); border: 1px solid #e8d888; }
+  .badge-safe { background: #d8f0e4; color: var(--green); border: 1px solid #a8d8bc; }
+  .badge-info { background: #daeaf5; color: var(--accent); border: 1px solid #b0ccdf; }
+  .badge-now  { background: #f5d8d8; color: #6b0a0a; border: 1px solid #d8a0a0; }
+
+  .table-wrap { overflow-x: auto; margin-bottom: 28px; border: 1px solid var(--border2); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 500px; }
+  thead tr { background: var(--accent); color: #fff; }
+  thead th { padding: 10px 14px; text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:hover { background: var(--surface2); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 10px 14px; vertical-align: top; color: var(--ink2); line-height: 1.5; }
+  tbody tr:nth-child(even) { background: var(--surface); }
+  tbody tr:nth-child(even):hover { background: var(--surface2); }
+  td code { font-family: var(--mono); font-size: 11px; background: var(--surface2); padding: 1px 4px; border: 1px solid var(--border); }
+
+  .code-block { background: #1c1a16; color: #e8e4da; font-family: var(--mono); font-size: 12px; padding: 18px 22px; overflow-x: auto; margin-bottom: 18px; line-height: 1.6; border-left: 3px solid var(--accent-light); }
+  .code-block .cm { color: #7a7469; }
+  .code-block .st { color: #7ab3d4; }
+  .code-block .kw { color: #c8a060; }
+  .code-block .fn { color: #90c090; }
+  .code-block .vl { color: #c8e890; }
+  .code-block .hl { color: #ffd080; }
+  .code-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; margin-top: 18px; }
+
+  /* LAYER BLOCKS */
+  .layer-block { margin-bottom: 28px; border: 1px solid var(--border2); overflow: hidden; }
+  .layer-header { background: var(--ink); color: #fff; padding: 12px 22px; display: flex; align-items: center; gap: 18px; }
+  .layer-num { font-family: var(--display); font-size: 28px; font-weight: 900; color: #7ab3d4; line-height: 1; min-width: 36px; }
+  .layer-name { font-family: var(--mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; }
+  .layer-note { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+  .layer-body { padding: 18px 22px; background: var(--surface); }
+
+  /* REPO CARDS */
+  .repo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 4px; margin-bottom: 24px; }
+  .repo-card { background: var(--surface); border: 1px solid var(--border2); padding: 18px 20px; transition: border-color 0.2s; }
+  .repo-card:hover { border-color: var(--accent-light); }
+  .repo-name { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 3px; }
+  .repo-url { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-bottom: 10px; text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; display: inline-block; }
+  .repo-url:hover { border-bottom-color: var(--muted); }
+  .repo-lang { display: inline-block; font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 7px; margin-bottom: 8px; }
+  .repo-lang.py { background: #daeaf5; color: var(--accent); border: 1px solid #b0ccdf; }
+  .repo-lang.rs { background: #fce8d5; color: var(--orange); border: 1px solid #f0c8a0; }
+  .repo-lang.go { background: #e6f4ea; color: var(--green); border: 1px solid #a8dab5; }
+  .repo-lang.js { background: #fdf5d8; color: var(--yellow); border: 1px solid #e8d888; }
+  .repo-lang.c  { background: #f5e0dd; color: var(--red); border: 1px solid #e8bdb8; }
+  .repo-lang.java { background: #f5e0dd; color: var(--red); border: 1px solid #e8bdb8; }
+  .repo-lang.multi { background: var(--surface2); color: var(--muted); border: 1px solid var(--border2); }
+  .repo-desc { font-size: 12.5px; color: var(--ink2); line-height: 1.55; margin-bottom: 10px; }
+  .repo-use { font-family: var(--mono); font-size: 10px; color: var(--green); background: #e6f4ea; border: 1px solid #a8dab5; padding: 2px 8px; display: inline-block; }
+
+  /* TOOL ROWS */
+  .tool-row { display: grid; grid-template-columns: 200px 1fr; border: 1px solid var(--border2); background: var(--surface); margin-bottom: 4px; transition: border-color 0.2s; }
+  .tool-row:hover { border-color: var(--accent-light); }
+  .tool-left { background: var(--surface2); padding: 14px 16px; border-right: 1px solid var(--border2); }
+  .tool-name { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 3px; }
+  .tool-type { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .tool-right { padding: 14px 16px; }
+  .tool-desc { font-size: 12.5px; color: var(--ink2); line-height: 1.55; }
+
+  /* PIPELINE */
+  .pipeline { display: flex; align-items: stretch; gap: 0; margin-bottom: 20px; flex-wrap: wrap; }
+  .pipe-step { background: var(--surface2); border: 1px solid var(--border2); padding: 14px 16px; flex: 1; min-width: 120px; }
+  .pipe-step.dark { background: var(--accent); border-color: var(--accent); }
+  .pipe-step.dark .pipe-num { color: #7ab3d4; }
+  .pipe-step.dark .pipe-label, .pipe-step.dark .pipe-title, .pipe-step.dark .pipe-sub { color: rgba(255,255,255,0.85); }
+  .pipe-step.dark .pipe-label { color: rgba(255,255,255,0.5); }
+  .pipe-step.grn { background: #e6f4ea; border-color: #a8dab5; }
+  .pipe-num { font-family: var(--display); font-size: 20px; font-weight: 900; color: var(--accent); line-height: 1; margin-bottom: 3px; }
+  .pipe-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .pipe-title { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+  .pipe-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); line-height: 1.4; }
+  .pipe-arrow { display: flex; align-items: center; padding: 0 4px; color: var(--muted); font-size: 16px; flex-shrink: 0; }
+
+  /* VFLOW */
+  .vflow { display: flex; flex-direction: column; gap: 0; margin-bottom: 20px; }
+  .vflow-step { display: grid; grid-template-columns: 44px 1fr; border: 1px solid var(--border2); border-bottom: none; background: var(--surface); }
+  .vflow-step:last-child { border-bottom: 1px solid var(--border2); }
+  .vflow-step:hover { background: var(--surface2); }
+  .vflow-left { background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 16px; font-weight: 900; color: #7ab3d4; border-right: 1px solid #0d2240; }
+  .vflow-right { padding: 12px 16px; }
+  .vflow-title { font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 3px; }
+  .vflow-desc { font-size: 12.5px; color: var(--ink2); line-height: 1.55; }
+  .vflow-mono { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* TAGS */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .tag { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; padding: 2px 7px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); text-transform: uppercase; }
+  .tag.g { background: #e6f4ea; color: var(--green); border-color: #a8dab5; }
+  .tag.r { background: #f5e0dd; color: var(--red); border-color: #e8bdb8; }
+  .tag.b { background: #daeaf5; color: var(--accent); border-color: #b0ccdf; }
+  .tag.y { background: #fdf5d8; color: var(--yellow); border-color: #e8d888; }
+
+  .site-footer { background: var(--ink); color: rgba(255,255,255,0.3); font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; padding: 20px 40px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+  @media (max-width: 768px) {
+    .header-inner, .main { padding: 24px 20px; }
+    .tab-nav-inner { padding: 0 20px; }
+    .repo-grid { grid-template-columns: 1fr; }
+    .tool-row { grid-template-columns: 1fr; }
+    .site-footer { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-eyebrow">PQC Scanner · General Purpose · Deep Reference</div>
+    <h1 class="site-title">PQC Scanner<br><span>Deep Reference Guide</span></h1>
+    <div class="header-meta">
+      <span>May 2026 · Internal Use</span>
+      <span>7 Tabs · SSL/TLS/SSH internals · CMDB · 7 Layers · Tools · GitHub Repos</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" onclick="showTab('t1',this)">01 · SSL / TLS / SSH Deep</button>
+    <button class="tab-btn" onclick="showTab('t2',this)">02 · CMDB &amp; Advantages</button>
+    <button class="tab-btn" onclick="showTab('t3',this)">03 · The 7 Scan Layers</button>
+    <button class="tab-btn" onclick="showTab('t4',this)">04 · Scan Mechanisms</button>
+    <button class="tab-btn" onclick="showTab('t5',this)">05 · Existing PQC Tools</button>
+    <button class="tab-btn" onclick="showTab('t6',this)">06 · GitHub Repos to Use</button>
+    <button class="tab-btn" onclick="showTab('t7',this)">07 · Full Data Flow</button>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ============================================================ -->
+<!-- TAB 1: SSL / TLS / SSH DEEP                                  -->
+<!-- ============================================================ -->
+<div id="t1" class="tab-panel active">
+
+  <div class="section-title">SSL, TLS &amp; SSH — Deep Internals</div>
+  <div class="section-sub">Every field the scanner reads, every term you will encounter</div>
+
+  <div class="infobox">
+    <strong>Why this matters</strong>
+    SSL/TLS and SSH are where the majority of quantum-vulnerable cryptography lives at the network layer. The scanner reads specific fields from these protocols during the handshake phase. You need to understand every field it reads to know what it's reporting on.
+  </div>
+
+  <div class="content-h2">SSL vs TLS — What's the Difference?</div>
+  <p class="prose">SSL (Secure Sockets Layer) is the predecessor to TLS (Transport Layer Security). SSL 2.0 and 3.0 are completely broken and were retired in 2011 and 2015. TLS 1.0 and 1.1 are deprecated. TLS 1.2 is the current minimum and TLS 1.3 is the modern standard. In everyday speech, people say "SSL" when they mean "TLS" — the HTTPS padlock in a browser is TLS, not SSL. Your scanner will report TLS version numbers — 1.0, 1.1, 1.2, 1.3 — and flag 1.0 and 1.1 as deprecated.</p>
+
+  <div class="content-h2">The TLS Handshake — Step by Step</div>
+  <p class="prose">The TLS handshake is the negotiation that happens before any application data is sent. It establishes: who the server is (authentication), what algorithms to use (negotiation), and a shared symmetric key for encrypting the session. The scanner reads and records data from steps 1–4 — it never needs to see the encrypted application data.</p>
+
+  <div class="vflow">
+    <div class="vflow-step">
+      <div class="vflow-left">1</div>
+      <div class="vflow-right">
+        <div class="vflow-title">ClientHello (Client → Server)</div>
+        <div class="vflow-desc">Client opens TCP connection and sends ClientHello. Contains: TLS version supported, a random 32-byte nonce, a session ID (if resuming), and — critically — a list of all <strong>cipher suites</strong> the client supports, plus a list of <strong>named groups</strong> (key exchange curves/algorithms). The scanner sends a ClientHello advertising every cipher suite and named group that exists, including PQC ones like X25519MLKEM768, to see what the server picks.</div>
+        <div class="vflow-mono">Fields scanner reads: supported_versions, cipher_suites list, supported_groups (key_share extension)</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">2</div>
+      <div class="vflow-right">
+        <div class="vflow-title">ServerHello (Server → Client)</div>
+        <div class="vflow-desc">Server picks one cipher suite from the client's list and responds with ServerHello. This reveals: the <strong>negotiated TLS version</strong>, the <strong>selected cipher suite</strong> (e.g. TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 or TLS_AES_256_GCM_SHA256 for TLS 1.3), and the server's chosen <strong>key share</strong> (the public portion of the key exchange). The scanner records all of this.</div>
+        <div class="vflow-mono">Fields scanner reads: version, cipher_suite, key_share → named group used (P-256, X25519, X25519MLKEM768...)</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">3</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Certificate (Server → Client)</div>
+        <div class="vflow-desc">Server sends its X.509 certificate chain — the leaf certificate plus all intermediate CAs. Each certificate is a DER-encoded binary structure. The scanner parses every certificate in the chain to extract: <strong>subject name</strong> (who the cert is issued to), <strong>issuer name</strong> (who signed it), <strong>signature algorithm OID</strong> (is it RSA? ECDSA? ML-DSA?), <strong>public key algorithm and size</strong>, <strong>SANs</strong> (Subject Alternative Names — all domains covered), <strong>validity dates</strong>. The signature algorithm OID is the key PQC finding.</div>
+        <div class="vflow-mono">Fields: signatureAlgorithm (OID), subjectPublicKeyInfo (keyType + keySize), notBefore, notAfter, subjectAltName</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">4</div>
+      <div class="vflow-right">
+        <div class="vflow-title">ServerKeyExchange / CertificateVerify</div>
+        <div class="vflow-desc">In TLS 1.2: ServerKeyExchange carries the server's ephemeral public key (for ECDHE/DHE) and a signature over it. This signature uses the certificate's private key — if the cert is RSA, the signature is RSA. In TLS 1.3 this is merged into CertificateVerify. The scanner notes the ephemeral key exchange algorithm (ECDHE = vulnerable, ML-KEM hybrid = safe) from the named group in ServerHello's key_share extension.</div>
+        <div class="vflow-mono">Key exchange types: RSA (no forward secrecy, vuln), DHE (vuln), ECDHE (vuln), X25519MLKEM768 (hybrid, safe)</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">5</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Finished — Encrypted Session Begins</div>
+        <div class="vflow-desc">Both sides confirm the handshake with a Finished message. From this point, all data is encrypted with the negotiated symmetric key (AES-256-GCM or ChaCha20-Poly1305). The scanner closes the connection here — it has everything it needs. No application data is read.</div>
+        <div class="vflow-mono">Symmetric cipher (AES-256-GCM, AES-128-GCM, ChaCha20) is safe against quantum — scanner notes it but doesn't flag it as vulnerable if AES-256</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-h2">Cipher Suites — Decoded</div>
+  <p class="prose">A cipher suite is a string naming the combination of algorithms used in a TLS session. Every character in the name means something specific. TLS 1.2 and TLS 1.3 use different naming conventions.</p>
+
+  <div class="content-h3">TLS 1.2 Cipher Suite Format</div>
+  <div class="code-block">
+<span class="hl">TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</span>
+    │      │    │       │       │    │
+    │      │    │       │       │    └─ <span class="cm">MAC / PRF hash: SHA-384 — SAFE</span>
+    │      │    │       │       └────── <span class="cm">Symmetric cipher mode: GCM (authenticated encryption)</span>
+    │      │    │       └────────────── <span class="cm">Symmetric cipher + key size: AES-256 — SAFE</span>
+    │      │    └────────────────────── <span class="cm">Auth / Signature: RSA (cert signs the key exchange) — QUANTUM VULNERABLE</span>
+    │      └─────────────────────────── <span class="cm">Key Exchange: ECDHE (Elliptic Curve DH Ephemeral) — QUANTUM VULNERABLE</span>
+    └────────────────────────────────── <span class="cm">Protocol family: TLS</span>
+
+<span class="cm">Scanner extracts two quantum-vulnerable components from this single cipher suite:</span>
+<span class="vl">  Finding 1:</span> Key exchange algorithm = ECDHE <span class="st">→ vulnerable (Shor's algorithm)</span>
+<span class="vl">  Finding 2:</span> Authentication  algorithm = RSA  <span class="st">→ vulnerable (Shor's algorithm)</span>
+<span class="cm">The AES-256-GCM and SHA-384 parts are NOT vulnerable.</span>
+  </div>
+
+  <div class="content-h3">TLS 1.3 Cipher Suite Format (simpler)</div>
+  <div class="code-block">
+<span class="hl">TLS_AES_256_GCM_SHA384</span>
+    │   │       │    │
+    │   │       │    └─ <span class="cm">Hash for HKDF key derivation: SHA-384 — SAFE</span>
+    │   │       └────── <span class="cm">AEAD mode: GCM</span>
+    │   └────────────── <span class="cm">Symmetric cipher + key size: AES-256 — SAFE</span>
+    └────────────────── <span class="cm">Protocol: TLS</span>
+
+<span class="cm">TLS 1.3 removed key exchange and auth from the cipher suite name.</span>
+<span class="cm">Key exchange is now specified separately in the supported_groups/key_share extension.</span>
+<span class="cm">Common TLS 1.3 key exchange groups:</span>
+  x25519          <span class="st">→ ECDH — QUANTUM VULNERABLE</span>
+  secp256r1       <span class="st">→ ECDH P-256 — QUANTUM VULNERABLE</span>
+  X25519MLKEM768  <span class="st">→ Hybrid ECDH + ML-KEM-768 — QUANTUM SAFE (hybrid)</span>
+  MLKEM768        <span class="st">→ Pure ML-KEM-768 — QUANTUM SAFE</span>
+  </div>
+
+  <div class="content-h2">X.509 Certificates — Every Field Explained</div>
+  <p class="prose">An X.509 certificate is a structured binary document (encoded in DER or PEM format) that binds a public key to an identity. The scanner parses these using the <code>cryptography</code> Python library or equivalent. Every field below is something the scanner reads and records.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Field</th><th>What it contains</th><th>Why the scanner reads it</th><th>PQC Relevance</th></tr></thead>
+      <tbody>
+        <tr><td><code>version</code></td><td>X.509 version: v1, v2, v3</td><td>v3 supports extensions (SANs etc.) — nearly all modern certs</td><td>Low</td></tr>
+        <tr><td><code>serialNumber</code></td><td>Unique hex number assigned by the CA</td><td>Uniquely identifies this cert — used for deduplication in CBOM</td><td>Low</td></tr>
+        <tr><td><code>signature</code> (outer)</td><td>The CA's cryptographic signature over this certificate</td><td>The algorithm used here is the key PQC finding — is it RSA-SHA256? ECDSA? ML-DSA?</td><td><span class="badge badge-crit">Critical</span></td></tr>
+        <tr><td><code>signatureAlgorithm</code></td><td>OID identifying the signing algorithm — e.g. 1.2.840.113549.1.1.11 = sha256WithRSAEncryption</td><td>Primary PQC classification field — scanner looks up this OID in its registry</td><td><span class="badge badge-crit">Critical</span></td></tr>
+        <tr><td><code>issuer</code></td><td>Distinguished Name (DN) of the CA that signed this cert — Country, Org, Common Name</td><td>Builds the CA chain dependency graph — who signed this?</td><td>High</td></tr>
+        <tr><td><code>validity.notBefore</code></td><td>Certificate valid-from date (UTC)</td><td>Lifecycle management — how old is this cert?</td><td>Medium</td></tr>
+        <tr><td><code>validity.notAfter</code></td><td>Certificate expiry date (UTC)</td><td>Expiry tracking — certs expiring after 2030 need PQC algo before renewal</td><td>High</td></tr>
+        <tr><td><code>subject</code></td><td>DN of who this cert is issued to — e.g. CN=api.company.com, O=Acme Corp</td><td>Identifies what system or service this cert protects</td><td>Medium</td></tr>
+        <tr><td><code>subjectPublicKeyInfo.algorithm</code></td><td>OID of the public key algorithm — RSA, EC, ML-DSA...</td><td>What algorithm is the embedded public key? RSA = vulnerable.</td><td><span class="badge badge-crit">Critical</span></td></tr>
+        <tr><td><code>subjectPublicKeyInfo.subjectPublicKey</code></td><td>The actual public key bytes</td><td>Scanner calculates key size from this — RSA-2048 vs RSA-4096</td><td><span class="badge badge-crit">Critical</span></td></tr>
+        <tr><td><code>extensions.subjectAltName</code></td><td>All hostnames and IPs this cert is valid for (DNS:, IP:)</td><td>Coverage mapping — what systems does migrating this cert affect?</td><td>Medium</td></tr>
+        <tr><td><code>extensions.keyUsage</code></td><td>What operations this key is permitted for: digitalSignature, keyEncipherment, keyCertSign...</td><td>Usage context — is this a signing cert or encryption cert?</td><td>Medium</td></tr>
+        <tr><td><code>extensions.extendedKeyUsage</code></td><td>Refined purpose: serverAuth, clientAuth, codeSigning, emailProtection, timestamping</td><td>Determines which migration path to recommend</td><td>High</td></tr>
+        <tr><td><code>extensions.authorityKeyIdentifier</code></td><td>Key ID of the CA that signed this cert — links child to parent in chain</td><td>Chain building for dependency graph</td><td>Medium</td></tr>
+        <tr><td><code>extensions.cRLDistributionPoints</code></td><td>URL where the Certificate Revocation List is published</td><td>Revocation infrastructure also uses RSA-signed CRLs — another migration target</td><td>Medium</td></tr>
+        <tr><td><code>extensions.authorityInfoAccess</code></td><td>URL of OCSP responder and CA issuer cert</td><td>OCSP responder also signs with RSA/ECDSA — another asset to scan</td><td>Medium</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">PEM vs DER vs PKCS#12 — Certificate File Formats</div>
+  <p class="prose">The same X.509 certificate can be stored on disk in several formats. The scanner needs to handle all of them when doing filesystem scanning (Mechanism 3).</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Format</th><th>Extension</th><th>Encoding</th><th>Contents</th><th>Where you find it</th></tr></thead>
+      <tbody>
+        <tr><td><strong>PEM</strong></td><td><code>.pem .crt .cer .key</code></td><td>Base64 text between <code>-----BEGIN...-----</code> headers</td><td>Certificate, private key, or full chain — one or many blocks</td><td>Linux servers, nginx/Apache config, Let's Encrypt</td></tr>
+        <tr><td><strong>DER</strong></td><td><code>.der .cer</code></td><td>Binary (raw ASN.1 bytes)</td><td>A single certificate — no text wrapper</td><td>Java applications, Windows systems</td></tr>
+        <tr><td><strong>PKCS#12</strong></td><td><code>.p12 .pfx</code></td><td>Binary, password-protected archive</td><td>Certificate + private key bundled together (and optionally the full chain)</td><td>Windows, IIS, Azure, code signing</td></tr>
+        <tr><td><strong>JKS</strong></td><td><code>.jks</code></td><td>Java-proprietary binary keystore</td><td>Multiple certificates and private keys, Java-style aliases</td><td>Java apps, Tomcat, Spring Boot, older Elasticsearch</td></tr>
+        <tr><td><strong>PKCS#7 / P7B</strong></td><td><code>.p7b .p7c</code></td><td>Base64 or binary</td><td>Certificate chain only — no private key</td><td>Windows, IIS, S/MIME email</td></tr>
+        <tr><td><strong>PKCS#8</strong></td><td><code>.key .pem</code></td><td>PEM or DER</td><td>Private key only (encrypted or unencrypted) — algorithm-agnostic wrapper</td><td>OpenSSL, Java, SSH key files</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">SSH Protocol — Internals</div>
+  <p class="prose">SSH (Secure Shell) is a protocol for encrypted remote access. Like TLS, it uses an asymmetric cryptography handshake (the KEX) to establish a symmetric session key, then uses symmetric crypto for the session. The scanner reads the SSH handshake similarly to TLS — by initiating a connection and reading the KEX Init messages.</p>
+
+  <div class="content-h3">SSH handshake fields the scanner reads</div>
+  <div class="code-block">
+<span class="cm"># SSH KEX Init message — both client and server send one</span>
+<span class="cm"># The scanner sends its own KEX Init then reads the server's</span>
+
+kex_algorithms:                   <span class="cm"># Key Exchange — how the session key is agreed</span>
+  curve25519-sha256               <span class="st">→ ECDH — quantum vulnerable</span>
+  ecdh-sha2-nistp256              <span class="st">→ ECDH P-256 — quantum vulnerable</span>
+  diffie-hellman-group14-sha256   <span class="st">→ DH-2048 — quantum vulnerable</span>
+  diffie-hellman-group1-sha1      <span class="st">→ DH-1024 + SHA-1 — classically broken</span>
+  mlkem768x25519                  <span class="vl">→ ML-KEM-768 + X25519 hybrid — SAFE</span>
+
+server_host_key_algorithms:       <span class="cm"># How server authenticates itself</span>
+  ssh-rsa                         <span class="st">→ RSA — quantum vulnerable</span>
+  ecdsa-sha2-nistp256             <span class="st">→ ECDSA P-256 — quantum vulnerable</span>
+  ssh-ed25519                     <span class="cm">→ EdDSA — classically secure, still quantum vulnerable</span>
+  rsa-sha2-512                    <span class="st">→ RSA with SHA-512 — quantum vulnerable</span>
+
+encryption_algorithms:            <span class="cm"># Symmetric cipher for session data</span>
+  aes256-gcm@openssh.com          <span class="vl">→ AES-256-GCM — SAFE</span>
+  aes128-ctr                      <span class="cm">→ AES-128 — weakened by Grover's but still usable</span>
+  3des-cbc                        <span class="st">→ 3DES — DISALLOWED NOW</span>
+
+mac_algorithms:                   <span class="cm"># Message authentication for integrity</span>
+  hmac-sha2-256                   <span class="vl">→ HMAC-SHA256 — SAFE</span>
+  hmac-sha1                       <span class="st">→ HMAC-SHA1 — classically broken</span>
+  </div>
+
+  <div class="content-h3">SSH Key Types on Disk</div>
+  <p class="prose">Beyond the server's configuration, servers have <strong>authorized_keys</strong> files — lists of public keys allowed to log in. Each public key entry has a type prefix that tells you the algorithm. The scanner reads these during filesystem scanning.</p>
+  <div class="code-block">
+<span class="cm"># ~/.ssh/authorized_keys — each line is one permitted public key</span>
+ssh-rsa AAAA...       <span class="st">→ RSA key — quantum vulnerable</span>
+ecdsa-sha2-nistp256 AAAA... <span class="st">→ ECDSA P-256 key — quantum vulnerable</span>
+ssh-ed25519 AAAA...   <span class="cm">→ Ed25519 — classically secure, but quantum vulnerable</span>
+sk-ssh-ed25519@openssh.com AAAA... <span class="cm">→ Ed25519 with hardware token (FIDO2)</span>
+
+<span class="cm"># Private key files — format reveals algorithm:</span>
+-----BEGIN RSA PRIVATE KEY-----       <span class="st"># RSA (PKCS#1) — vulnerable</span>
+-----BEGIN OPENSSH PRIVATE KEY-----   <span class="cm"># Modern format — algorithm inside, parse to determine</span>
+-----BEGIN EC PRIVATE KEY-----        <span class="st"># ECDSA — vulnerable</span>
+  </div>
+
+  <div class="content-h2">IPsec / IKEv2 — VPN Protocol</div>
+  <p class="prose">IPsec is the protocol used for VPN tunnels between networks — branch offices to data centres, data centre to cloud, etc. IKEv2 (Internet Key Exchange version 2) is the handshake protocol within IPsec that negotiates cryptographic parameters. The scanner probes IKEv2 on UDP port 500/4500.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>IKEv2 Transform Type</th><th>Purpose</th><th>Vulnerable Examples</th><th>Safe Examples</th></tr></thead>
+      <tbody>
+        <tr><td>Encryption (Type 1)</td><td>Bulk data encryption of the VPN tunnel</td><td>3DES, AES-128</td><td>AES-256-GCM</td></tr>
+        <tr><td>PRF / Integrity (Type 2/3)</td><td>Pseudorandom function for key derivation and HMAC</td><td>SHA-1</td><td>SHA-256, SHA-384</td></tr>
+        <tr><td>DH Group (Type 4)</td><td>The Diffie-Hellman group for key exchange — this is the quantum-vulnerable part</td><td>Group 2 (1024-bit DH), Group 5 (1536-bit), Group 14 (2048-bit)</td><td>Group 20 (P-384), ML-KEM hybrid groups</td></tr>
+        <tr><td>Authentication (separate)</td><td>How the VPN peers authenticate — certificates or PSK</td><td>RSA or ECDSA certificate auth</td><td>Pre-shared key (symmetric) or ML-DSA cert</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /t1 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 2: CMDB & ASSET INVENTORY                                -->
+<!-- ============================================================ -->
+<div id="t2" class="tab-panel">
+
+  <div class="section-title">CMDB &amp; Cryptographic Asset Inventory</div>
+  <div class="section-sub">What a CMDB is, why scanning it is a competitive advantage, and how it feeds the scanner</div>
+
+  <div class="content-h2">What is a CMDB?</div>
+  <p class="prose">A CMDB (Configuration Management Database) is an organisation's central database of all IT assets — servers, applications, network devices, certificates, software components, cloud resources — and the <strong>relationships between them</strong>. It is the organisation's "single source of truth" for what exists in the IT environment: who owns it, what it runs, what it connects to, how critical it is, and what environment it lives in (production, staging, dev).</p>
+  <p class="prose">A CMDB stores <strong>Configuration Items (CIs)</strong> — each CI is one asset record. Every CI can have attributes (IP address, OS version, installed software, owning team, tier, location) and relationships to other CIs (this server hosts that application, that application depends on this database). This relationship graph is what makes a CMDB fundamentally different from a simple asset spreadsheet.</p>
+
+  <div class="content-h2">CMDB Tools — What Exists in the Market</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tool</th><th>Type</th><th>How it's populated</th><th>What it knows</th></tr></thead>
+      <tbody>
+        <tr><td><strong>ServiceNow CMDB</strong></td><td>Commercial · Most common enterprise</td><td>Discovery probes over SSH/WinRM/SNMP + manual entry + API integrations</td><td>Servers, services, applications, relationships, business owners, CI tier, change history</td></tr>
+        <tr><td><strong>BMC Helix CMDB</strong></td><td>Commercial</td><td>Auto-discovery via BMC Discovery agents, manual imports</td><td>Same as ServiceNow — full ITIL-compliant CI model</td></tr>
+        <tr><td><strong>Jira Service Management</strong></td><td>Commercial (Atlassian)</td><td>Manual + Insight discovery plugin</td><td>Lighter CMDB model — good for SMEs</td></tr>
+        <tr><td><strong>i-doit</strong></td><td>Open Source / Commercial</td><td>Manual + discovery integrations (Nmap, OCS Inventory)</td><td>Servers, network devices, locations, contracts, licences</td></tr>
+        <tr><td><strong>NetBox</strong></td><td>Open Source · Network-focused</td><td>Manual + API imports from network automation tools</td><td>IP addresses, VLANs, rack locations, prefixes, device types — excellent for network layer</td></tr>
+        <tr><td><strong>Ralph</strong></td><td>Open Source · IT assets</td><td>Manual + auto-discovery agents</td><td>Physical and virtual assets, DC infrastructure, licences</td></tr>
+        <tr><td><strong>AWS Config</strong></td><td>Cloud-native (AWS)</td><td>Automatic — continuous recording of all AWS resource state changes</td><td>Every AWS resource: EC2, RDS, ELB, ACM certs, KMS keys, IAM roles, S3 buckets — with full config history</td></tr>
+        <tr><td><strong>Azure Resource Graph</strong></td><td>Cloud-native (Azure)</td><td>Automatic — indexes all Azure resources in real-time</td><td>VMs, App Services, Key Vault keys and certs, App Gateways, NSGs — queryable via KQL</td></tr>
+        <tr><td><strong>GCP Asset Inventory</strong></td><td>Cloud-native (GCP)</td><td>Automatic — near-real-time inventory of all GCP resources</td><td>VMs, Cloud KMS keys, certificates, GCS buckets, IAM policies</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">CMDB vs Cryptographic Inventory — Two Different Things</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dimension</th><th>CMDB</th><th>Cryptographic Inventory (CBOM)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>What it records</strong></td><td>Servers, applications, services, devices, owners, versions, locations, relationships, business tiers</td><td>Specifically: which algorithms, keys, certificates, and protocols are in use on each asset — and whether they are quantum-safe</td></tr>
+        <tr><td><strong>Who maintains it</strong></td><td>IT operations — via discovery agents, automation, and manual updates</td><td>The PQC scanner — auto-discovered on every scan run, continuously updated</td></tr>
+        <tr><td><strong>Granularity</strong></td><td>Asset-level: "Server X runs Service Y on Port Z, owned by Team A, Tier 1 production"</td><td>Crypto-level: "Service Y on Port Z uses TLS 1.2 with an RSA-2048 certificate, ECDHE key exchange, signed by internal CA"</td></tr>
+        <tr><td><strong>Role in PQC scanning</strong></td><td>The CMDB is the <strong>input</strong> — it provides the authoritative list of what exists and needs scanning</td><td>The CBOM is the <strong>output</strong> — it adds cryptographic detail to each CMDB record</td></tr>
+        <tr><td><strong>Standard format</strong></td><td>Vendor-specific schema (ServiceNow tables, Azure JSON, AWS Config JSON)</td><td>CycloneDX CBOM (ECMA-424) — standardised JSON/XML</td></tr>
+        <tr><td><strong>Update frequency</strong></td><td>Ranges from real-time (cloud CMDBs) to days/weeks (on-prem CMDBs with stale data)</td><td>Updated on every scan run — as frequent as the scanner is scheduled</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">Why Scanning the CMDB Changes Everything — 7 Specific Advantages</div>
+
+  <div class="infobox">
+    <strong>The core shift</strong>
+    Every other approach to PQC scanning starts blind — sweep an IP range, find what's listening, figure out what it is. CMDB integration flips this: you start with a complete, structured picture of what exists, and scan with context. The difference is not incremental — it changes the quality of every finding, every risk score, and every report the scanner produces.
+  </div>
+
+  <div class="content-h3">Advantage 1 — Complete Target List With Zero Enumeration</div>
+  <p class="prose">Without a CMDB, the scanner sweeps IP ranges with Nmap, guesses at domains, and misses anything that isn't network-visible — internal services, shadow IT on odd ports, systems behind NAT. The scan coverage is whatever you thought to include in the IP range.</p>
+  <p class="prose">With CMDB access, you query for every CI in scope and get back a structured list of every server, every application, every service, every cloud resource — with hostnames, IPs, environments, and ports already known. The CMDB has already solved the discovery problem. You inherit that work instantly. Coverage goes from "what we pointed the scanner at" to "everything the organisation knows it runs."</p>
+  <div class="code-block">
+<span class="cm"># Without CMDB — blind sweep</span>
+targets = nmap_sweep(<span class="st">"10.0.0.0/8"</span>)   <span class="cm"># ~16 million IPs, hours to scan, misses HTTPS on port 8443</span>
+
+<span class="cm"># With ServiceNow CMDB API</span>
+cis = servicenow.query(<span class="st">"cmdb_ci_server"</span>, filters={<span class="st">"environment"</span>: <span class="st">"production"</span>})
+<span class="cm"># Returns: [{name, ip, hostname, os, env, tier, owner, services: [{port, protocol}]}]</span>
+<span class="cm"># Every server the org knows about — including the ones on port 8443, 9443, 4443</span>
+  </div>
+
+  <div class="content-h3">Advantage 2 — Risk Scoring Uses Real Business Context</div>
+  <p class="prose">The scanner's risk scorer needs two key inputs it cannot derive from a TLS handshake alone: <strong>data sensitivity</strong> (what kind of data flows through this system?) and <strong>exposure level</strong> (is this internet-facing or internal?). Without a CMDB, you use a default or ask the user to fill in a spreadsheet.</p>
+  <p class="prose">With CMDB access, these fields are already recorded. The CI record for a server says: Tier 1 production, internet-facing, PII data classification, owned by the Customer Identity team. The risk scorer pulls these directly and computes an accurate composite score — not an estimate based on port numbers and guesses.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Risk dimension</th><th>Without CMDB</th><th>With CMDB</th></tr></thead>
+      <tbody>
+        <tr><td>Data sensitivity</td><td>Guess based on service name — "api" probably handles PII?</td><td>CMDB CI has data classification: PII / confidential / public — pulled directly</td></tr>
+        <tr><td>Business tier</td><td>Unknown — all servers treated equally</td><td>Tier 1 (customer-facing revenue) vs Tier 3 (dev/test) — CMDB CI attribute</td></tr>
+        <tr><td>Exposure</td><td>Check if port 443 is accessible from internet — rough heuristic</td><td>CMDB CI has "internet_facing: true/false" — authoritative, not inferred</td></tr>
+        <tr><td>Owning team</td><td>Unknown — finding has no owner assigned</td><td>CMDB CI has "owner", "support_group", "manager" — finding routes immediately</td></tr>
+        <tr><td>SLA / criticality</td><td>Not available</td><td>CMDB CI has SLA tier and recovery time objective — drives urgency weighting</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h3">Advantage 3 — Every Finding Has an Owner Immediately</div>
+  <p class="prose">The most common failure mode in vulnerability management is findings that sit unactioned because nobody knows who owns the affected system. A PQC scanner without CMDB integration produces: "RSA-2048 certificate found on 10.14.22.17:443." Someone now has to investigate what that IP is, what team manages it, and who is responsible for migrating it.</p>
+  <p class="prose">With CMDB access, the scanner enriches every finding at the moment of discovery: "RSA-2048 certificate found on api-prod-03 (10.14.22.17:443), owner: Platform Team, manager: Jane Smith, Tier 1 production, CI ID: SRV-00492." The finding goes directly into the right team's remediation queue with zero manual triage.</p>
+
+  <div class="content-h3">Advantage 4 — Dependency Graph Without Inference</div>
+  <p class="prose">CMDBs track relationships between CIs. Application A runs on Server B, which uses Database C, which connects to Cache D. These relationships are pre-built and maintained by the organisation. Without a CMDB, the scanner must infer these relationships from network traffic patterns or filesystem analysis — which is incomplete and slow.</p>
+  <p class="prose">With CMDB access, the scanner reads the dependency graph directly. When it finds a vulnerable certificate on Server B, it immediately knows Application A is affected — because the CMDB says so — without ever scanning Application A directly. The blast radius analysis ("if we migrate this certificate, what else is affected?") is answered by the CMDB's relationship model, not reverse-engineered from packet captures.</p>
+  <div class="code-block">
+<span class="cm"># Query ServiceNow: what applications depend on this server?</span>
+relationships = servicenow.query(<span class="st">"cmdb_rel_ci"</span>, filters={
+  <span class="st">"child"</span>: <span class="st">"SRV-00492"</span>,        <span class="cm"># server where we found the vulnerable cert</span>
+  <span class="st">"type"</span>: <span class="st">"Hosted On::Hosts"</span>
+})
+<span class="cm"># Returns: [APP-1102 (user-portal-frontend), APP-1103 (identity-api), APP-1104 (audit-service)]</span>
+<span class="cm"># All three applications are now known to be impacted — without scanning any of them</span>
+  </div>
+
+  <div class="content-h3">Advantage 5 — Prioritisation by Business Impact, Not Just Algorithm Risk</div>
+  <p class="prose">An RSA-2048 certificate on a Tier 1 production system serving 10 million users is categorically more urgent than an identical certificate on a developer's test server. Technically they are the same finding — same algorithm, same vulnerability. But the business impact is incomparable.</p>
+  <p class="prose">Without CMDB context, both findings get the same risk score and appear in the same priority queue. With CMDB context, the Tier 1 production finding is automatically scored higher due to its business tier, data classification, traffic volume, and SLA. A CISO reading the priority queue sees the most business-critical systems at the top — not a random ordering based on which subnet was scanned first.</p>
+
+  <div class="content-h3">Advantage 6 — Software Version Cross-Referencing Without Scanning</div>
+  <p class="prose">CMDBs track software inventory — what version of OpenSSL, nginx, Java, or specific applications is installed on each server. This information is collected by CMDB discovery agents (ServiceNow Discovery, SCCM, Puppet facts) and stored as CI attributes. The scanner can cross-reference these version records against its algorithm registry before sending a single network packet.</p>
+  <p class="prose">"Server X has OpenSSL 1.1.1 installed" — from CMDB. Cross-reference: OpenSSL 1.1.1 does not support ML-KEM or ML-DSA. Flag as migration dependency. Zero network scanning needed. This is especially powerful at scale — instead of actively scanning 10,000 servers for their OpenSSL version, you query the CMDB once and get the answer for all of them instantly.</p>
+  <div class="code-block">
+<span class="cm"># CMDB software inventory query — no scanning needed</span>
+software_cis = servicenow.query(<span class="st">"cmdb_ci_spkg"</span>, filters={
+  <span class="st">"name"</span>: <span class="st">"OpenSSL"</span>,
+  <span class="st">"version"</span>: {<span class="st">"startswith"</span>: <span class="st">"1.1"</span>}       <span class="cm"># OpenSSL 1.1.x — no PQC support</span>
+})
+<span class="cm"># Returns: list of all servers running OpenSSL 1.1.x — flag as PQC migration dependency</span>
+<span class="cm"># Same query works for BouncyCastle &lt; 1.72, PyCryptodome &lt; 3.19, etc.</span>
+  </div>
+
+  <div class="content-h3">Advantage 7 — Continuous Monitoring Becomes Cheap</div>
+  <p class="prose">Without a CMDB, re-running the scanner means re-scanning the entire IP range and all repositories from scratch. Every scan is full-coverage and expensive. You might run it monthly — which means a new vulnerable system deployed on Day 2 of the month isn't detected for 28 days.</p>
+  <p class="prose">With CMDB integration, the scanner watches the CMDB for changes — new CI added, OS updated, new service deployed, new application registered. Only the delta is rescanned. A new server provisioned this morning is scanned this afternoon, automatically, because the CMDB change event triggered a targeted scan job. Detection latency drops from weeks to hours.</p>
+
+  <div class="content-h2">The Full Picture: CMDB → Scanner → CBOM → CMDB</div>
+  <p class="prose">The relationship is bidirectional. The CMDB feeds the scanner with context and target lists. The scanner enriches each CMDB CI with cryptographic findings. The enriched CMDB then becomes the source of truth for the migration project — teams see their own CIs with attached PQC findings in the same tool they use for daily operations (ServiceNow, Jira, etc.).</p>
+  <div class="pipeline">
+    <div class="pipe-step dark">
+      <div class="pipe-label">Step 1</div>
+      <div class="pipe-title">Query CMDB</div>
+      <div class="pipe-sub">Get all CIs: hosts, apps, services, owners, tiers, software versions, relationships</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-label">Step 2</div>
+      <div class="pipe-title">Build target list</div>
+      <div class="pipe-sub">Structured, contextual — not blind IP sweep. Prioritised by CI tier before scanning starts.</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-label">Step 3</div>
+      <div class="pipe-title">Scan with context</div>
+      <div class="pipe-sub">Every scan job carries CI metadata — owner, tier, data class — into the finding record</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step grn">
+      <div class="pipe-label">Step 4</div>
+      <div class="pipe-title">Write back to CMDB</div>
+      <div class="pipe-sub">CBOM findings attached to CI records — teams see PQC status in ServiceNow/Jira</div>
+    </div>
+  </div>
+
+  <div class="content-h2">What the Scanner Reads From a CMDB CI Record</div>
+  <div class="code-block">
+<span class="cm">// Example ServiceNow CI record — what the scanner consumes</span>
+{
+  <span class="st">"sys_id"</span>: <span class="st">"SRV-00492"</span>,
+  <span class="st">"name"</span>: <span class="st">"api-prod-03"</span>,
+  <span class="st">"ip_address"</span>: <span class="st">"10.14.22.17"</span>,
+  <span class="st">"fqdn"</span>: <span class="st">"api-prod-03.internal.company.com"</span>,
+  <span class="st">"os"</span>: <span class="st">"Ubuntu 22.04"</span>,
+  <span class="st">"environment"</span>: <span class="st">"production"</span>,
+  <span class="st">"tier"</span>: <span class="st">"1"</span>,                              <span class="cm">// → high risk score weight</span>
+  <span class="st">"internet_facing"</span>: <span class="kw">true</span>,                    <span class="cm">// → maximum exposure score</span>
+  <span class="st">"data_classification"</span>: <span class="st">"confidential"</span>,        <span class="cm">// → high data sensitivity score</span>
+  <span class="st">"owner"</span>: <span class="st">"platform-team"</span>,           <span class="cm">// → finding routes here immediately</span>
+  <span class="st">"support_group"</span>: <span class="st">"SG-API-INFRA"</span>,
+  <span class="st">"software"</span>: [
+    { <span class="st">"name"</span>: <span class="st">"OpenSSL"</span>, <span class="st">"version"</span>: <span class="st">"1.1.1f"</span> },    <span class="cm">// → no ML-KEM/ML-DSA support</span>
+    { <span class="st">"name"</span>: <span class="st">"nginx"</span>, <span class="st">"version"</span>: <span class="st">"1.18.0"</span> }
+  ],
+  <span class="st">"services"</span>: [
+    { <span class="st">"port"</span>: 443, <span class="st">"protocol"</span>: <span class="st">"HTTPS"</span> },
+    { <span class="st">"port"</span>: 22,  <span class="st">"protocol"</span>: <span class="st">"SSH"</span> }
+  ],
+  <span class="st">"relationships"</span>: {
+    <span class="st">"applications"</span>: [<span class="st">"APP-1102"</span>, <span class="st">"APP-1103"</span>],   <span class="cm">// → blast radius if cert migrated</span>
+    <span class="st">"depends_on"</span>: [<span class="st">"DB-0091"</span>, <span class="st">"CACHE-0012"</span>]
+  }
+}
+  </div>
+
+  <div class="content-h2">What the Scanner Writes Back to the CMDB</div>
+  <div class="code-block">
+<span class="cm">// Scanner writes findings as custom attributes on the CI record</span>
+servicenow.update(<span class="st">"SRV-00492"</span>, {
+  <span class="st">"x_pqc_scan_date"</span>: <span class="st">"2026-05-24T14:22:00Z"</span>,
+  <span class="st">"x_pqc_vulnerable"</span>: <span class="kw">true</span>,
+  <span class="st">"x_pqc_risk_score"</span>: 22,                     <span class="cm">// P1 — immediate action needed</span>
+  <span class="st">"x_pqc_priority"</span>: <span class="st">"P1"</span>,
+  <span class="st">"x_pqc_deadline"</span>: <span class="st">"2030"</span>,
+  <span class="st">"x_pqc_findings_summary"</span>: <span class="st">"TLS cert RSA-2048 (expires 2027), ECDHE key exchange, SSH host key RSA-2048"</span>,
+  <span class="st">"x_pqc_cbom_url"</span>: <span class="st">"https://scanner.internal/cbom/SRV-00492/latest.json"</span>
+})
+<span class="cm">// Now any CMDB query for "all Tier 1 production servers with PQC priority P1"</span>
+<span class="cm">// returns this server — teams work in their existing tools, not a new scanner dashboard</span>
+  </div>
+
+  <div class="content-h2">CMDB Discovery Agents — How the CMDB Gets Populated</div>
+  <p class="prose">For the scanner to benefit from CMDB data, the CMDB needs to be reasonably up to date. Most enterprise CMDBs are populated by discovery agents — software that periodically scans the network and updates CI records automatically.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tool</th><th>Discovery method</th><th>What it gives the PQC scanner</th></tr></thead>
+      <tbody>
+        <tr><td><strong>ServiceNow Discovery</strong></td><td>Agentless probes over SSH, WinRM, SNMP — collects OS, running processes, installed software, network config</td><td>Host list with software inventory (OpenSSL version, Java version), running services, ports</td></tr>
+        <tr><td><strong>SCCM / Intune</strong> (Microsoft)</td><td>Agent on Windows endpoints — collects installed software, hardware, patch status</td><td>Windows servers with crypto library versions; cert store state can be collected via custom inventory</td></tr>
+        <tr><td><strong>Puppet / Chef / Ansible facts</strong></td><td>Configuration management agents collect "facts" — OS, packages, running services, file checksums</td><td>Package versions including libssl, OpenSSL, BouncyCastle — directly usable by scanner</td></tr>
+        <tr><td><strong>AWS Config</strong></td><td>Automatic continuous recording — no agent needed</td><td>Every AWS resource with full config: ACM cert algorithm, KMS key type, EC2 instance type, security groups</td></tr>
+        <tr><td><strong>Azure Resource Graph</strong></td><td>Automatic indexing of all Azure resources</td><td>Key Vault key types, App Gateway certs, VM extensions — queryable via KQL before scanning</td></tr>
+        <tr><td><strong>GCP Asset Inventory</strong></td><td>Automatic near-real-time inventory</td><td>Cloud KMS key algorithms, GCE instance metadata, certificate manager certs</td></tr>
+        <tr><td><strong>NetBox</strong></td><td>Manual + API imports from network automation (Napalm, Netmiko)</td><td>Authoritative IP/VLAN/prefix data — the best open-source source for network scanning target lists</td></tr>
+        <tr><td><strong>Shodan / Censys</strong></td><td>Internet-wide passive scanning — already indexed public-facing TLS</td><td>For internet-facing assets: existing TLS certificate and cipher suite data without active scanning</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="warnbox">
+    <strong>The staleness problem — and how to handle it</strong>
+    Most on-prem CMDBs have stale data. Assets get provisioned but not registered; CIs get decommissioned but not removed. The scanner should treat CMDB data as the primary but not exclusive source. Strategy: use CMDB as the high-confidence target list (scan everything the CMDB knows about), then run a lightweight network sweep (Nmap/masscan) of your IP ranges to catch anything the CMDB missed — shadow IT, unregistered instances, misconfigured systems. Findings from the sweep that have no matching CMDB CI are flagged as "unregistered asset" — a data quality alert for the CMDB team.
+  </div>
+
+  <div class="content-h2">The CBOM — Cryptography Bill of Materials</div>
+  <p class="prose">The CBOM is the standardised output format for cryptographic asset inventories. It is part of the CycloneDX BOM standard (also used for SBOMs) and has been ratified as ECMA-424. NIST SP 1800-38B endorses it as the required output format.</p>
+
+  <div class="content-h3">Four asset record types in CBOM</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Type</th><th>CycloneDX component type</th><th>What it records</th><th>Key fields</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Algorithm</strong></td><td><code>cryptographic-asset</code> → <code>algorithm</code></td><td>A specific algorithm in use (RSA-2048, AES-256-GCM, ML-KEM-768)</td><td>name, variant, primitive, parameterSetIdentifier, classicalSecurityLevel, nistQuantumSecurityLevel, pqcSafe, oid</td></tr>
+        <tr><td><strong>Key / Key Material</strong></td><td><code>cryptographic-asset</code> → <code>related-crypto-material</code></td><td>A specific key instance — its type, size, lifecycle state, and protection</td><td>relatedCryptoMaterialType (private-key/public-key/secret-key), state (active/deactivated), size, secured (hsm/tpm/software), creationDate, expirationDate</td></tr>
+        <tr><td><strong>Certificate</strong></td><td><code>cryptographic-asset</code> → <code>certificate</code></td><td>An X.509 certificate — its identity, validity, algorithm, and issuer chain</td><td>subjectName, issuerName, notValidBefore, notValidAfter, algorithmRef, subjectPublicKeyRef, certificateFormat, serialNumber</td></tr>
+        <tr><td><strong>Protocol</strong></td><td><code>cryptographic-asset</code> → <code>protocol</code></td><td>A protocol instance — TLS/SSH/IPsec with its cipher suite configuration</td><td>name (TLS/SSH/IKEv2), version (1.2/1.3/2.0), cipherSuites, cryptoRefArray (links to algorithm records)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h3">Minimal CBOM record — what every finding must contain</div>
+  <div class="code-block">
+<span class="cm">// Per NIST SP 1800-38B — minimum required fields for any finding:</span>
+{
+  <span class="st">"type"</span>: <span class="st">"cryptographic-asset"</span>,
+  <span class="st">"name"</span>: <span class="st">"api.company.com TLS Certificate"</span>,
+  <span class="st">"cryptoProperties"</span>: {
+    <span class="st">"assetType"</span>: <span class="st">"certificate"</span>,
+    <span class="st">"algorithmProperties"</span>: {
+      <span class="st">"variant"</span>: <span class="st">"RSA-2048"</span>,         <span class="cm">// specific, not just "RSA"</span>
+      <span class="st">"primitive"</span>: <span class="st">"signature"</span>,
+      <span class="st">"pqcSafe"</span>: <span class="kw">false</span>
+    }
+  },
+  <span class="st">"evidence"</span>: {
+    <span class="st">"occurrences"</span>: [{
+      <span class="st">"location"</span>: <span class="st">"api.company.com:443"</span>,    <span class="cm">// where it was found</span>
+      <span class="st">"line"</span>: <span class="kw">null</span>
+    }]
+  },
+  <span class="cm">// Extended fields for risk scoring (not in CBOM spec, your additions):</span>
+  <span class="st">"x-pqc-deadline"</span>: <span class="st">"2030"</span>,
+  <span class="st">"x-pqc-priority"</span>: <span class="st">"P2"</span>,
+  <span class="st">"x-pqc-risk-score"</span>: 18
+}
+  </div>
+
+  <div class="content-h2">Dependency Relationships in CBOM</div>
+  <p class="prose">Beyond individual records, CBOM captures <strong>how assets relate to each other</strong>. This builds the dependency graph — essential for understanding the blast radius of migrating one asset. CycloneDX uses a <code>dependencies</code> array where each entry says "component A depends on component B."</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Relationship type</th><th>Meaning</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><code>provides</code></td><td>Library implements / provides an algorithm</td><td>OpenSSL 3.0 provides RSA-2048</td></tr>
+        <tr><td><code>uses</code></td><td>Application calls a library</td><td>nginx uses OpenSSL 3.0</td></tr>
+        <tr><td><code>implements</code></td><td>Protocol implements an algorithm at a specific endpoint</td><td>TLS on api.company.com:443 implements ECDHE</td></tr>
+        <tr><td><code>ancestorOf</code></td><td>Key hierarchy — this key wraps or protects another</td><td>Root CA key is ancestorOf Intermediate CA key</td></tr>
+        <tr><td><code>descendantOf</code></td><td>Inverse — this key is derived from / protected by another</td><td>TLS leaf cert key is descendantOf Intermediate CA key</td></tr>
+        <tr><td><code>issuedBy</code></td><td>Certificate was signed by this CA</td><td>api.company.com cert issuedBy DigiCert Intermediate CA</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">Output Formats the Scanner Produces</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Format</th><th>Use case</th><th>Consumer</th></tr></thead>
+      <tbody>
+        <tr><td><strong>CycloneDX CBOM JSON</strong></td><td>Machine-readable cryptographic inventory</td><td>GRC tools, dashboards, downstream automation, vulnerability management platforms</td></tr>
+        <tr><td><strong>CycloneDX CBOM XML</strong></td><td>Same data, XML serialization</td><td>Legacy SIEM integrations, enterprise tools that require XML</td></tr>
+        <tr><td><strong>SARIF</strong> (Static Analysis Results Interchange Format)</td><td>SAST findings from source code scanning</td><td>GitHub Advanced Security, GitLab SAST, Azure DevOps — integrates into PR/MR workflows</td></tr>
+        <tr><td><strong>CSV / Excel</strong></td><td>Human-readable summary for non-technical stakeholders</td><td>CISOs, board reporting, compliance teams, audit submissions</td></tr>
+        <tr><td><strong>PDF Report</strong></td><td>Formal audit report</td><td>External auditors, regulators, management</td></tr>
+        <tr><td><strong>JSON (custom schema)</strong></td><td>Dashboard data API</td><td>Web dashboard frontend — fetches findings to render charts and priority queues</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /t2 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 3: THE 7 SCAN LAYERS                                     -->
+<!-- ============================================================ -->
+<div id="t3" class="tab-panel">
+
+  <div class="section-title">The 7 Infrastructure Layers</div>
+  <div class="section-sub">Every category of IT asset that contains cryptography — universal, no industry-specific context</div>
+
+  <div class="infobox">
+    <strong>Why 7 layers?</strong>
+    Cryptography appears at every level of an IT stack. A scanner that only checks TLS endpoints misses 80% of the cryptographic surface. These 7 layers provide a systematic framework for ensuring nothing is missed. Each layer has different asset types, different scanning mechanisms, and different migration complexity.
+  </div>
+
+  <div class="warnbox">
+    <strong>Migration order matters</strong>
+    L3 (HSM/Key Management) → L2 (PKI/Certificates) → L1 (Network/TLS) → L4 (Applications) → L5 (Data) → L6 (Infrastructure) → L7 (Endpoints/Third Party). You cannot migrate a higher layer until the foundational layer beneath it is ready. PKI must be migrated before TLS because TLS certificates are signed by the PKI. HSMs must be ready before PKI because root CA private keys live in HSMs.
+  </div>
+
+  <!-- L1 -->
+  <div class="layer-block">
+    <div class="layer-header">
+      <div class="layer-num">L1</div>
+      <div>
+        <div class="layer-name">Network &amp; Transport</div>
+        <div class="layer-note">All protocols that transmit data over a network — highest HNDL exposure, visible to external adversaries</div>
+      </div>
+    </div>
+    <div class="layer-body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Protocol / Port</th><th>What to scan for</th><th>Mechanism</th><th>Risk</th><th>Deadline</th></tr></thead>
+          <tbody>
+            <tr><td><strong>HTTPS / API endpoints</strong></td><td>TCP 443, 8443</td><td>TLS version, cipher suite, key exchange group (named group), certificate algorithm + key size</td><td>M1 Active</td><td><span class="badge badge-crit">Critical</span></td><td>2030 KEX, 2035 cert</td></tr>
+            <tr><td><strong>Internal service mesh</strong><br><span style="font-size:11px;color:var(--muted);">microservice mTLS, Istio, Linkerd</span></td><td>Custom ports</td><td>mTLS cipher suites, certificate algorithm, auto-rotation capability</td><td>M1 + M2 Passive</td><td><span class="badge badge-crit">Critical</span></td><td>2030</td></tr>
+            <tr><td><strong>VPN / IPsec tunnels</strong><br><span style="font-size:11px;color:var(--muted);">IKEv2, OpenVPN, WireGuard</span></td><td>UDP 500, 4500</td><td>IKE cipher proposals, DH group number (≤14 = vulnerable), auth method (cert or PSK)</td><td>M1 Active</td><td><span class="badge badge-crit">Critical</span></td><td>2030</td></tr>
+            <tr><td><strong>SSH servers</strong></td><td>TCP 22</td><td>Host key algorithm, KEX algorithm list, MAC algorithm, cipher list; authorized_keys entries on filesystem</td><td>M1 Active + M3</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td><strong>SMTP with STARTTLS</strong></td><td>TCP 25, 587</td><td>TLS cipher suite offered after STARTTLS upgrade; DANE/TLSA record signing</td><td>M1 Active</td><td><span class="badge badge-med">Medium</span></td><td>2035</td></tr>
+            <tr><td><strong>LDAP over TLS (LDAPS)</strong></td><td>TCP 636</td><td>Certificate algorithm on directory server, TLS cipher suite</td><td>M1 Active</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td><strong>DNSSEC zones</strong></td><td>UDP/TCP 53</td><td>DNSSEC signing algorithm (RSA vs ECDSA), key tag, rollover period</td><td>M1 Active (DNS query)</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td><strong>OCSP / CRL infrastructure</strong></td><td>TCP 80, 443</td><td>Signing algorithm on OCSP responder certificate, response signing key size</td><td>M1 Active</td><td><span class="badge badge-med">Medium</span></td><td>2030</td></tr>
+            <tr><td><strong>RDP (Remote Desktop)</strong></td><td>TCP 3389</td><td>TLS version and certificate algorithm on Windows server RDP</td><td>M1 Active</td><td><span class="badge badge-med">Medium</span></td><td>2035</td></tr>
+            <tr><td><strong>Database TCP listeners</strong><br><span style="font-size:11px;color:var(--muted);">PostgreSQL, MySQL, Oracle, MSSQL</span></td><td>5432, 3306, 1521, 1433</td><td>TLS cipher suite on the database connection</td><td>M1 Active</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+            <tr><td><strong>Network appliance management</strong><br><span style="font-size:11px;color:var(--muted);">firewalls, routers, switches, load balancers</span></td><td>TCP 443, 22</td><td>SSH cipher suites on management console, HTTPS management TLS, firmware signing algorithm</td><td>M1 Active</td><td><span class="badge badge-med">Medium</span></td><td>2035</td></tr>
+            <tr><td><strong>gRPC / GraphQL services</strong></td><td>TCP 443, custom</td><td>TLS cipher suite on HTTP/2 connection, certificate algorithm</td><td>M1 Active</td><td><span class="badge badge-crit">Critical</span></td><td>2030</td></tr>
+            <tr><td><strong>Message brokers</strong><br><span style="font-size:11px;color:var(--muted);">Kafka, RabbitMQ, MQTT</span></td><td>9093, 5671, 8883</td><td>TLS cipher suite on broker listener, client certificate algorithm</td><td>M1 Active</td><td><span class="badge badge-high">High</span></td><td>2030</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- L2 -->
+  <div class="layer-block">
+    <div class="layer-header">
+      <div class="layer-num">L2</div>
+      <div>
+        <div class="layer-name">PKI &amp; Certificate Infrastructure</div>
+        <div class="layer-note">Must be migrated before everything else — every TLS endpoint, code signing system, and authentication service depends on this chain</div>
+      </div>
+    </div>
+    <div class="layer-body">
+      <p class="prose">PKI (Public Key Infrastructure) is the hierarchical system of Certificate Authorities that issue and sign the certificates used across all other layers. Root CA → Intermediate CA → Leaf Certificate. The root CA is the trust anchor — its signing algorithm must be migrated to ML-DSA before any leaf certificate migration matters.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>What to scan for</th><th>Mechanism</th><th>Risk</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Root CA certificate</strong></td><td>Signing algorithm, key size (RSA-4096 or ECDSA P-384 → needs ML-DSA), HSM-backed?, validity period</td><td>M4 (ADCS/LDAP) + M3</td><td><span class="badge badge-crit">Critical</span></td></tr>
+            <tr><td><strong>Intermediate / Issuing CAs</strong></td><td>Algorithm, key size, HSM-backed, CRL/OCSP config, constrained or unconstrained</td><td>M4 + M3</td><td><span class="badge badge-crit">Critical</span></td></tr>
+            <tr><td><strong>TLS leaf certificates</strong></td><td>Algorithm (RSA vs ECDSA vs ML-DSA), key size, SANs, expiry, issuer chain</td><td>M1 Active + M4</td><td><span class="badge badge-crit">Critical</span></td></tr>
+            <tr><td><strong>Client authentication certificates</strong><br><span style="font-size:11px;color:var(--muted);">device auth, mTLS, smartcards</span></td><td>Algorithm, key size, validity period, issuing CA</td><td>M4 + M3</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Code signing certificates</strong></td><td>Algorithm, key size, key storage location (HSM or software), certificate validity, EKU = codeSigning</td><td>M4 + M5 SAST</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Document signing / PDF signing</strong></td><td>Algorithm, key size, Timestamp Authority dependency</td><td>M4</td><td><span class="badge badge-med">Medium</span></td></tr>
+            <tr><td><strong>Timestamp Authority (TSA)</strong></td><td>Signing algorithm, key size — TSA must survive as long as the signatures it timestamps</td><td>M1 Active</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>S/MIME email certificates</strong></td><td>Encryption algorithm (RSA/ECDH = vulnerable), signing algorithm</td><td>M4 + M3</td><td><span class="badge badge-med">Medium</span></td></tr>
+            <tr><td><strong>TLS certificate CT logs</strong><br><span style="font-size:11px;color:var(--muted);">Certificate Transparency</span></td><td>All publicly issued certs for your domains visible in CT logs — use crt.sh or Censys to enumerate without scanning</td><td>External CT log query</td><td><span class="badge badge-info">Info</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- L3 -->
+  <div class="layer-block">
+    <div class="layer-header">
+      <div class="layer-num">L3</div>
+      <div>
+        <div class="layer-name">HSM &amp; Key Management</div>
+        <div class="layer-note">The physical and logical foundation — highest criticality, hardware may require physical replacement</div>
+      </div>
+    </div>
+    <div class="layer-body">
+      <p class="prose">HSMs (Hardware Security Modules) are the tamper-resistant hardware devices where the most sensitive private keys live and all sensitive cryptographic operations are performed. Key Management Servers (KMS) are software systems that manage the lifecycle of keys — rotation, escrow, distribution. Cloud KMS is the managed equivalent in cloud environments.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>What to scan for</th><th>Mechanism</th><th>Risk</th></tr></thead>
+          <tbody>
+            <tr><td><strong>General-purpose HSMs</strong><br><span style="font-size:11px;color:var(--muted);">Thales Luna, Entrust nShield, Utimaco</span></td><td>Firmware version vs PQC support matrix; all key objects: CKA_KEY_TYPE (RSA/EC/AES), CKA_MODULUS_BITS; FIPS 140-3 validation status</td><td>M4 PKCS#11</td><td><span class="badge badge-crit">Critical</span></td></tr>
+            <tr><td><strong>Enterprise KMS</strong><br><span style="font-size:11px;color:var(--muted);">Thales CipherTrust, IBM SKLM, HashiCorp Vault, Entrust KeyControl</span></td><td>All managed keys via KMIP: algorithm, key length, cryptographic usage mask, lifecycle state, creation date</td><td>M4 KMIP</td><td><span class="badge badge-crit">Critical</span></td></tr>
+            <tr><td><strong>Cloud KMS</strong><br><span style="font-size:11px;color:var(--muted);">AWS KMS, Azure Key Vault, GCP Cloud KMS</span></td><td>CMK algorithm (RSA_2048, EC_SIGN_P256 = vulnerable; AES_256, SYMMETRIC_DEFAULT = safe); key type (CUSTOMER_MANAGED vs AWS_MANAGED); BYOK status</td><td>M4 REST API</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>TPM (Trusted Platform Module)</strong><br><span style="font-size:11px;color:var(--muted);">hardware chip on every server motherboard</span></td><td>TPM version (1.2 vs 2.0), key algorithm supported, endorsement key algorithm</td><td>M3 Agent (tpm2-tools)</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Software key stores</strong><br><span style="font-size:11px;color:var(--muted);">.jks, .p12, .pfx, OS keystores</span></td><td>Algorithm and key size of each key entry; password protection status</td><td>M3 Agent</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Secret managers</strong><br><span style="font-size:11px;color:var(--muted);">HashiCorp Vault Transit, AWS Secrets Manager</span></td><td>Transit encryption key algorithm; seal/unseal key type (Shamir vs cloud KMS)</td><td>M4 API</td><td><span class="badge badge-high">High</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- L4 -->
+  <div class="layer-block">
+    <div class="layer-header">
+      <div class="layer-num">L4</div>
+      <div>
+        <div class="layer-name">Application Layer</div>
+        <div class="layer-note">Largest attack surface — web apps, APIs, mobile apps, CI/CD, anywhere developers wrote crypto calls</div>
+      </div>
+    </div>
+    <div class="layer-body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>What to scan for</th><th>Mechanism</th><th>Risk</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Web applications / REST APIs</strong></td><td>TLS config (M1), JWT signing algorithm (RS256/ES256 = vulnerable), OAuth2/OIDC signing key, session cookie encryption/signing</td><td>M1 + M5</td><td><span class="badge badge-crit">Critical</span></td></tr>
+            <tr><td><strong>Mobile apps (iOS / Android)</strong></td><td>TLS certificate pinning algorithm in APK/IPA, crypto library version embedded, local encryption algorithm, JWT algorithm in API calls</td><td>M5 SAST</td><td><span class="badge badge-crit">Critical</span></td></tr>
+            <tr><td><strong>Source code repositories</strong></td><td>Hardcoded algorithm calls (RSA.generate(), Cipher.getInstance("DES"), hashlib.md5()), crypto library import versions, non-agile patterns</td><td>M5 SAST</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Container images</strong></td><td>OpenSSL version in image layers, BouncyCastle/PyCryptodome version, baked-in certificates, hardcoded keys</td><td>M5 SAST (image scan)</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>CI/CD pipelines</strong><br><span style="font-size:11px;color:var(--muted);">Jenkins, GitHub Actions, GitLab CI</span></td><td>Code signing cert algorithm, artifact signing keys, container image signing (Cosign/Notary), pipeline secrets that are RSA keys</td><td>M4 API + M5</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Authentication &amp; SSO</strong><br><span style="font-size:11px;color:var(--muted);">SAML, OIDC, OAuth2</span></td><td>SAML XML signing cert algorithm, OIDC signing key (JWKS endpoint key type), PKCE code challenge hash</td><td>M1 + M5</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Service meshes &amp; sidecars</strong><br><span style="font-size:11px;color:var(--muted);">Istio, Linkerd, Consul Connect</span></td><td>mTLS cert algorithm auto-issued by mesh CA, cipher suites on sidecar proxies</td><td>M1 + M4 (mesh API)</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>API gateways</strong><br><span style="font-size:11px;color:var(--muted);">Kong, Nginx, Traefik, AWS API GW</span></td><td>TLS termination cert, JWT validation key type, mTLS client cert requirement algorithm</td><td>M1 + M4</td><td><span class="badge badge-crit">Critical</span></td></tr>
+            <tr><td><strong>Package dependencies</strong><br><span style="font-size:11px;color:var(--muted);">npm, pip, Maven, NuGet</span></td><td>Crypto library versions in manifest files — does the pinned version support ML-KEM/ML-DSA?</td><td>M5 SAST (manifest scan)</td><td><span class="badge badge-high">High</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- L5 -->
+  <div class="layer-block">
+    <div class="layer-header">
+      <div class="layer-num">L5</div>
+      <div>
+        <div class="layer-name">Data &amp; Storage</div>
+        <div class="layer-note">HNDL threat most acute here — data stored today may be decrypted by future quantum computers</div>
+      </div>
+    </div>
+    <div class="layer-body">
+      <p class="prose">Data at rest uses symmetric encryption (AES) which is largely quantum-safe at AES-256. The scanner's job here is: (1) flag AES-128 for upgrade to AES-256, and (2) check how the AES key itself is protected — if the key is wrapped with RSA, the protection is quantum-vulnerable even if the data uses AES-256.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>What to scan for</th><th>Mechanism</th><th>Risk</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Database TDE</strong><br><span style="font-size:11px;color:var(--muted);">Oracle, MSSQL, PostgreSQL, MySQL</span></td><td>Encryption algorithm (AES-128 → upgrade; AES-256 → safe), key storage (in-DB vs HSM), key wrapping algorithm</td><td>M4 (SQL query)</td><td><span class="badge badge-med">Medium</span></td></tr>
+            <tr><td><strong>Column / field encryption</strong></td><td>Algorithm, key size, where the column key is wrapped (if RSA-wrapped = vulnerable)</td><td>M4 (SQL)</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Disk / volume encryption</strong><br><span style="font-size:11px;color:var(--muted);">LUKS (Linux), BitLocker (Windows), FileVault (macOS)</span></td><td>Encryption algorithm and mode; LUKS: aes-xts-plain64 with 256-bit key = safe; BitLocker: AES-256 = safe; AES-128 = upgrade</td><td>M3 Agent</td><td><span class="badge badge-med">Medium</span></td></tr>
+            <tr><td><strong>Object storage encryption</strong><br><span style="font-size:11px;color:var(--muted);">S3 SSE, Azure Blob, GCS</span></td><td>Encryption type (SSE-S3/SSE-KMS/SSE-C); CMK algorithm in cloud KMS</td><td>M4 Cloud API</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Backup encryption</strong><br><span style="font-size:11px;color:var(--muted);">Veeam, Commvault, tape</span></td><td>Encryption algorithm, key storage, key accessibility (can you still decrypt backups?)</td><td>M3 Agent</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Archive / long-term storage</strong></td><td>Encryption algorithm on archived data, re-encryption feasibility — HNDL: adversaries may already have this data</td><td>M3 Agent</td><td><span class="badge badge-crit">Critical</span></td></tr>
+            <tr><td><strong>Data lakes / warehouses</strong><br><span style="font-size:11px;color:var(--muted);">Snowflake, Databricks, BigQuery</span></td><td>Encryption at rest algorithm, CMK management, query signing</td><td>M4 API</td><td><span class="badge badge-high">High</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- L6 -->
+  <div class="layer-block">
+    <div class="layer-header">
+      <div class="layer-num">L6</div>
+      <div>
+        <div class="layer-name">Infrastructure &amp; Compute</div>
+        <div class="layer-note">SSH keys, Kerberos, containers, firmware — the operational backbone</div>
+      </div>
+    </div>
+    <div class="layer-body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>What to scan for</th><th>Mechanism</th><th>Risk</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Server SSH host keys</strong></td><td>Host key algorithm on all Linux/Unix servers; KEX algorithm configuration in sshd_config; authorized_keys entries per user</td><td>M1 Active + M3</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Kerberos / Active Directory</strong></td><td>Ticket encryption type (RC4 = broken now; AES-256-CTS = safe); PKINIT certificate algorithm (RSA = vulnerable); KDC signing key</td><td>M3 Agent</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Kubernetes cluster</strong></td><td>API server TLS cert + cipher suite; etcd encryption config (algorithm, key source); service account signing key algorithm; all TLS secrets across namespaces</td><td>M1 + M4 K8s API</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Container runtimes</strong><br><span style="font-size:11px;color:var(--muted);">containerd, Docker, CRI-O</span></td><td>Image signing (Cosign) key algorithm; registry TLS cert; daemon TLS cert (for remote Docker API)</td><td>M1 + M5</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Firmware signing</strong><br><span style="font-size:11px;color:var(--muted);">BIOS/UEFI, OS kernel, network device</span></td><td>Signing algorithm (RSA → should move to LMS/XMSS for long-lived firmware); signing certificate</td><td>M5 SAST + M3</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>OS trust stores</strong><br><span style="font-size:11px;color:var(--muted);">Java cacerts, Windows Cert Store, Linux /etc/ssl/certs</span></td><td>Algorithm and key size of every trusted root CA; any private roots with weak algorithms</td><td>M3 Agent</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>Hypervisor / virtualisation</strong><br><span style="font-size:11px;color:var(--muted);">VMware vSphere, Hyper-V, KVM</span></td><td>vCenter TLS cert and cipher suite; VM encryption algorithm; management API TLS</td><td>M1 + M4</td><td><span class="badge badge-med">Medium</span></td></tr>
+            <tr><td><strong>Configuration management</strong><br><span style="font-size:11px;color:var(--muted);">Ansible, Puppet, Chef, Salt</span></td><td>Signing key for fact/catalog encryption; Vault integration key type; agent TLS cert</td><td>M3 + M5</td><td><span class="badge badge-med">Medium</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- L7 -->
+  <div class="layer-block">
+    <div class="layer-header">
+      <div class="layer-num">L7</div>
+      <div>
+        <div class="layer-name">Endpoints, Third Parties &amp; Vendor Dependencies</div>
+        <div class="layer-note">Assets you don't fully control — plan now even if migration is later</div>
+      </div>
+    </div>
+    <div class="layer-body">
+      <p class="prose">This layer covers hardware with long replacement cycles, vendor-managed software you can't modify, and external services. The scanner's job is to assess readiness and flag dependencies that are on the critical migration path. You cannot migrate faster than your vendors.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>What to scan for</th><th>Key constraint</th><th>Risk</th></tr></thead>
+          <tbody>
+            <tr><td><strong>End-user laptops / workstations</strong></td><td>TLS client settings (Schannel on Windows, NSS on Linux), disk encryption (BitLocker/FileVault), cert store algorithms</td><td>OS update cycle + fleet management</td><td><span class="badge badge-med">Medium</span></td></tr>
+            <tr><td><strong>SaaS / third-party services</strong><br><span style="font-size:11px;color:var(--muted);">CRM, ERP, collaboration tools</span></td><td>TLS cipher suite on login endpoint, SAML cert algorithm for SSO, data-at-rest encryption spec</td><td>Vendor's own migration timeline</td><td><span class="badge badge-med">Medium</span></td></tr>
+            <tr><td><strong>IoT / embedded devices</strong><br><span style="font-size:11px;color:var(--muted);">sensors, cameras, industrial devices</span></td><td>TLS cipher suite, firmware signing algorithm, device certificate algorithm, DTLS for UDP protocols</td><td>Memory/compute constraints; may not support PQC key sizes</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>OT / SCADA / ICS systems</strong></td><td>Protocol encryption (DNP3-SA, IEC 61850 TLS), firmware signing algorithm</td><td>Cannot be patched without production downtime; very long hardware cycles</td><td><span class="badge badge-high">High</span></td></tr>
+            <tr><td><strong>CDN / WAF providers</strong><br><span style="font-size:11px;color:var(--muted);">Cloudflare, Akamai, Fastly</span></td><td>TLS cipher suites offered to clients, certificate algorithm on CDN edge, TLS version support</td><td>CDN must support PQC before your customers see it</td><td><span class="badge badge-crit">Critical</span></td></tr>
+            <tr><td><strong>Cloud provider managed services</strong><br><span style="font-size:11px;color:var(--muted);">RDS, Lambda, managed Kafka</span></td><td>TLS on managed service endpoints, CMK algorithm, service-to-service auth cert</td><td>Cloud provider roadmap</td><td><span class="badge badge-high">High</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /t3 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 4: SCAN MECHANISMS                                       -->
+<!-- ============================================================ -->
+<div id="t4" class="tab-panel">
+
+  <div class="section-title">The 5 Scan Mechanisms</div>
+  <div class="section-sub">How the scanner connects to systems — every method, every protocol, every credential required</div>
+
+  <div class="infobox">
+    <strong>No single mechanism covers everything</strong>
+    Each mechanism covers different asset types. A production PQC scanner uses all five simultaneously, dispatched by a central orchestrator to a worker pool. The orchestrator decides which mechanism to use for each target based on the target type and available credentials.
+  </div>
+
+  <div class="content-h2">M1 — Active Network Handshake</div>
+  <p class="prose">The scanner initiates a protocol handshake — TLS ClientHello, SSH KEX Init, IKEv2 SA Init, DNS query — and reads the server's response. The connection is aborted immediately after the scanner has what it needs. Zero production impact. No credentials needed.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Protocol</th><th>Port</th><th>Opening message</th><th>What scanner extracts</th><th>Library / tool</th></tr></thead>
+      <tbody>
+        <tr><td>TLS</td><td>443, 8443, any</td><td>ClientHello with full cipher suite list + PQC named groups</td><td>TLS version, selected cipher suite, named group (key exchange), full cert chain with OIDs</td><td>SSLyze, Python ssl/nassl, OpenSSL</td></tr>
+        <tr><td>SSH</td><td>22, custom</td><td>SSH_MSG_KEXINIT</td><td>kex_algorithms, host_key_algorithms, encryption_algorithms, mac_algorithms</td><td>ssh-audit, Python paramiko (just KEX phase)</td></tr>
+        <tr><td>IKEv2 / IPsec</td><td>UDP 500, 4500</td><td>IKE_SA_INIT request</td><td>SA proposals: encryption, PRF, integrity, DH group</td><td>Scapy, ike-scan, custom IKEv2 probe</td></tr>
+        <tr><td>SMTP+STARTTLS</td><td>25, 587</td><td>EHLO → STARTTLS → ClientHello</td><td>TLS cipher suite after upgrade</td><td>Python smtplib + ssl</td></tr>
+        <tr><td>LDAPS</td><td>636</td><td>TLS ClientHello</td><td>Certificate algorithm on AD/LDAP server</td><td>Python ldap3 + ssl</td></tr>
+        <tr><td>DNSSEC</td><td>UDP/TCP 53</td><td>DNS DNSKEY query for zone</td><td>Algorithm field in DNSKEY RR (5=RSA/SHA1, 8=RSA/SHA256, 13=ECDSA/P-256, 16=Ed448)</td><td>Python dnspython</td></tr>
+        <tr><td>RDP</td><td>3389</td><td>x.224 TPKT Connection Request</td><td>TLS certificate on RDP session</td><td>Python impacket or custom probe</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">M2 — Passive Network Tap / SPAN</div>
+  <p class="prose">The scanner listens on a mirrored network port (SPAN port, network tap, or inline sensor) and captures all traffic without sending any packets. TLS ClientHello and ServerHello are not encrypted — cipher suites and certificates are visible. This catches: actual negotiated ciphers in production (vs just what's configured), internal east-west traffic that active scanning might miss, and legacy clients that downgrade to weaker ciphers.</p>
+  <div class="code-block">
+<span class="cm"># Zeek (Bro) — the standard tool for passive TLS analysis</span>
+<span class="cm"># Zeek generates ssl.log with one line per TLS connection:</span>
+ts    id.orig_h    id.resp_h    id.resp_p    version    cipher    server_name    cert_chain_fuids
+<span class="cm"># cert_chain_fuids links to x509.log which has the certificate fields:</span>
+<span class="cm">#   certificate.key_type, certificate.key_length, certificate.sig_alg</span>
+
+<span class="cm"># pyshark — Python wrapper over tshark for programmatic packet analysis</span>
+<span class="kw">import</span> pyshark
+cap = pyshark.<span class="fn">LiveCapture</span>(interface=<span class="st">'eth1'</span>, display_filter=<span class="st">'tls.handshake.type == 2'</span>)
+<span class="cm"># filter for ServerHello packets — contains cipher suite + cert</span>
+  </div>
+
+  <div class="content-h2">M3 — Authenticated Agent (SSH / WinRM)</div>
+  <p class="prose">The scanner logs into each server with a read-only service account and runs commands to enumerate cryptographic assets on the filesystem, in OS configuration, and in installed software. This is the only mechanism that finds key files on disk, SSH config, Kerberos settings, and OS trust store contents.</p>
+  <div class="code-block">
+<span class="cm">### Linux — via SSH (Python paramiko)</span>
+
+<span class="cm"># Find all crypto-relevant files</span>
+find / -name <span class="st">"*.pem"</span> -o -name <span class="st">"*.key"</span> -o -name <span class="st">"*.crt"</span> -o -name <span class="st">"*.p12"</span> \
+       -o -name <span class="st">"*.jks"</span> -o -name <span class="st">"*.pfx"</span> -o -name <span class="st">"*.p7b"</span> 2>/dev/null
+
+<span class="cm"># Check what SSH algorithms are configured on this server</span>
+grep -E <span class="st">'HostKey|KexAlgorithms|Ciphers|MACs|PubkeyAcceptedAlgorithms'</span> /etc/ssh/sshd_config
+
+<span class="cm"># Get OpenSSL version — does it support ML-KEM/ML-DSA?</span>
+openssl version -a
+openssl list -kem-algorithms 2>/dev/null  <span class="cm"># shows PQC KEMs if OpenSSL 3.3+</span>
+openssl list -signature-algorithms 2>/dev/null
+
+<span class="cm"># Installed crypto packages</span>
+dpkg -l | grep -E <span class="st">'libssl|libgcrypt|libgpg|libbotan|bouncycastle'</span>
+rpm -qa | grep -E <span class="st">'openssl|nss|libgcrypt|botan'</span>
+
+<span class="cm"># Java keystores</span>
+find / -name <span class="st">"cacerts"</span> -o -name <span class="st">"*.jks"</span> 2>/dev/null
+keytool -list -v -keystore /etc/ssl/certs/java/cacerts -storepass changeit
+
+<span class="cm"># LUKS disk encryption</span>
+cryptsetup luksDump /dev/sda1
+
+<span class="cm">### Windows — via WinRM (Python pywinrm)</span>
+
+<span class="cm"># All certificates in Windows cert store</span>
+Get-ChildItem -Path Cert:\LocalMachine\ -Recurse |
+  Select-Object Subject,Issuer,NotAfter,SignatureAlgorithm,Thumbprint,EnhancedKeyUsageList
+
+<span class="cm"># Schannel TLS settings (what protocols/ciphers Windows allows)</span>
+Get-Item "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols"
+Get-Item "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers"
+
+<span class="cm"># Kerberos encryption types</span>
+Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\Kerberos\Parameters" SupportedEncryptionTypes
+
+<span class="cm"># BitLocker status</span>
+Get-BitLockerVolume | Select-Object MountPoint,EncryptionMethod,KeyProtector
+  </div>
+
+  <div class="content-h2">M4 — Vendor API / Management Console</div>
+  <p class="prose">Each specialised system exposes a management API. The scanner authenticates with a read-only credential and queries for cryptographic asset metadata. Private key material is never exported — only metadata.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>System</th><th>API Protocol</th><th>Auth method</th><th>Key data returned</th></tr></thead>
+      <tbody>
+        <tr><td>HSM (any vendor)</td><td>PKCS#11 C API via vendor .so/.dll</td><td>HSM partition PIN or smart card</td><td>CKA_KEY_TYPE, CKA_MODULUS_BITS, CKA_EC_PARAMS, CKA_LABEL, CKA_ID, key count</td></tr>
+        <tr><td>Enterprise KMS</td><td>KMIP 2.x over mTLS, port 5696</td><td>Client certificate (mTLS)</td><td>Algorithm, key length, cryptographic usage mask, state (active/deactivated), creation date</td></tr>
+        <tr><td>AWS KMS</td><td>HTTPS REST (boto3)</td><td>IAM role with kms:ListKeys + kms:DescribeKey</td><td>KeyAlgorithm (RSA_2048/EC_SIGN_P256/SYMMETRIC_DEFAULT), KeyUsage, KeyState</td></tr>
+        <tr><td>Azure Key Vault</td><td>HTTPS REST</td><td>Service principal / managed identity</td><td>kty (RSA/EC/oct), key_size, key_ops, attributes.enabled</td></tr>
+        <tr><td>GCP Cloud KMS</td><td>HTTPS REST</td><td>Service account with cloudkms.viewer</td><td>algorithm (RSA_SIGN_PSS_2048/EC_SIGN_P256/GOOGLE_SYMMETRIC_ENCRYPTION), protection level</td></tr>
+        <tr><td>Microsoft ADCS (PKI)</td><td>LDAP + certutil CLI</td><td>Domain service account (Certificate Authority Reader)</td><td>All issued certs: algorithm, key size, subject, expiry, template</td></tr>
+        <tr><td>Kubernetes</td><td>K8s REST API</td><td>ServiceAccount token with get/list RBAC on secrets</td><td>All kubernetes.io/tls secrets: tls.crt parsed for algorithm; etcd encryption config</td></tr>
+        <tr><td>Oracle DB (TDE)</td><td>JDBC + SQL</td><td>Read-only DBA account</td><td>V$ENCRYPTION_WALLET: wallet_type, status; DBA_ENCRYPTED_COLUMNS: encryption_alg, key_length</td></tr>
+        <tr><td>SQL Server (TDE)</td><td>JDBC + SQL</td><td>Read-only sysadmin or VIEW DATABASE STATE</td><td>sys.dm_database_encryption_keys: key_algorithm, key_length, encryption_state, encryptor_type</td></tr>
+        <tr><td>HashiCorp Vault</td><td>HTTPS REST</td><td>Vault token with read policy on transit/</td><td>Transit engine keys: type (rsa-2048/ecdsa-p256/aes256-gcm96), latest_version</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">M5 — SAST (Static Analysis of Code &amp; Dependencies)</div>
+  <p class="prose">SAST reads source code, compiled bytecode, binaries, and package manifests without executing anything. It finds hardcoded algorithm calls, vulnerable crypto library versions, non-agile patterns, and secrets baked into code. Output is in SARIF format for CI/CD integration.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Target</th><th>How scanner accesses it</th><th>What it extracts</th><th>Tool</th></tr></thead>
+      <tbody>
+        <tr><td>Git repositories</td><td>Git clone or GitHub/GitLab/Bitbucket API</td><td>Crypto API calls, hardcoded algorithm strings, library imports</td><td>Semgrep + PQC rules, IBM CBOMkit</td></tr>
+        <tr><td>Maven / Gradle (Java)</td><td>pom.xml / build.gradle parse</td><td>BouncyCastle version, Conscrypt, JCE provider versions</td><td>cdxgen, syft, dependency-check</td></tr>
+        <tr><td>pip / requirements.txt (Python)</td><td>requirements.txt / pyproject.toml parse</td><td>cryptography, PyCryptodome, pyOpenSSL versions</td><td>pip-audit, syft</td></tr>
+        <tr><td>npm / package.json (Node.js)</td><td>package.json / package-lock.json parse</td><td>node-forge, node:crypto usage, tls module config</td><td>npm audit, semgrep</td></tr>
+        <tr><td>Container images</td><td>Docker registry API pull + layer extraction</td><td>OpenSSL version in image, installed crypto packages, baked certs</td><td>Trivy, Grype, syft</td></tr>
+        <tr><td>Compiled JARs / .class files</td><td>Decompile bytecode</td><td>Crypto API calls in compiled Java</td><td>IBM CBOMkit, Semgrep on decompiled output</td></tr>
+        <tr><td>Python .pyc bytecode</td><td>dis / decompile</td><td>Crypto module usage in compiled Python</td><td>Custom bytecode analysis</td></tr>
+        <tr><td>Binary executables</td><td>String extraction + symbol analysis</td><td>OpenSSL version strings, algorithm name strings</td><td>strings, objdump, binwalk</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /t4 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 5: EXISTING PQC TOOLS                                    -->
+<!-- ============================================================ -->
+<div id="t5" class="tab-panel">
+
+  <div class="section-title">Existing PQC Tools — How They Work</div>
+  <div class="section-sub">Architecture of every significant tool in the market — open source and commercial — with internal mechanics</div>
+
+  <div class="content-h2">Open Source Tools</div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">pqcscan</div>
+      <div class="tool-type">Open Source · Rust · GitHub: anvilsecure/pqcscan</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>What it does:</strong> Single Rust binary. Takes an IP/domain + port as input. Opens a raw TLS socket using the <code>rustls</code> library, sends a ClientHello listing all PQC and hybrid named groups (X25519MLKEM768 etc.), reads the ServerHello to see what the server selected. Separately handles SSH by initiating a KEX exchange and reading the server's algorithm list. <strong>PQC detection:</strong> Checks if the server selected a cipher suite or named group containing ML-KEM. Checks server certificate for ML-DSA OIDs. <strong>Output:</strong> JSON + optional HTML report. No CBOM. No risk scoring. No chain analysis. <strong>Coverage:</strong> Mechanism M1, Layer L1 only.</div>
+      <div class="tag-row"><span class="tag r">No CBOM</span><span class="tag r">No risk scoring</span><span class="tag g">Good: integrate as M1 component</span><span class="tag b">Best for: quick TLS/SSH PQC status check</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">SSLyze</div>
+      <div class="tool-type">Open Source · Python · GitHub: nabla-c0d3/sslyze</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>Architecture:</strong> Python library + CLI. Runs multiple scan jobs concurrently against a TLS endpoint: <em>CipherSuitesScanJob</em> (offers each cipher suite individually to find all supported), <em>CertificateInfoScanJob</em> (downloads and validates full chain using Mozilla trust store), <em>SessionRenegotiationScanJob</em>, <em>OCSPStaplingScanJob</em>, <em>TlsVersionsScanJob</em>. Uses nassl (Python bindings over OpenSSL). <strong>Certificate analysis:</strong> Parses full chain with pyOpenSSL — extracts subject, issuer, signature algorithm OID, key type, key size, SANs, validity. <strong>Output:</strong> Structured JSON per scan target. Machine-readable and integrable. <strong>PQC note:</strong> Detects hybrid groups (X25519MLKEM768) when server supports them. <strong>Use in your scanner:</strong> Primary M1 TLS active scanning component — don't rebuild this.</div>
+      <div class="tag-row"><span class="tag g">Recommended: use as M1 component</span><span class="tag b">Python: from sslyze import Scanner, ServerScanRequest</span><span class="tag r">No CBOM output natively</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">testssl.sh</div>
+      <div class="tool-type">Open Source · Bash · GitHub: drwetter/testssl.sh</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>What it does:</strong> Shell script that wraps OpenSSL and gnutls-cli to test TLS endpoints for every possible misconfiguration and vulnerability. Checks: TLS versions, cipher suites (offered and preferred), certificate details, known vulnerabilities (BEAST, POODLE, Heartbleed, etc.), HTTP security headers, OCSP stapling, certificate chain. <strong>PQC:</strong> Can detect X25519MLKEM768 if run against a server that supports it. Output in JSON available with <code>--jsonfile</code>. <strong>Use in your scanner:</strong> Good for comprehensive TLS configuration checking beyond just PQC — finds all weaknesses in the TLS setup at once.</div>
+      <div class="tag-row"><span class="tag b">Use for: comprehensive TLS audit beyond just PQC</span><span class="tag">JSON output available</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">ssh-audit</div>
+      <div class="tool-type">Open Source · Python · GitHub: jtesta/ssh-audit</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>Architecture:</strong> Pure Python. Initiates SSH connection, exchanges SSH_MSG_KEXINIT messages to enumerate all algorithms without completing authentication. Compares each algorithm against a built-in database with recommendation level (good/warn/fail) and rationale. <strong>Output:</strong> Structured JSON with every algorithm flagged individually. <strong>PQC:</strong> Recognises mlkem768x25519 (the hybrid ML-KEM-768+X25519 KEX algorithm) as a good algorithm. Flags all RSA and ECDH KEX algorithms as PQC-vulnerable. <strong>Use in your scanner:</strong> The SSH scanning component — call as subprocess, parse JSON.</div>
+      <div class="tag-row"><span class="tag g">Recommended: integrate as M1 SSH component</span><span class="tag b">JSON: ssh-audit --json target</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">IBM CBOMkit / Quantum Safe Explorer</div>
+      <div class="tool-type">Open Source Core · Python / Java · GitHub: IBM/cbomkit</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>Architecture:</strong> AST-based (Abstract Syntax Tree) static analyser for Java, Python, Go, and C/C++. Uses language-specific parsers (JavaParser, Python ast, tree-sitter) to traverse source code and find every call to a cryptographic API (javax.crypto, openssl, BouncyCastle, pyca/cryptography). Each call becomes a CycloneDX CBOM Algorithm record. Dependency relationships (app → library → algorithm) are captured in the CycloneDX dependency array. <strong>Output:</strong> Native CycloneDX CBOM JSON — the only open-source tool that does this natively. <strong>Use in your scanner:</strong> The M5 SAST component for CBOM generation from source code. Integrate its output by merging CBOMs.</div>
+      <div class="tag-row"><span class="tag g">Recommended: M5 SAST + native CBOM output</span><span class="tag b">GitHub: IBM/cbomkit</span><span class="tag r">Source code only — no network/HSM</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">Semgrep (PQC rules)</div>
+      <div class="tool-type">Open Source Core · Go · semgrep.dev</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>Architecture:</strong> Generic pattern-matching SAST engine. Rules are written in YAML and describe code patterns to match across any supported language. The community PQC ruleset (and your custom rules) detect hardcoded algorithm strings, direct RSA/DES/MD5 API calls, and missing crypto abstraction layers. <strong>Output:</strong> SARIF format — directly integrates with GitHub Advanced Security, GitLab SAST, and CI/CD pipelines as PR checks. <strong>Use in your scanner:</strong> Complement IBM CBOMkit with Semgrep for pattern-based detection. Write custom rules for your organisation's specific crypto APIs and internal libraries.</div>
+      <div class="tag-row"><span class="tag g">Recommended: M5 pattern matching + CI/CD integration</span><span class="tag b">Output: SARIF</span><span class="tag b">Custom rules: YAML</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">Zeek (Bro)</div>
+      <div class="tool-type">Open Source · C++ / ZeekScript · GitHub: zeek/zeek</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>Architecture:</strong> Network traffic analysis framework. Sits on a SPAN port in promiscuous mode and processes all packets through protocol analysers. The TLS analyser parses ClientHello and ServerHello, writes <code>ssl.log</code> with one line per connection: negotiated cipher suite, TLS version, SNI hostname. The X.509 analyser writes <code>x509.log</code>: certificate algorithm, key type, key size, validity. <strong>Use in your scanner:</strong> The M2 passive tap component. Configure Zeek to write ssl.log and x509.log as JSON, then consume these logs to produce CBOM certificate and protocol records.</div>
+      <div class="tag-row"><span class="tag g">Recommended: M2 passive network analysis</span><span class="tag b">Output: ssl.log + x509.log (JSON)</span><span class="tag">Handles 10Gbps+ networks</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">Trivy / Grype</div>
+      <div class="tool-type">Open Source · Go · GitHub: aquasecurity/trivy · anchore/grype</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>What they do:</strong> Container image and filesystem vulnerability scanners. They extract the software inventory (OS packages, language packages) from a container image and check against vulnerability databases. For PQC, they are relevant because they identify OpenSSL version, BouncyCastle version, libgcrypt version — which tells you whether PQC algorithms (ML-KEM, ML-DSA) are available in that image. <strong>Output:</strong> SBOM in CycloneDX or SPDX format, with vulnerability findings. <strong>Use in your scanner:</strong> Run Trivy/Grype against container images to extract crypto library versions as part of M5.</div>
+      <div class="tag-row"><span class="tag g">Use for: container image crypto library version extraction</span><span class="tag b">SBOM output feeds CBOM generation</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">syft / cdxgen</div>
+      <div class="tool-type">Open Source · Go / Node · GitHub: anchore/syft · CycloneDX/cdxgen</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>What they do:</strong> SBOM generators. Syft scans container images, directories, and archives to generate a complete software inventory in CycloneDX or SPDX format. cdxgen does the same specifically for CycloneDX BOM output and supports many language ecosystems (Java, Python, Node, Go, Rust, .NET). <strong>Use in your scanner:</strong> Generate SBOMs for all applications/images as part of M5. The SBOM tells you exactly which crypto library versions are in use — feed this into your CBOM generation pipeline to flag vulnerable library versions.</div>
+      <div class="tag-row"><span class="tag g">Use for: SBOM generation → crypto library version inventory</span><span class="tag b">syft packages dir:. -o cyclonedx-json</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">PyKCS11</div>
+      <div class="tool-type">Open Source · Python · GitHub: LudovicRousseau/PyKCS11</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>What it does:</strong> Python wrapper over the PKCS#11 C API. Loads any vendor's PKCS#11 shared library (.so or .dll) and exposes Pythonic access to all HSM operations. Used by the scanner to enumerate all keys in an HSM partition without exporting any private key material. <strong>Key operations for scanning:</strong> <code>C_FindObjects()</code> to list all objects, <code>C_GetAttributeValue()</code> to read CKA_KEY_TYPE (algorithm), CKA_MODULUS_BITS (RSA key size), CKA_LABEL (key name), CKA_ID. <strong>Works with:</strong> Thales Luna, Entrust nShield, Utimaco, SoftHSM2 (for development/testing).</div>
+      <div class="tag-row"><span class="tag g">Required: M4 HSM scanning</span><span class="tag b">pip install PyKCS11</span><span class="tag">SoftHSM2 for dev/testing</span></div>
+    </div>
+  </div>
+
+  <div class="content-h2">Commercial Tools</div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">SandboxAQ AQtive Guard</div>
+      <div class="tool-type">Commercial · $5.75B valuation · US DoD deployed</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>Architecture — three engines:</strong> (1) <em>Network engine:</em> Passive SPAN probe appliance (physical or virtual) running DPI on all TLS traffic — parses ClientHello/ServerHello from raw packets; plus active TLS scans against discovered hosts. (2) <em>Code engine:</em> GitHub/GitLab OAuth integration + AST-based source code scan + container registry scan for crypto library versions. (3) <em>PKI engine:</em> Integrates with ADCS, Venafi, DigiCert, and public CT logs — maintains real-time cert inventory. All three engines feed a <em>risk intelligence layer</em> that correlates findings into a unified risk graph, produces CBOM, and shows "crypto posture score" over time. <strong>Gaps:</strong> Deep HSM scanning is weak; no industry-specific crypto modules. <strong>Price:</strong> $200K–$2M+/yr.</div>
+      <div class="tag-row"><span class="tag">All 5 mechanisms</span><span class="tag r">Weak HSM scanning</span><span class="tag y">$200K–$2M/yr</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">Keyfactor Command + AgileSec</div>
+      <div class="tool-type">Commercial · Acquired InfoSec Global + CipherInsights 2025</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>Architecture:</strong> Originally a CLM (Certificate Lifecycle Management) platform, expanded via two acquisitions: InfoSec Global (agent-based host scanning) added M3 — a lightweight agent on Linux/Windows enumerates cert stores, key files, SSH config, library versions and reports to central platform. CipherInsights (passive network) added M2 — SPAN-based TLS handshake analysis. Core Keyfactor Command does M4 — ADCS, Venafi, DigiCert integration for PKI inventory. All feed into a unified dashboard with CBOM output. Also ships EJBCA (open-source CA) allowing it to issue hybrid ML-DSA certificates — one of few tools that goes beyond discovery into actual migration. <strong>Price:</strong> $75K–$500K/yr.</div>
+      <div class="tag-row"><span class="tag">M1+M2+M3+M4</span><span class="tag g">Strongest: PKI/CLM layer</span><span class="tag y">$75K–$500K/yr</span></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <div class="tool-left">
+      <div class="tool-name">CryptoNext COMPASS</div>
+      <div class="tool-type">Commercial · Paris · EU financial focus · €12M raised</div>
+    </div>
+    <div class="tool-right">
+      <div class="tool-desc"><strong>Architecture — three components:</strong> (1) <em>COMPASS Discovery</em> — open/free active network scanner similar to SSLyze. Open-sourced to drive adoption. (2) <em>COMPASS Network Probe</em> — high-throughput passive SPAN appliance designed for 10Gbps+ enterprise networks. Uses Zeek-based analysis for TLS handshake extraction. (3) <em>COMPASS Analytics</em> — aggregation dashboard that ingests findings from Discovery and Probe, generates CBOM, assigns risk scores, produces regulatory-aligned reports. <strong>Architecture insight:</strong> Open discovery layer builds trust + captures market; proprietary analytics layer is the revenue. CryptoNext's modular open+commercial split is the closest architectural reference to what you're building. <strong>Price:</strong> €100K–€500K/yr.</div>
+      <div class="tag-row"><span class="tag">M1+M2 (probe)</span><span class="tag r">No agent / SAST / HSM</span><span class="tag y">€100K–€500K/yr</span></div>
+    </div>
+  </div>
+
+</div><!-- /t5 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 6: GITHUB REPOS TO USE                                   -->
+<!-- ============================================================ -->
+<div id="t6" class="tab-panel">
+
+  <div class="section-title">GitHub Repos &amp; Libraries to Use</div>
+  <div class="section-sub">Every library, tool, and reference implementation your scanner should integrate — not rebuild</div>
+
+  <div class="infobox">
+    <strong>Build vs Integrate decision rule</strong>
+    If a well-maintained open-source library solves the problem correctly, integrate it. Only build custom code for: (1) the orchestration layer, (2) risk scoring, (3) CBOM aggregation and deduplication, (4) the dashboard/reporting layer, and (5) any domain-specific scanning modules for your target use case.
+  </div>
+
+  <div class="content-h2">Network Scanning</div>
+  <div class="repo-grid">
+
+    <div class="repo-card">
+      <div class="repo-name">SSLyze</div>
+      <a class="repo-url" href="https://github.com/nabla-c0d3/sslyze">github.com/nabla-c0d3/sslyze</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Most comprehensive open-source TLS scanner. Concurrent scan jobs per target: cipher suites, certificate chain, OCSP, session renegotiation, TLS version. Structured JSON output. Maintained and actively developed.</div>
+      <div class="repo-use">Use for: M1 TLS active scanning — primary component</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">ssh-audit</div>
+      <a class="repo-url" href="https://github.com/jtesta/ssh-audit">github.com/jtesta/ssh-audit</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Best SSH server/client auditor. Enumerates all KEX, host key, cipher, and MAC algorithms. Built-in recommendation database — every algorithm tagged good/warn/fail with reason. JSON output. Recognises mlkem768x25519 hybrid KEX.</div>
+      <div class="repo-use">Use for: M1 SSH active scanning — primary component</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">testssl.sh</div>
+      <a class="repo-url" href="https://github.com/drwetter/testssl.sh">github.com/drwetter/testssl.sh</a>
+      <div><span class="repo-lang multi">Bash/Shell</span></div>
+      <div class="repo-desc">Comprehensive TLS testing script. Tests for every known TLS vulnerability (BEAST, POODLE, Heartbleed, ROBOT, etc.) alongside cipher suite and certificate analysis. JSON output. Good complement to SSLyze for vulnerability detection beyond just PQC.</div>
+      <div class="repo-use">Use for: supplementary TLS vulnerability detection</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">pqcscan</div>
+      <a class="repo-url" href="https://github.com/anvilsecure/pqcscan">github.com/anvilsecure/pqcscan</a>
+      <div><span class="repo-lang rs">Rust</span></div>
+      <div class="repo-desc">Small Rust binary specifically for PQC TLS/SSH detection. Sends ClientHello with all PQC named groups, reads what the server negotiates. Good reference for OID registry and PQC detection logic. JSON + HTML output.</div>
+      <div class="repo-use">Use for: reference for PQC OID registry + PQC named group detection logic</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">Zeek</div>
+      <a class="repo-url" href="https://github.com/zeek/zeek">github.com/zeek/zeek</a>
+      <div><span class="repo-lang c">C++</span></div>
+      <div class="repo-desc">Industry-standard network traffic analysis framework. Parses TLS handshakes from raw packets on a SPAN port. Produces ssl.log (cipher suite, TLS version, SNI) and x509.log (cert algorithm, key size, validity). Used by SandboxAQ and CryptoNext in their passive probes.</div>
+      <div class="repo-use">Use for: M2 passive network tap — core component</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">pyshark</div>
+      <a class="repo-url" href="https://github.com/KimiNewt/pyshark">github.com/KimiNewt/pyshark</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Python wrapper over tshark (Wireshark CLI). Allows live capture or pcap file analysis in Python. Display filters let you select only TLS handshake packets. Easier to integrate into a Python scanner than raw Zeek, but lower throughput.</div>
+      <div class="repo-use">Use for: M2 passive analysis (lower throughput — dev/testing) or pcap file analysis</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">dnspython</div>
+      <a class="repo-url" href="https://github.com/rthalley/dnspython">github.com/rthalley/dnspython</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Full-featured DNS library for Python. Required for DNSSEC scanning — query DNSKEY records for a zone, parse the algorithm field to determine if RSA or ECDSA is being used for zone signing.</div>
+      <div class="repo-use">Use for: DNSSEC algorithm detection in M1</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">impacket</div>
+      <a class="repo-url" href="https://github.com/fortra/impacket">github.com/fortra/impacket</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Python library for working with network protocols at a low level — SMB, LDAP, Kerberos, MS-RPC, NTLM. Use for M4 ADCS scanning (LDAP queries for issued certificates) and M3 Windows agent (WinRM + DCOM).</div>
+      <div class="repo-use">Use for: M4 Active Directory / ADCS LDAP queries</div>
+    </div>
+
+  </div>
+
+  <div class="content-h2">Certificate &amp; Crypto Parsing</div>
+  <div class="repo-grid">
+
+    <div class="repo-card">
+      <div class="repo-name">cryptography (pyca)</div>
+      <a class="repo-url" href="https://github.com/pyca/cryptography">github.com/pyca/cryptography</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">The standard Python cryptography library. Load and parse X.509 certificates from PEM/DER/PKCS#12, read every field (subject, issuer, SANs, algorithm OID, key size, extensions), generate PKCS#11 operations, and (in newer versions) perform ML-KEM/ML-DSA operations. Essential dependency for your scanner.</div>
+      <div class="repo-use">Use for: certificate parsing across all mechanisms — core dependency</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">PyKCS11</div>
+      <a class="repo-url" href="https://github.com/LudovicRousseau/PyKCS11">github.com/LudovicRousseau/PyKCS11</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Python bindings for the PKCS#11 C API. Load any vendor's HSM library (.so/.dll), open sessions, enumerate all key objects with C_FindObjects(), read key metadata (type, size, label, creation date). Works with Thales Luna, Entrust nShield, Utimaco, and SoftHSM2 for development.</div>
+      <div class="repo-use">Use for: M4 HSM scanning via PKCS#11 API</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">SoftHSM2</div>
+      <a class="repo-url" href="https://github.com/opendnssec/SoftHSMv2">github.com/opendnssec/SoftHSMv2</a>
+      <div><span class="repo-lang c">C++</span></div>
+      <div class="repo-desc">Software emulation of a PKCS#11 HSM. Implements the full PKCS#11 API in software — useful for development and testing of the HSM scanning module without needing real HSM hardware. Use this to develop and test the PyKCS11 scanner code before testing on real HSMs.</div>
+      <div class="repo-use">Use for: local development and testing of HSM scanning code</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">asn1crypto</div>
+      <a class="repo-url" href="https://github.com/wbond/asn1crypto">github.com/wbond/asn1crypto</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Pure Python ASN.1 parser (the encoding format used by X.509 certificates, PKCS#8 keys, etc.). Lower-level than pyca/cryptography — useful when you need to parse non-standard or PQC-specific ASN.1 structures that the higher-level library doesn't yet support.</div>
+      <div class="repo-use">Use for: low-level parsing of novel PQC certificate structures and extensions</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">paramiko</div>
+      <a class="repo-url" href="https://github.com/paramiko/paramiko">github.com/paramiko/paramiko</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Python SSH library. Use for M3 SSH agent scanning — connect to target servers, run remote commands, and read output. Can also be used for reading the KEX Init phase only (without completing auth) to enumerate SSH server algorithms programmatically.</div>
+      <div class="repo-use">Use for: M3 Linux server agent (SSH remote execution)</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">pywinrm</div>
+      <a class="repo-url" href="https://github.com/dinonuggies/pywinrm">github.com/dinonuggies/pywinrm</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Python client for Windows Remote Management (WinRM). Allows running PowerShell commands remotely on Windows servers without needing to be on the same machine. Used for M3 Windows agent — enumerating cert stores, Schannel settings, BitLocker status, Kerberos config.</div>
+      <div class="repo-use">Use for: M3 Windows server agent (WinRM/PowerShell)</div>
+    </div>
+
+  </div>
+
+  <div class="content-h2">SAST &amp; SBOM</div>
+  <div class="repo-grid">
+
+    <div class="repo-card">
+      <div class="repo-name">IBMm CBOMkit</div>
+      <a class="repo-url" href="https://github.com/IBM/cbomkit">github.com/IBM/cbomkit</a>
+      <div><span class="repo-lang java">Java</span></div>
+      <div class="repo-desc">IBM Research's CBOM generation toolkit. AST-based crypto API detection for Java, Python, Go, and C. Outputs native CycloneDX CBOM JSON — the only open-source tool that does this. Detects crypto API calls and maps them to algorithm records. Designed to be composed with other scanners.</div>
+      <div class="repo-use">Use for: M5 SAST source code scanning + native CBOM output — primary SAST component</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">Semgrep</div>
+      <a class="repo-url" href="https://github.com/semgrep/semgrep">github.com/semgrep/semgrep</a>
+      <div><span class="repo-lang go">Go</span></div>
+      <div class="repo-desc">Generic SAST pattern-matching engine. Write YAML rules for any language. The PQC community ruleset detects hardcoded algorithm calls. SARIF output integrates into CI/CD pipelines as PR checks. Write custom rules for your organisation's internal crypto APIs and patterns.</div>
+      <div class="repo-use">Use for: M5 pattern-based code scanning + CI/CD integration via SARIF</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">syft</div>
+      <a class="repo-url" href="https://github.com/anchore/syft">github.com/anchore/syft</a>
+      <div><span class="repo-lang go">Go</span></div>
+      <div class="repo-desc">SBOM generator for container images, directories, and archives. Scans installed OS packages and language packages, outputs CycloneDX or SPDX SBOM. Extracts OpenSSL version, BouncyCastle version, and all other crypto library versions from an image or directory.</div>
+      <div class="repo-use">Use for: M5 crypto library version extraction from container images and filesystems</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">cdxgen</div>
+      <a class="repo-url" href="https://github.com/CycloneDX/cdxgen">github.com/CycloneDX/cdxgen</a>
+      <div><span class="repo-lang js">Node.js</span></div>
+      <div class="repo-desc">CycloneDX BOM generator for 20+ language ecosystems (Java, Python, Node, Go, Rust, .NET, Ruby, PHP, etc.). Reads package manifests and lock files to generate a complete SBOM. The recommended tool for generating SBOMs that feed into your CBOM pipeline.</div>
+      <div class="repo-use">Use for: M5 SBOM generation for all application ecosystems</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">Trivy</div>
+      <a class="repo-url" href="https://github.com/aquasecurity/trivy">github.com/aquasecurity/trivy</a>
+      <div><span class="repo-lang go">Go</span></div>
+      <div class="repo-desc">Container image, filesystem, and repo vulnerability scanner. Extracts SBOM (CycloneDX or SPDX) and cross-references against CVE databases. For PQC: identifies OpenSSL/BouncyCastle versions in images, can flag versions that don't support ML-KEM/ML-DSA.</div>
+      <div class="repo-use">Use for: M5 container image scanning — crypto library version + CVE detection</div>
+    </div>
+
+  </div>
+
+  <div class="content-h2">CBOM &amp; Output Standards</div>
+  <div class="repo-grid">
+
+    <div class="repo-card">
+      <div class="repo-name">cyclonedx-python-lib</div>
+      <a class="repo-url" href="https://github.com/CycloneDX/cyclonedx-python-lib">github.com/CycloneDX/cyclonedx-python-lib</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Official Python library for CycloneDX BOM creation. Provides typed Python classes for every BOM element — Component, Dependency, CryptographicProperties, etc. Handles JSON and XML serialization and schema validation. Use this to generate your CBOM output rather than constructing JSON by hand.</div>
+      <div class="repo-use">Use for: CBOM output generation — core dependency for reporting layer</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">cyclonedx-go</div>
+      <a class="repo-url" href="https://github.com/CycloneDX/cyclonedx-go">github.com/CycloneDX/cyclonedx-go</a>
+      <div><span class="repo-lang go">Go</span></div>
+      <div class="repo-desc">Official Go library for CycloneDX BOM creation. Same as cyclonedx-python-lib but for Go. If you write your scanner orchestrator in Go rather than Python, use this for CBOM generation.</div>
+      <div class="repo-use">Use for: CBOM output if scanner is built in Go</div>
+    </div>
+
+  </div>
+
+  <div class="content-h2">PQC Reference Implementations &amp; Libraries</div>
+  <div class="repo-grid">
+
+    <div class="repo-card">
+      <div class="repo-name">liboqs</div>
+      <a class="repo-url" href="https://github.com/open-quantum-safe/liboqs">github.com/open-quantum-safe/liboqs</a>
+      <div><span class="repo-lang c">C</span></div>
+      <div class="repo-desc">Open Quantum Safe project's reference implementation of all NIST PQC algorithms — ML-KEM, ML-DSA, SLH-DSA, Falcon, SPHINCS+. This is the canonical reference implementation used for testing and interoperability. Not for production use in most cases — use vendor-validated implementations. But essential for: testing your scanner's OID detection against real PQC certificates, and understanding how the algorithms work.</div>
+      <div class="repo-use">Use for: generating test PQC certificates for scanner development + testing</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">oqs-provider (OpenSSL)</div>
+      <a class="repo-url" href="https://github.com/open-quantum-safe/oqs-provider">github.com/open-quantum-safe/oqs-provider</a>
+      <div><span class="repo-lang c">C</span></div>
+      <div class="repo-desc">OpenSSL 3.x provider plugin that adds ML-KEM, ML-DSA, and other PQC algorithms to a standard OpenSSL installation. Allows you to set up a TLS test server running ML-DSA certificates and X25519MLKEM768 key exchange — essential for end-to-end testing of your scanner's PQC detection.</div>
+      <div class="repo-use">Use for: setting up test TLS servers with PQC algorithms to verify scanner detects them correctly</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">oqs-demos</div>
+      <a class="repo-url" href="https://github.com/open-quantum-safe/oqs-demos">github.com/open-quantum-safe/oqs-demos</a>
+      <div><span class="repo-lang multi">Multi-language</span></div>
+      <div class="repo-desc">Docker-based demos showing PQC-enabled TLS servers and clients using nginx, curl, Chromium, and other tools with oqs-provider. Spin up a PQC-enabled nginx in Docker to test your scanner's detection. Extremely useful for development and validation.</div>
+      <div class="repo-use">Use for: Docker test environment — PQC-enabled TLS server for scanner validation</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">pqcrypto (Rust)</div>
+      <a class="repo-url" href="https://github.com/rustpq/pqcrypto">github.com/rustpq/pqcrypto</a>
+      <div><span class="repo-lang rs">Rust</span></div>
+      <div class="repo-desc">Rust bindings to the NIST PQC reference implementations. If you write your scanner core in Rust, this gives you native ML-KEM and ML-DSA support. Useful for implementing the scanner's PQC key generation for mTLS scanning scenarios.</div>
+      <div class="repo-use">Use for: PQC operations in Rust-based scanner components</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">NIST PQC reference code</div>
+      <a class="repo-url" href="https://github.com/usnistgov/PQC-Algorithms">github.com/usnistgov/PQC-Algorithms</a>
+      <div><span class="repo-lang c">C</span></div>
+      <div class="repo-desc">NIST's official reference implementations of FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), and FIPS 205 (SLH-DSA). These are the normative implementations. Study these to understand the exact parameter sets (key sizes, signature sizes) that your scanner must report on.</div>
+      <div class="repo-use">Use for: understanding exact FIPS 203/204/205 parameter sets and OIDs</div>
+    </div>
+
+  </div>
+
+  <div class="content-h2">Cloud &amp; Infrastructure SDKs</div>
+  <div class="repo-grid">
+
+    <div class="repo-card">
+      <div class="repo-name">boto3 (AWS SDK)</div>
+      <a class="repo-url" href="https://github.com/boto/boto3">github.com/boto/boto3</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">AWS SDK for Python. Use for M4 Cloud KMS scanning: <code>kms.list_keys()</code> then <code>kms.describe_key()</code> for each key to get KeyAlgorithm, KeyUsage, KeyState. Also: ACM (certificate manager) for TLS cert inventory, CloudFront for CDN cert algorithm, EC2 for instance key pair algorithm.</div>
+      <div class="repo-use">Use for: M4 AWS KMS, ACM, and other AWS crypto asset scanning</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">azure-sdk-for-python</div>
+      <a class="repo-url" href="https://github.com/Azure/azure-sdk-for-python">github.com/Azure/azure-sdk-for-python</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Azure SDK for Python. Use azure-keyvault-keys for M4 Key Vault scanning: list all keys, get each key's kty (RSA/EC/oct), key_size, key_ops. Use azure-mgmt-keyvault to enumerate all Key Vaults across subscriptions. Use azure-mgmt-network for App Gateway certificate inventory.</div>
+      <div class="repo-use">Use for: M4 Azure Key Vault and certificate scanning</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">google-cloud-kms</div>
+      <a class="repo-url" href="https://github.com/googleapis/google-cloud-python">github.com/googleapis/google-cloud-python</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">GCP SDK for Python. Use google-cloud-kms for M4 Cloud KMS scanning: list all key rings and crypto keys, read algorithm (RSA_SIGN_PSS_2048, EC_SIGN_P256, GOOGLE_SYMMETRIC_ENCRYPTION), protection level (SOFTWARE vs HSM), and key version state.</div>
+      <div class="repo-use">Use for: M4 GCP Cloud KMS scanning</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">kubernetes-client (Python)</div>
+      <a class="repo-url" href="https://github.com/kubernetes-client/python">github.com/kubernetes-client/python</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Official Python client for the Kubernetes API. Use for M4 K8s scanning: list all TLS secrets across namespaces, read the tls.crt field (base64 DER cert), parse with pyca/cryptography to extract algorithm. Also: read API server cert, etcd encryption configuration.</div>
+      <div class="repo-use">Use for: M4 Kubernetes TLS secrets and API server cert scanning</div>
+    </div>
+
+  </div>
+
+  <div class="content-h2">Orchestration &amp; Pipeline</div>
+  <div class="repo-grid">
+
+    <div class="repo-card">
+      <div class="repo-name">Celery</div>
+      <a class="repo-url" href="https://github.com/celery/celery">github.com/celery/celery</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Distributed task queue for Python. Use to build the scanner's job orchestration layer — each scan target becomes a Celery task, the worker pool picks tasks up concurrently, results are stored in a backend (Redis/PostgreSQL). Supports rate limiting, task retries, and priority queues natively.</div>
+      <div class="repo-use">Use for: scanner orchestrator — job queue + distributed worker pool</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">Nmap (python-nmap)</div>
+      <a class="repo-url" href="https://github.com/nmap/nmap">nmap.org + python-nmap wrapper</a>
+      <div><span class="repo-lang c">C / Python wrapper</span></div>
+      <div class="repo-desc">Network port scanner. Use as the pre-filter: given an IP range, discover which hosts are alive and which ports are open before dispatching TLS/SSH scan jobs. Prevents wasting time on dead hosts and closed ports. python-nmap provides a Python wrapper for programmatic use.</div>
+      <div class="repo-use">Use for: target enumeration pre-filter before M1 scan jobs</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">masscan</div>
+      <a class="repo-url" href="https://github.com/robertdavidgraham/masscan">github.com/robertdavidgraham/masscan</a>
+      <div><span class="repo-lang c">C</span></div>
+      <div class="repo-desc">Internet-scale port scanner — much faster than Nmap for large IP ranges (claims to scan the entire internet in 6 minutes). Use masscan for the initial port discovery phase on large network ranges, then hand off live hosts with open ports to SSLyze and ssh-audit for deep analysis.</div>
+      <div class="repo-use">Use for: fast port discovery on large IP ranges (enterprise network sweeps)</div>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-name">PostgreSQL + SQLAlchemy</div>
+      <a class="repo-url" href="https://github.com/sqlalchemy/sqlalchemy">github.com/sqlalchemy/sqlalchemy</a>
+      <div><span class="repo-lang py">Python</span></div>
+      <div class="repo-desc">Use PostgreSQL as the scanner's findings database. SQLAlchemy provides the ORM layer. Store each CBOM record as a row, track scan history across runs, compute diff between scans (what's new, what's changed, what's been fixed). JSON columns for the full CBOM record, indexed columns for risk score and deadline for dashboard queries.</div>
+      <div class="repo-use">Use for: scanner findings database — persistence layer</div>
+    </div>
+
+  </div>
+
+</div><!-- /t6 -->
+
+
+<!-- ============================================================ -->
+<!-- TAB 7: FULL DATA FLOW                                        -->
+<!-- ============================================================ -->
+<div id="t7" class="tab-panel">
+
+  <div class="section-title">Full Scanner Data Flow</div>
+  <div class="section-sub">End-to-end — from target input to CBOM output — with every processing step</div>
+
+  <div class="content-h2">Phase 1 — Target Acquisition</div>
+  <p class="prose">The scanner starts with a list of targets. These come from multiple sources: a CMDB export, manually configured IP ranges, cloud account IDs, GitHub organisation names, or a passive SPAN feed. All sources are normalised into a unified target list.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Source type</th><th>Example input</th><th>How it's consumed</th><th>Yields</th></tr></thead>
+      <tbody>
+        <tr><td>IP ranges / CIDRs</td><td><code>10.0.0.0/8, 192.168.1.0/24</code></td><td>Expand to individual IPs → port scan → live host + open port list</td><td>(IP, port, protocol) tuples</td></tr>
+        <tr><td>Domain names</td><td><code>*.company.com</code></td><td>DNS enumeration / CT log query → IP list → port scan</td><td>(domain, IP, port, protocol) tuples</td></tr>
+        <tr><td>CMDB API</td><td>ServiceNow CMDB, AWS Config, Azure Resource Graph</td><td>API query for all CI records with IP/hostname → same as above</td><td>(host, service, port, type) records</td></tr>
+        <tr><td>GitHub / GitLab org</td><td><code>github.com/myorg</code></td><td>List all repos → clone or API access for SAST</td><td>(repo URL, default branch) tuples</td></tr>
+        <tr><td>Cloud accounts</td><td>AWS account ID, Azure subscription ID</td><td>Cloud SDK calls to enumerate KMS keys, ACM certs, ELBs</td><td>(resource type, resource ID, region) tuples</td></tr>
+        <tr><td>HSM connections</td><td>HSM IP, partition name, PKCS#11 library path</td><td>Direct PKCS#11 connection — no port scanning needed</td><td>(hsm_ip, partition, slot_id)</td></tr>
+        <tr><td>SPAN port (passive)</td><td>Network interface in promiscuous mode</td><td>Continuous packet capture — target list is inferred from observed traffic</td><td>Real-time stream of (src_ip, dst_ip, dst_port, protocol) observations</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="content-h2">Phase 2 — Job Dispatch</div>
+  <p class="prose">The orchestrator takes the target list and creates scan jobs. Each job specifies exactly: target address, port, mechanism to use, and credentials (if needed). Jobs are pushed to a priority queue — internet-facing targets and high-risk assets get higher priority. A worker pool (Celery workers or ThreadPoolExecutor) pulls jobs and executes them concurrently. A rate limiter prevents flooding target networks.</p>
+
+  <div class="code-block">
+<span class="cm"># Job schema — what the orchestrator dispatches to each worker</span>
+{
+  <span class="st">"job_id"</span>: <span class="st">"uuid-v4"</span>,
+  <span class="st">"target"</span>: <span class="st">"api.company.com"</span>,
+  <span class="st">"port"</span>: 443,
+  <span class="st">"mechanism"</span>: <span class="st">"M1_TLS_ACTIVE"</span>,
+  <span class="st">"priority"</span>: 1,                <span class="cm">// 1=highest (internet-facing), 4=lowest (internal/low-risk)</span>
+  <span class="st">"credentials"</span>: <span class="kw">null</span>,          <span class="cm">// M1 needs no credentials</span>
+  <span class="st">"timeout_seconds"</span>: 10,
+  <span class="st">"rate_limit_group"</span>: <span class="st">"network"</span>  <span class="cm">// shared rate limit pool for network scans</span>
+}
+
+<span class="cm"># Rate limiter — prevents overwhelming target networks</span>
+<span class="cm"># Per-target limit: max 1 connection/5 seconds to same host</span>
+<span class="cm"># Global limit: max 100 concurrent outbound TLS connections</span>
+<span class="cm"># Jitter: random 0-500ms delay per job to avoid synchronized bursts</span>
+  </div>
+
+  <div class="content-h2">Phase 3 — Per-Job Execution</div>
+  <p class="prose">Each worker picks a job, executes the appropriate scanning mechanism, and returns raw data. This is the core scanning logic — five different code paths depending on mechanism type.</p>
+
+  <div class="vflow">
+    <div class="vflow-step">
+      <div class="vflow-left">A</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Mechanism execution → raw data</div>
+        <div class="vflow-desc">M1: TLS handshake → raw DER certificate bytes + cipher suite string + TLS version. M2: packet from SPAN → raw TLS record bytes. M3: SSH command output → file paths, config file text, command output strings. M4: API JSON response → key metadata dict. M5: AST traversal → list of (file, line, algorithm_call) tuples.</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">B</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Parse raw data → structured objects</div>
+        <div class="vflow-desc">DER cert bytes → <code>x509.load_der_x509_certificate()</code> → Certificate object with all fields. Cipher suite string "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384" → split into {kex: "ECDHE", auth: "RSA", cipher: "AES-256-GCM", mac: "SHA-384"}. API key dict {KeyAlgorithm: "RSA_2048"} → {algorithm: "RSA", key_size: 2048}.</div>
+        <div class="vflow-mono">cert.signature_algorithm_oid.dotted_string → "1.2.840.113549.1.1.11"</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">C</div>
+      <div class="vflow-right">
+        <div class="vflow-title">OID lookup → algorithm classification</div>
+        <div class="vflow-desc">Every cryptographic identifier (OID, algorithm name string, key type constant) is looked up in the scanner's algorithm registry — a curated database mapping identifiers to: algorithm family, specific variant, primitive type (signature/KEM/symmetric/hash), classical security level, PQC safety status, and NIST IR 8547 deprecation deadline. This is the core knowledge base of the scanner.</div>
+        <div class="vflow-mono">"1.2.840.113549.1.1.11" → { name: "RSA", variant: "RSA-SHA256", primitive: "signature", pqc_safe: false, deadline: "2035" }</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">D</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Risk scoring → priority classification</div>
+        <div class="vflow-desc">Each finding is scored on 5 dimensions, each 1–5: (1) Algorithm risk — AES-256=1, AES-128=2, ECDSA=4, RSA=5. (2) Data sensitivity — public data=1, long-lived PII=5. (3) Exposure — air-gapped=1, internet-facing high-traffic=5. (4) Replaceability — config change=1, hardware replacement=5. (5) Regulatory obligation — no mandate=1, hard deadline=5. Sum (5–25) → Priority 1 (20–25, immediate), P2 (15–19, before 2028), P3 (10–14, before 2030), P4 (&lt;10, before 2035).</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">E</div>
+      <div class="vflow-right">
+        <div class="vflow-title">CBOM record creation → persist to DB</div>
+        <div class="vflow-desc">Finding is normalised into a CycloneDX CBOM record (one of: Algorithm, Key, Certificate, Protocol). All required fields are populated. Record is written to the findings database with: scan_id, timestamp, job_id, target, mechanism, and the full CBOM record as JSON. The database is the single source of truth — all output formats are generated from it on demand.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-h2">Phase 4 — Aggregation &amp; Dependency Graph</div>
+  <p class="prose">After all jobs for a scan run are complete, the aggregation phase processes all findings together to produce the unified output.</p>
+  <div class="vflow">
+    <div class="vflow-step">
+      <div class="vflow-left">1</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Deduplication</div>
+        <div class="vflow-desc">The same certificate may have been found by M1 (TLS scan), M3 (filesystem scan), and M4 (ADCS API). These are merged into one CBOM certificate record, enriched with context from all three sources. Dedup key: certificate serial number + issuer DN (for certs), or OID + location (for algorithms).</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">2</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Dependency graph construction</div>
+        <div class="vflow-desc">Build the relationships: Root CA → Intermediate CA → TLS leaf cert → application using it. Library → algorithm it provides → application that calls it. HSM → key stored in it → cert that uses that key. This graph enables blast radius analysis: if you migrate the root CA's signing algorithm, what else breaks? The graph answer: every cert signed by it.</div>
+        <div class="vflow-mono">root_ca issuedBy → intermediate_ca issuedBy → api.company.com TLS cert uses → nginx uses → serves traffic from LoadBalancer</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">3</div>
+      <div class="vflow-right">
+        <div class="vflow-title">CBOM document assembly</div>
+        <div class="vflow-desc">All records and dependency relationships are assembled into a complete CycloneDX CBOM JSON document with the standard envelope: bomFormat, specVersion, serialNumber, metadata (scanner name/version, timestamp, scanned component), components array (all crypto asset records), dependencies array (all relationships).</div>
+      </div>
+    </div>
+    <div class="vflow-step">
+      <div class="vflow-left">4</div>
+      <div class="vflow-right">
+        <div class="vflow-title">Delta analysis (continuous scanning)</div>
+        <div class="vflow-desc">Compare current scan results to the previous scan stored in the DB. Identify: new findings (new vulnerable asset appeared), resolved findings (asset was migrated — PQC-safe algorithm now), changed findings (cert renewed but still with RSA), unchanged findings (still vulnerable, still there). Delta report shows migration progress over time — the key metric for stakeholder reporting.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-h2">Phase 5 — Output Generation</div>
+  <div class="pipeline">
+    <div class="pipe-step dark">
+      <div class="pipe-label">Source</div>
+      <div class="pipe-title">Findings DB (PostgreSQL)</div>
+      <div class="pipe-sub">All CBOM records + metadata + scan history</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-label">Output 1</div>
+      <div class="pipe-title">CBOM JSON</div>
+      <div class="pipe-sub">CycloneDX v1.7 — machine-readable, GRC tools, automation</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-label">Output 2</div>
+      <div class="pipe-title">SARIF</div>
+      <div class="pipe-sub">SAST findings — GitHub/GitLab PR integration</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="pipe-label">Output 3</div>
+      <div class="pipe-title">Dashboard API</div>
+      <div class="pipe-sub">REST API for web dashboard — priority queue, risk charts, migration progress</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step grn">
+      <div class="pipe-label">Output 4</div>
+      <div class="pipe-title">CSV / PDF</div>
+      <div class="pipe-sub">Human-readable — executive reporting, audit submissions</div>
+    </div>
+  </div>
+
+  <div class="content-h2">Complete Architecture in One View</div>
+  <div style="background:var(--surface); border:1px solid var(--border2); padding:24px; overflow-x:auto; margin-bottom:24px;">
+    <div style="display:grid; grid-template-columns:1fr; gap:3px; min-width:700px;">
+
+      <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:2px;">
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">INPUT</div>
+          <div style="font-weight:600;">IP / CIDR ranges</div>
+        </div>
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">INPUT</div>
+          <div style="font-weight:600;">Domains / URLs</div>
+        </div>
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">INPUT</div>
+          <div style="font-weight:600;">Git Repositories</div>
+        </div>
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">INPUT</div>
+          <div style="font-weight:600;">Cloud Accounts</div>
+        </div>
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">INPUT</div>
+          <div style="font-weight:600;">HSM Connections</div>
+        </div>
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">INPUT</div>
+          <div style="font-weight:600;">SPAN Port</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;color:var(--muted);font-size:18px;padding:3px;">↓</div>
+
+      <div style="background:var(--accent); color:#fff; padding:12px; text-align:center;">
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.5);margin-bottom:3px;">ORCHESTRATION LAYER</div>
+        <div style="font-size:13px;font-weight:600;">Target Enumerator → Job Queue → Worker Pool (Celery) → Rate Limiter</div>
+      </div>
+
+      <div style="text-align:center;color:var(--muted);font-size:18px;padding:3px;">↓</div>
+
+      <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:2px;">
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">M1 · WORKER</div>
+          <div style="font-weight:600;">Active Handshake</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;">SSLyze, ssh-audit, pqcscan, dnspython</div>
+        </div>
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">M2 · WORKER</div>
+          <div style="font-weight:600;">Passive SPAN</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;">Zeek, pyshark, tshark</div>
+        </div>
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">M3 · WORKER</div>
+          <div style="font-weight:600;">SSH / WinRM</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;">paramiko, pywinrm, Ansible</div>
+        </div>
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">M4 · WORKER</div>
+          <div style="font-weight:600;">Vendor APIs</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;">PyKCS11, boto3, azure-sdk, K8s client</div>
+        </div>
+        <div style="background:#e8f0f8; border:1px solid #b8cfe0; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px;">M5 · WORKER</div>
+          <div style="font-weight:600;">SAST / SBOM</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;">CBOMkit, Semgrep, syft, Trivy</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;color:var(--muted);font-size:18px;padding:3px;">↓</div>
+
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2px;">
+        <div style="background:var(--surface); border:1px solid var(--border2); padding:10px; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:3px;">PARSE + CLASSIFY</div>
+          <div style="font-weight:600;">pyca/cryptography · OID Registry · Algorithm DB</div>
+        </div>
+        <div style="background:var(--surface); border:1px solid var(--border2); padding:10px; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:3px;">RISK SCORING</div>
+          <div style="font-weight:600;">5-dimension scorer → Priority P1–P4 · HNDL risk · Mosca calc</div>
+        </div>
+        <div style="background:var(--surface); border:1px solid var(--border2); padding:10px; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:3px;">CBOM RECORD</div>
+          <div style="font-weight:600;">cyclonedx-python-lib · Algorithm / Key / Cert / Protocol</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;color:var(--muted);font-size:18px;padding:3px;">↓</div>
+
+      <div style="background:var(--surface); border:1px solid var(--border2); padding:12px; text-align:center;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:3px;">AGGREGATION</div>
+        <div style="font-size:13px;font-weight:600;">Deduplication → Dependency Graph → Delta Analysis → PostgreSQL Findings DB</div>
+      </div>
+
+      <div style="text-align:center;color:var(--muted);font-size:18px;padding:3px;">↓</div>
+
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:2px;">
+        <div style="background:#e6f4ea; border:1px solid #a8dab5; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--green);margin-bottom:3px;">OUTPUT</div>
+          <div style="font-weight:600;">CBOM JSON (CycloneDX)</div>
+        </div>
+        <div style="background:#e6f4ea; border:1px solid #a8dab5; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--green);margin-bottom:3px;">OUTPUT</div>
+          <div style="font-weight:600;">SARIF (CI/CD)</div>
+        </div>
+        <div style="background:#e6f4ea; border:1px solid #a8dab5; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--green);margin-bottom:3px;">OUTPUT</div>
+          <div style="font-weight:600;">Dashboard + REST API</div>
+        </div>
+        <div style="background:#e6f4ea; border:1px solid #a8dab5; padding:8px 10px; text-align:center; font-size:11px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--green);margin-bottom:3px;">OUTPUT</div>
+          <div style="font-weight:600;">PDF / CSV Report</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="content-h2">The Algorithm Registry — Core Knowledge Base</div>
+  <p class="prose">The algorithm registry is the scanner's internal lookup table that maps every possible cryptographic identifier to structured metadata. This is not something you source from a library — it's knowledge you build and maintain. Every OID the scanner might encounter must be in this registry.</p>
+
+  <div class="code-block">
+<span class="cm"># Algorithm registry entry schema</span>
+ALGORITHM_REGISTRY = {
+  <span class="cm"># Key: OID dotted string OR algorithm name string</span>
+  <span class="st">"1.2.840.113549.1.1.11"</span>: {
+    <span class="st">"name"</span>: <span class="st">"RSA"</span>,
+    <span class="st">"variant"</span>: <span class="st">"RSA-SHA256"</span>,
+    <span class="st">"primitive"</span>: <span class="st">"signature"</span>,
+    <span class="st">"classical_security_level"</span>: 112,     <span class="cm"># bits (for RSA-2048)</span>
+    <span class="st">"pqc_safe"</span>: <span class="kw">False</span>,
+    <span class="st">"quantum_attack"</span>: <span class="st">"Shor's algorithm"</span>,
+    <span class="st">"nist_ir8547_status"</span>: <span class="st">"disallowed_2035"</span>,
+    <span class="st">"replacement"</span>: [<span class="st">"ML-DSA-65"</span>, <span class="st">"ML-DSA-87"</span>],
+    <span class="st">"algorithm_risk_score"</span>: 5
+  },
+  <span class="st">"2.16.840.1.101.3.4.3.17"</span>: {       <span class="cm"># ML-DSA-44 (FIPS 204)</span>
+    <span class="st">"name"</span>: <span class="st">"ML-DSA"</span>,
+    <span class="st">"variant"</span>: <span class="st">"ML-DSA-44"</span>,
+    <span class="st">"primitive"</span>: <span class="st">"signature"</span>,
+    <span class="st">"nist_security_level"</span>: 2,
+    <span class="st">"pqc_safe"</span>: <span class="kw">True</span>,
+    <span class="st">"fips_standard"</span>: <span class="st">"FIPS 204"</span>,
+    <span class="st">"algorithm_risk_score"</span>: 1
+  },
+  <span class="cm"># ... 200+ more entries covering all TLS cipher suites,</span>
+  <span class="cm"># SSH algorithm names, DNSSEC algorithm numbers,</span>
+  <span class="cm"># HSM CKA_KEY_TYPE constants, and cloud provider key type strings</span>
+}
+  </div>
+
+</div><!-- /t7 -->
+
+</main>
+
+<footer class="site-footer">
+  <span>PQC Scanner Deep Reference Guide · General Purpose · May 2026</span>
+  <span>SSL/TLS/SSH · CMDB · 7 Layers · Scan Mechanisms · Tools · GitHub Repos · Data Flow</span>
+</footer>
+
+<script>
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

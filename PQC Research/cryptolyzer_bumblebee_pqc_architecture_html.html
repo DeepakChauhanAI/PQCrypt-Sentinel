@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CryptoLyzer + Bumblebee PQC Platform Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f7fb;
+  --surface: #ffffff;
+  --surface-alt: #eef3f9;
+  --border: #dce4ef;
+  --text: #162033;
+  --muted: #617084;
+  --accent: #2563eb;
+  --green: #15803d;
+  --orange: #ea580c;
+  --purple: #7c3aed;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Inter', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(37,99,235,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37,99,235,0.03) 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+}
+
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 32px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+header {
+  padding: 72px 0 52px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 52px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(37,99,235,0.08);
+  border: 1px solid rgba(37,99,235,0.2);
+  color: var(--accent);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: 24px;
+}
+
+.badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+h1 {
+  font-size: clamp(44px, 6vw, 74px);
+  line-height: 1.03;
+  letter-spacing: -0.045em;
+  margin-bottom: 20px;
+}
+
+h1 span {
+  color: var(--accent);
+}
+
+.subtitle {
+  max-width: 880px;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.section {
+  margin-bottom: 68px;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.section-title {
+  font-size: 36px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 30px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(15,23,42,0.04);
+}
+
+.card p {
+  color: #334155;
+  margin-bottom: 16px;
+}
+
+.card p:last-child {
+  margin-bottom: 0;
+}
+
+.highlight {
+  border-left: 4px solid var(--accent);
+  background: rgba(37,99,235,0.06);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+}
+
+.feature-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.feature-body {
+  color: #475569;
+  font-size: 14px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.tag-blue {
+  background: rgba(37,99,235,0.12);
+  color: var(--accent);
+}
+
+.tag-green {
+  background: rgba(21,128,61,0.12);
+  color: var(--green);
+}
+
+.tag-orange {
+  background: rgba(234,88,12,0.12);
+  color: var(--orange);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+th {
+  background: #dfe8f3;
+  color: #0f172a;
+  text-align: left;
+  padding: 14px 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+td {
+  padding: 16px 18px;
+  border-top: 1px solid var(--border);
+  color: #334155;
+  vertical-align: top;
+}
+
+tr:hover td {
+  background: var(--surface-alt);
+}
+
+.architecture {
+  background: linear-gradient(135deg, #ffffff 0%, #f7faff 100%);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 36px;
+}
+
+.arch-layer {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.arch-layer:last-child {
+  margin-bottom: 0;
+}
+
+.arch-box {
+  min-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  font-weight: 600;
+}
+
+.arch-desc {
+  color: #475569;
+}
+
+.code {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 18px;
+  padding: 24px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.compare-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+}
+
+.compare-box h3 {
+  margin-bottom: 14px;
+}
+
+.compare-box ul {
+  padding-left: 18px;
+}
+
+.compare-box li {
+  margin-bottom: 10px;
+  color: #475569;
+}
+
+footer {
+  border-top: 1px solid var(--border);
+  padding-top: 28px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 900px) {
+  .compare {
+    grid-template-columns: 1fr;
+  }
+
+  .arch-layer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .arch-box {
+    min-width: unset;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 20px 60px;
+  }
+
+  h1 {
+    font-size: 46px;
+  }
+
+  .section-title {
+    font-size: 30px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+  <div class="badge">PQC Architecture Proposal · May 2026</div>
+  <h1>CryptoLyzer + <span>Bumblebee</span><br>PQC Platform Architecture</h1>
+  <p class="subtitle">
+    A strategic proposal for combining protocol-level cryptographic analysis and dependency-level software inventory to accelerate the development of a professional post-quantum cryptographic discovery platform.
+  </p>
+</header>
+
+<section class="section">
+  <div class="section-label">Executive Summary</div>
+  <h2 class="section-title">Why This Combination Is Powerful</h2>
+
+  <div class="card highlight">
+    <p>
+      CryptoLyzer and Bumblebee operate at different visibility layers.
+    </p>
+
+    <p>
+      Together they provide:
+    </p>
+
+    <p>
+      <strong>Runtime cryptographic visibility + dependency inventory visibility.</strong>
+    </p>
+
+    <p>
+      This creates a strong foundation for building a professional PQC discovery and migration intelligence platform.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Tool Comparison</div>
+  <h2 class="section-title">What Each Tool Contributes</h2>
+
+  <div class="compare">
+
+    <div class="compare-box">
+      <h3>CryptoLyzer</h3>
+      <ul>
+        <li>TLS handshake analysis</li>
+        <li>SSH cryptographic analysis</li>
+        <li>DNSSEC inspection</li>
+        <li>IKE / VPN discovery</li>
+        <li>Cipher suite detection</li>
+        <li>Host key analysis</li>
+        <li>JA3 / HASSH fingerprinting</li>
+        <li>Runtime cryptographic exposure visibility</li>
+      </ul>
+    </div>
+
+    <div class="compare-box">
+      <h3>Bumblebee</h3>
+      <ul>
+        <li>Dependency inventory</li>
+        <li>Package metadata scanning</li>
+        <li>Lockfile inspection</li>
+        <li>Supply-chain visibility</li>
+        <li>Developer environment analysis</li>
+        <li>SBOM-related discovery</li>
+        <li>Software package mapping</li>
+        <li>Cryptographic library discovery</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Architectural Strength</div>
+  <h2 class="section-title">Static + Runtime Correlation</h2>
+
+  <div class="card">
+    <p>
+      The biggest advantage comes from correlating:
+    </p>
+
+    <ul style="padding-left: 22px; color: #334155; margin-top: 10px;">
+      <li>Installed cryptographic dependencies</li>
+      <li>Runtime cryptographic behavior</li>
+    </ul>
+
+    <p style="margin-top: 18px;">
+      This enables the platform to distinguish between:
+    </p>
+
+    <ul style="padding-left: 22px; color: #334155; margin-top: 10px;">
+      <li>Available cryptographic capabilities</li>
+      <li>Actually negotiated cryptographic exposure</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Example Correlation</div>
+  <h2 class="section-title">How The Combined Intelligence Works</h2>
+
+  <div class="code">
+Bumblebee Detects:
+
+{
+  "package": "openssl",
+  "version": "1.1.1"
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CryptoLyzer Detects:
+
+{
+  "host": "api.company.com",
+  "cipher": "TLS_RSA_WITH_AES_256_GCM_SHA384",
+  "tls_version": "TLS1.2"
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Unified Platform Output:
+
+{
+  "asset": "api.company.com",
+  "runtime_crypto": "RSA",
+  "dependency_crypto": "OpenSSL 1.1.1",
+  "quantum_risk": "HIGH",
+  "migration_priority": "HIGH"
+}
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Combined Coverage</div>
+  <h2 class="section-title">What The Platform Can Discover</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Discovery Type</th>
+        <th>Coverage</th>
+        <th>Primary Tool</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>TLS Runtime Analysis</td>
+        <td>Strong</td>
+        <td>CryptoLyzer</td>
+      </tr>
+      <tr>
+        <td>SSH Cryptography</td>
+        <td>Strong</td>
+        <td>CryptoLyzer</td>
+      </tr>
+      <tr>
+        <td>VPN / IKE Analysis</td>
+        <td>Partial</td>
+        <td>CryptoLyzer</td>
+      </tr>
+      <tr>
+        <td>Dependency Inventory</td>
+        <td>Strong</td>
+        <td>Bumblebee</td>
+      </tr>
+      <tr>
+        <td>Package Metadata</td>
+        <td>Strong</td>
+        <td>Bumblebee</td>
+      </tr>
+      <tr>
+        <td>Supply Chain Discovery</td>
+        <td>Strong</td>
+        <td>Bumblebee</td>
+      </tr>
+      <tr>
+        <td>CBOM Inputs</td>
+        <td>Strong</td>
+        <td>Both</td>
+      </tr>
+      <tr>
+        <td>Quantum Exposure Analysis</td>
+        <td>Moderate</td>
+        <td>Both</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="section-label">Platform Architecture</div>
+  <h2 class="section-title">Recommended MVP Design</h2>
+
+  <div class="architecture">
+
+    <div class="arch-layer">
+      <div class="arch-box">CryptoLyzer</div>
+      <div class="arch-desc">
+        Runtime protocol analysis, TLS negotiation inspection, SSH cryptographic discovery, and live network exposure visibility.
+      </div>
+    </div>
+
+    <div class="arch-layer">
+      <div class="arch-box">Bumblebee</div>
+      <div class="arch-desc">
+        Dependency inventory, software package analysis, metadata-driven discovery, and supply-chain visibility.
+      </div>
+    </div>
+
+    <div class="arch-layer">
+      <div class="arch-box">Normalization Layer</div>
+      <div class="arch-desc">
+        Converts heterogeneous scanner output into a canonical cryptographic asset schema.
+      </div>
+    </div>
+
+    <div class="arch-layer">
+      <div class="arch-box">CBOM Engine</div>
+      <div class="arch-desc">
+        Generates Cryptographic Bills of Materials for enterprise inventory and migration planning.
+      </div>
+    </div>
+
+    <div class="arch-layer">
+      <div class="arch-box">Risk Intelligence Engine</div>
+      <div class="arch-desc">
+        Performs PQC migration scoring, quantum risk analysis, crypto agility assessment, and remediation prioritization.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Major Advantages</div>
+  <h2 class="section-title">Why This Is A Strong MVP Foundation</h2>
+
+  <div class="grid">
+
+    <div class="feature-card">
+      <div class="tag tag-blue">Advantage</div>
+      <div class="feature-title">End-to-End Visibility</div>
+      <div class="feature-body">
+        Combines software dependency intelligence with live cryptographic runtime behavior.
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="tag tag-green">Advantage</div>
+      <div class="feature-title">CBOM Readiness</div>
+      <div class="feature-body">
+        Provides strong data inputs for building enterprise Cryptographic Bills of Materials.
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="tag tag-orange">Advantage</div>
+      <div class="feature-title">Python Ecosystem</div>
+      <div class="feature-body">
+        Both tools are Python-native, simplifying orchestration and rapid prototyping.
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="tag tag-blue">Advantage</div>
+      <div class="feature-title">Read-Oriented Scanning</div>
+      <div class="feature-body">
+        Safer enterprise deployment model compared to invasive endpoint instrumentation.
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="tag tag-green">Advantage</div>
+      <div class="feature-title">Runtime vs Installed State</div>
+      <div class="feature-body">
+        Detects differences between installed cryptographic libraries and actual runtime negotiation.
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="tag tag-orange">Advantage</div>
+      <div class="feature-title">Enterprise Protocol Coverage</div>
+      <div class="feature-body">
+        Supports TLS, SSH, DNSSEC, VPN-related analysis, and software ecosystem discovery.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Important Limitations</div>
+  <h2 class="section-title">Capabilities Still Missing</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Missing Capability</th>
+        <th>Importance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Deep Binary Crypto Extraction</td>
+        <td>Very High</td>
+      </tr>
+      <tr>
+        <td>Certificate Store Discovery</td>
+        <td>High</td>
+      </tr>
+      <tr>
+        <td>Kubernetes Crypto Mapping</td>
+        <td>High</td>
+      </tr>
+      <tr>
+        <td>Cloud KMS Analysis</td>
+        <td>High</td>
+      </tr>
+      <tr>
+        <td>Crypto Agility Assessment</td>
+        <td>Critical</td>
+      </tr>
+      <tr>
+        <td>Firmware Cryptographic Analysis</td>
+        <td>High</td>
+      </tr>
+      <tr>
+        <td>PKI Graph Mapping</td>
+        <td>Critical</td>
+      </tr>
+      <tr>
+        <td>Source-Code Crypto Discovery</td>
+        <td>High</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="section-label">Strategic Recommendation</div>
+  <h2 class="section-title">Recommended Product Roadmap</h2>
+
+  <div class="grid">
+
+    <div class="feature-card">
+      <div class="feature-title">Phase 1</div>
+      <div class="feature-body">
+        Use CryptoLyzer and Bumblebee as ingestion and discovery engines for rapid MVP development.
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-title">Phase 2</div>
+      <div class="feature-body">
+        Build normalization, CBOM generation, canonical asset schema, and migration intelligence.
+      </div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-title">Phase 3</div>
+      <div class="feature-body">
+        Add binary analysis, Kubernetes scanning, PKI graphing, and crypto agility intelligence.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-label">Final Conclusion</div>
+  <h2 class="section-title">Long-Term Strategic Direction</h2>
+
+  <div class="card highlight">
+    <p>
+      CryptoLyzer + Bumblebee is not the final enterprise PQC platform.
+    </p>
+
+    <p>
+      However, it is:
+    </p>
+
+    <p>
+      <strong>An extremely strong foundation for building a professional cryptographic exposure management platform.</strong>
+    </p>
+
+    <p>
+      The real long-term opportunity is not merely PQC scanning.
+    </p>
+
+    <p>
+      The opportunity is building:
+    </p>
+
+    <p>
+      <strong>The system of record for enterprise cryptographic exposure.</strong>
+    </p>
+  </div>
+</section>
+
+<footer>
+  CryptoLyzer + Bumblebee Architecture Proposal · Internal Research Document · May 2026
+</footer>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,413 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PQC Scanner Engineering Handbook - Expanded Edition</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;background:#f5f7fb;color:#222;max-width:1400px;margin:auto;padding:30px;line-height:1.7}
+h1,h2,h3,h4{color:#163d73}
+.section{background:white;padding:24px;margin:18px 0;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+code,pre{background:#eef3f9;border-radius:6px;padding:10px;display:block;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #d0d7e2;padding:8px}
+th{background:#e8eef8}
+.toc li{margin:4px 0}
+</style>
+</head>
+<body>
+
+<h1>PQC Scanner Engineering Handbook</h1>
+<p><strong>Expanded Engineering Reference Edition</strong></p>
+
+<div class="section">
+<h2>Table of Contents</h2>
+<ol class="toc">
+<li>Project Goals</li>
+<li>Networking Fundamentals</li>
+<li>DNS Fundamentals</li>
+<li>Cryptography Fundamentals</li>
+<li>PKI Fundamentals</li>
+<li>TLS / SSL Deep Dive</li>
+<li>SSH Deep Dive</li>
+<li>Post Quantum Cryptography</li>
+<li>Asset Discovery Architecture</li>
+<li>CMDB Systems</li>
+<li>Cloud Discovery</li>
+<li>Kubernetes Discovery</li>
+<li>Certificate Discovery</li>
+<li>Scanner Architecture</li>
+<li>Risk Scoring</li>
+<li>Data Model Design</li>
+<li>Existing PQC Tools</li>
+<li>Migration Planning</li>
+<li>Glossary</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>1. Project Goals</h2>
+<p>The purpose of a PQC scanner is to discover cryptographic assets, identify quantum-vulnerable algorithms, map dependencies, prioritize remediation, and support migration to post-quantum cryptography.</p>
+<p>Primary objectives:</p>
+<ul>
+<li>Enterprise-wide cryptographic visibility</li>
+<li>Asset inventory creation</li>
+<li>Certificate discovery</li>
+<li>Algorithm inventory</li>
+<li>Risk scoring</li>
+<li>PQC readiness assessment</li>
+<li>Migration planning</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>2. Networking Fundamentals</h2>
+<h3>OSI Model</h3>
+<table>
+<tr><th>Layer</th><th>Purpose</th></tr>
+<tr><td>7 Application</td><td>HTTP, HTTPS, SSH</td></tr>
+<tr><td>6 Presentation</td><td>Encryption, Encoding</td></tr>
+<tr><td>5 Session</td><td>Connections</td></tr>
+<tr><td>4 Transport</td><td>TCP, UDP</td></tr>
+<tr><td>3 Network</td><td>IP Routing</td></tr>
+<tr><td>2 Data Link</td><td>Ethernet</td></tr>
+<tr><td>1 Physical</td><td>Cables and Hardware</td></tr>
+</table>
+<h3>Important Concepts</h3>
+<ul>
+<li>IP Addresses</li>
+<li>Subnets</li>
+<li>CIDR</li>
+<li>Ports</li>
+<li>TCP Handshakes</li>
+<li>Routing</li>
+<li>Firewalls</li>
+<li>Load Balancers</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>3. DNS Fundamentals</h2>
+<p>DNS converts names into IP addresses.</p>
+<ul>
+<li>A Records</li>
+<li>AAAA Records</li>
+<li>CNAME Records</li>
+<li>MX Records</li>
+<li>TXT Records</li>
+<li>PTR Records</li>
+</ul>
+<p>DNS is critical because it often reveals systems that should be scanned.</p>
+</div>
+
+<div class="section">
+<h2>4. Cryptography Fundamentals</h2>
+<h3>Symmetric Encryption</h3>
+<p>AES and ChaCha20 use the same key for encryption and decryption.</p>
+<h3>Asymmetric Encryption</h3>
+<p>RSA and ECC use public/private key pairs.</p>
+<h3>Hashing</h3>
+<p>SHA-256, SHA-384, SHA-512 and SHA-3.</p>
+<h3>Digital Signatures</h3>
+<p>Provide integrity and authentication.</p>
+<h3>Key Exchange</h3>
+<p>RSA, Diffie-Hellman, ECDH and future PQ KEMs.</p>
+</div>
+
+<div class="section">
+<h2>5. PKI Fundamentals</h2>
+<h3>Certificate Hierarchy</h3>
+<pre>
+Root CA
+  ↓
+Intermediate CA
+  ↓
+Server Certificate
+</pre>
+<ul>
+<li>Root CA</li>
+<li>Intermediate CA</li>
+<li>Certificate Chains</li>
+<li>Trust Stores</li>
+<li>CRL</li>
+<li>OCSP</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>6. TLS / SSL Deep Dive</h2>
+<h3>TLS Handshake</h3>
+<pre>
+Client Hello
+Server Hello
+Certificate
+Key Exchange
+Finished
+Encrypted Session
+</pre>
+<h3>Cipher Suites</h3>
+<pre>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</pre>
+<p>A scanner should identify key exchange algorithms, signature algorithms, certificate types and TLS versions.</p>
+</div>
+
+<div class="section">
+<h2>7. SSH Deep Dive</h2>
+<ul>
+<li>SSH Host Keys</li>
+<li>User Keys</li>
+<li>Authorized Keys</li>
+<li>Known Hosts</li>
+<li>Key Exchange Algorithms</li>
+</ul>
+<pre>
+ssh-ed25519
+rsa-sha2-256
+ecdsa-sha2-nistp256
+</pre>
+<p>Quantum readiness depends on both authentication and key exchange algorithms.</p>
+</div>
+
+<div class="section">
+<h2>8. Post Quantum Cryptography</h2>
+<h3>NIST Standards</h3>
+<ul>
+<li>ML-KEM</li>
+<li>ML-DSA</li>
+<li>SLH-DSA</li>
+</ul>
+<h3>Quantum Vulnerable Algorithms</h3>
+<ul>
+<li>RSA</li>
+<li>DH</li>
+<li>ECDH</li>
+<li>ECDSA</li>
+</ul>
+<h3>Migration Strategies</h3>
+<ul>
+<li>Classical</li>
+<li>Hybrid</li>
+<li>Pure PQC</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>9. Asset Discovery Architecture</h2>
+<table>
+<tr><th>Source</th><th>Examples</th></tr>
+<tr><td>Network</td><td>Nmap, Masscan</td></tr>
+<tr><td>DNS</td><td>Amass, Subfinder</td></tr>
+<tr><td>Cloud</td><td>AWS APIs</td></tr>
+<tr><td>CMDB</td><td>ServiceNow</td></tr>
+<tr><td>Endpoints</td><td>Agents</td></tr>
+<tr><td>Kubernetes</td><td>K8s API</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>10. CMDB Systems</h2>
+<h3>What is a CMDB?</h3>
+<p>A CMDB stores Configuration Items and relationships.</p>
+<h3>Important Concepts</h3>
+<ul>
+<li>Configuration Items</li>
+<li>Relationships</li>
+<li>Ownership</li>
+<li>Business Services</li>
+<li>Application Mapping</li>
+<li>Infrastructure Mapping</li>
+</ul>
+
+<h3>Major Advantages for PQC Scanning</h3>
+<ol>
+<li>Instant asset inventory</li>
+<li>Ownership mapping</li>
+<li>Business context</li>
+<li>Dependency analysis</li>
+<li>Software inventory enrichment</li>
+<li>Risk prioritization</li>
+<li>Continuous monitoring</li>
+<li>Reduced scanning overhead</li>
+<li>Shadow IT detection through inventory comparison</li>
+</ol>
+
+<h3>Popular CMDB Platforms</h3>
+<ul>
+<li>ServiceNow</li>
+<li>NetBox</li>
+<li>Device42</li>
+<li>BMC Helix</li>
+<li>i-doit</li>
+<li>GLPI</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>11. Cloud Discovery</h2>
+<h3>AWS</h3>
+<ul>
+<li>Organizations</li>
+<li>Accounts</li>
+<li>EC2</li>
+<li>ELB</li>
+<li>ACM</li>
+<li>Route53</li>
+</ul>
+
+<h3>Azure</h3>
+<ul>
+<li>Subscriptions</li>
+<li>Resource Groups</li>
+<li>Key Vault</li>
+</ul>
+
+<h3>Google Cloud</h3>
+<ul>
+<li>Projects</li>
+<li>Load Balancers</li>
+<li>Certificate Manager</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>12. Kubernetes Discovery</h2>
+<ul>
+<li>Clusters</li>
+<li>Nodes</li>
+<li>Pods</li>
+<li>Deployments</li>
+<li>Ingress Controllers</li>
+<li>Secrets</li>
+<li>Certificates</li>
+</ul>
+<p>Certificates are frequently stored inside secrets or ingress resources.</p>
+</div>
+
+<div class="section">
+<h2>13. Certificate Discovery</h2>
+<ul>
+<li>TLS Endpoints</li>
+<li>Certificate Stores</li>
+<li>Java Keystores</li>
+<li>Windows Certificate Stores</li>
+<li>Kubernetes Secrets</li>
+<li>Cloud Certificate Managers</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>14. Scanner Architecture</h2>
+<pre>
+Connectors
+    ↓
+Discovery Engine
+    ↓
+Asset Inventory
+    ↓
+Crypto Analysis Engine
+    ↓
+Correlation Engine
+    ↓
+Risk Engine
+    ↓
+Reporting Platform
+</pre>
+
+<h3>Key Components</h3>
+<ul>
+<li>Connector Framework</li>
+<li>Scheduler</li>
+<li>Asset Database</li>
+<li>Knowledge Graph</li>
+<li>Reporting Layer</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>15. Risk Scoring</h2>
+<p>Suggested Factors:</p>
+<ul>
+<li>Internet Exposure</li>
+<li>Business Criticality</li>
+<li>Data Sensitivity</li>
+<li>Algorithm Vulnerability</li>
+<li>Migration Complexity</li>
+<li>Certificate Lifetime</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>16. Data Model Design</h2>
+<h3>Core Entities</h3>
+<ul>
+<li>Asset</li>
+<li>Certificate</li>
+<li>Algorithm</li>
+<li>Application</li>
+<li>Business Service</li>
+<li>Owner</li>
+<li>Finding</li>
+</ul>
+
+<pre>
+Asset → Certificate
+Asset → Owner
+Asset → Service
+Finding → Risk Score
+</pre>
+</div>
+
+<div class="section">
+<h2>17. Existing PQC Ecosystem</h2>
+<h3>Libraries</h3>
+<ul>
+<li>OpenSSL</li>
+<li>BoringSSL</li>
+<li>wolfSSL</li>
+<li>liboqs</li>
+<li>oqs-provider</li>
+</ul>
+
+<h3>Discovery Tools</h3>
+<ul>
+<li>Nmap</li>
+<li>Masscan</li>
+<li>Amass</li>
+<li>Subfinder</li>
+</ul>
+
+<h3>TLS Analysis</h3>
+<ul>
+<li>SSLyze</li>
+<li>testssl.sh</li>
+<li>zgrab2</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>18. Migration Planning</h2>
+<ol>
+<li>Discover Assets</li>
+<li>Identify Algorithms</li>
+<li>Build Inventory</li>
+<li>Assess Risk</li>
+<li>Create Roadmap</li>
+<li>Deploy Hybrid Crypto</li>
+<li>Move to PQC</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>19. Glossary</h2>
+<p><strong>Asset:</strong> A discoverable system.</p>
+<p><strong>Certificate:</strong> Digital identity document.</p>
+<p><strong>CI:</strong> Configuration Item.</p>
+<p><strong>CMDB:</strong> Configuration Management Database.</p>
+<p><strong>KEM:</strong> Key Encapsulation Mechanism.</p>
+<p><strong>PKI:</strong> Public Key Infrastructure.</p>
+<p><strong>PQC:</strong> Post Quantum Cryptography.</p>
+<p><strong>Risk Engine:</strong> Component calculating remediation priority.</p>
+<p><strong>Knowledge Graph:</strong> Relationship-aware inventory model.</p>
+</div>
+
+</body>
+</html>

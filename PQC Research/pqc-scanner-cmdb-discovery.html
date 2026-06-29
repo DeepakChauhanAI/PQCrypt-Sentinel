@@ -1,0 +1,326 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PQC Scanner - CMDB and Discovery Approaches</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;background:#f5f7fb;color:#222;max-width:1400px;margin:auto;padding:30px;line-height:1.7}
+h1,h2,h3,h4{color:#163d73}
+.section{background:white;padding:24px;margin:18px 0;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+code,pre{background:#eef3f9;border-radius:6px;padding:10px;display:block;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #d0d7e2;padding:8px}
+th{background:#e8eef8}
+.toc li{margin:4px 0}
+</style>
+</head>
+<body>
+
+<h1>PQC Scanner: CMDB Integration and Discovery Approaches</h1>
+<p><strong>Companion to the PQC Scanner Engineering Handbook</strong></p>
+
+<div class="section">
+<h2>Table of Contents</h2>
+<ol class="toc">
+<li>What a CMDB Is</li>
+<li>Approach A: CMDB-Based Discovery</li>
+<li>Approach A.1: How the Tool Connects</li>
+<li>Approach A.2: How the Tool Reads the CMDB</li>
+<li>Approach A.3: How It Filters for PQC</li>
+<li>Approach A.4: Mapping Component Relationships</li>
+<li>Approach B: No-CMDB Discovery (From Scratch)</li>
+<li>Approach B.1: Network-Level Discovery</li>
+<li>Approach B.2: Certificate Authority Queries</li>
+<li>Approach B.3: Identity, Keys, and HSM Systems</li>
+<li>Approach B.4: Software and Code Inventory</li>
+<li>Approach B.5: Cloud and SaaS Configuration</li>
+<li>The Phased Rollout Sequence</li>
+<li>Building the Picture: Reconciliation and Inference</li>
+<li>Practical Realities</li>
+<li>CMDB vs No-CMDB: Trade-offs</li>
+<li>Glossary</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>1. What a CMDB Is</h2>
+<p>A CMDB (Configuration Management Database) is a company's master list of every technology asset it owns. Each item is called a <strong>CI (Configuration Item)</strong> - a server, a piece of software, a certificate, a network service, an application, and so on.</p>
+<p>The CMDB also stores <strong>relationships</strong> between CIs: this software is installed on that server, this application depends on that database, this certificate was issued by that CA. These relationships are what make a CMDB more than a spreadsheet.</p>
+</div>
+
+<div class="section">
+<h2>2. Approach A: CMDB-Based Discovery</h2>
+<p>If a CMDB exists and is reasonably current, the PQC scanner can use it as the primary inventory source. The integration has four layers.</p>
+</div>
+
+<div class="section">
+<h2>3. Approach A.1: How the Tool Connects</h2>
+<p>A CMDB is just software, and like all modern software it exposes ways for other programs to talk to it.</p>
+<table>
+<tr><th>Channel</th><th>Examples</th><th>Mechanism</th></tr>
+<tr><td>REST API</td><td>ServiceNow Table API, NetBox, Device42, BMC Helix</td><td>HTTPS request/JSON, OAuth2 or API key</td></tr>
+<tr><td>Direct database read</td><td>Custom CMDBs on Postgres, MySQL, MSSQL</td><td>Read-only SQL account</td></tr>
+<tr><td>File export</td><td>Legacy CMDBs, Excel-driven shops</td><td>Scheduled SFTP/S3 CSV or JSON dumps</td></tr>
+<tr><td>Event stream</td><td>ServiceNow webhooks, Kafka change-data-capture</td><td>Subscribe to CI add/update/delete events</td></tr>
+</table>
+<p>In all cases the tool uses a <strong>service account</strong> - a dedicated username and password or API key with read-only access, so normal user permissions do not matter and nothing breaks if the account is misused.</p>
+</div>
+
+<div class="section">
+<h2>4. Approach A.2: How the Tool Reads the CMDB</h2>
+<p>The CMDB does not return one big list. It returns separate classes (tables) that the tool has to join together.</p>
+<h3>Relevant CMDB classes</h3>
+<ul>
+<li><strong>Hardware/server CIs</strong> - hostname, IP, OS, environment (prod/dev), owner</li>
+<li><strong>Software CIs and software instances</strong> - what is installed where, with version (e.g., OpenSSL 1.0.2 on server X)</li>
+<li><strong>Certificate CIs</strong> - the cert itself: issuer, algorithm, key size, expiry, where it is deployed</li>
+<li><strong>Key, HSM, KMS CIs</strong> - where the private keys live</li>
+<li><strong>Application and service CIs</strong> - the business-level app that ties everything together</li>
+<li><strong>Relationship records</strong> - the links between all of the above</li>
+</ul>
+<h3>Reading pattern</h3>
+<ol>
+<li><strong>Schema discovery</strong> - ask the CMDB what classes and fields it has, cache the result.</li>
+<li><strong>Federated query</strong> - pull a CI, pull its relationships, pull the related CIs, repeat.</li>
+<li><strong>Initial full pull</strong> - batch, paginated.</li>
+<li><strong>Incremental sync</strong> - after the first run, fetch only CIs that changed since the last pull, using a timestamp like <code>last_updated &gt; X</code>.</li>
+</ol>
+</div>
+
+<div class="section">
+<h2>5. Approach A.3: How It Filters for PQC</h2>
+<p>The CMDB may hold over 100,000 CIs. The tool picks only the ones relevant to cryptography using four filter layers.</p>
+
+<h3>Layer 1 - Class filter</h3>
+<p>Keep only CIs that can host or use cryptography: servers, load balancers, VPN gateways, web apps, APIs, databases, certs, keys, HSMs, code repos, build pipelines.</p>
+
+<h3>Layer 2 - Attribute and keyword filter</h3>
+<p>Within those, keep CIs whose description, tags, or named fields contain words like <code>tls</code>, <code>ssl</code>, <code>cert</code>, <code>key</code>, <code>hsm</code>, <code>kms</code>, <code>ca</code>, <code>vpn</code>, <code>ssh</code>, <code>pgp</code>, <code>signature</code>, <code>jwt</code>. This cuts noise from servers that do not actually touch crypto.</p>
+
+<h3>Layer 3 - Relationship traversal</h3>
+<p>A CA server by itself is not the problem - it is a problem because 200 certificates depend on it. From a known crypto-relevant CI, the tool walks the relationship graph outward:</p>
+<ul>
+<li>Show every CI that depends on this OpenSSL instance</li>
+<li>Show every CI that uses a certificate issued by this CA</li>
+</ul>
+<p>This is what turns a list into a useful inventory.</p>
+
+<h3>Layer 4 - Priority filter</h3>
+<p>PQC migration takes years. Sort by <code>environment = production</code> and <code>business_criticality = high/critical</code> first. Dev, test, and internal-only systems come later.</p>
+
+<h3>PQC-specific narrowing</h3>
+<p>Within crypto, only <strong>asymmetric</strong> primitives are quantum-vulnerable - RSA, ECDSA, ECDH, DH, DSA. Symmetric primitives (AES, SHA-2/3) at sufficient key and hash sizes are considered safe. So the inventory focuses on:</p>
+<ul>
+<li>Public-key algorithms</li>
+<li>PKI and certificate chains</li>
+<li>Key exchange</li>
+<li>Digital signatures</li>
+<li>Code signing</li>
+<li>Protocols that use them: TLS, SSH, S/MIME, PGP, JWT, IPsec</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>6. Approach A.4: Mapping Component Relationships</h2>
+<p>This is the part that answers the question that matters most: <em>if I have to change this crypto thing, what else breaks?</em></p>
+
+<h3>The dependency graph</h3>
+<p>The CMDB already stores the relationships as typed edges. The PQC tool's job is to build a <strong>dependency graph</strong> where nodes are CIs and edges are relationships, then run traversals on it.</p>
+<pre>
+Business Service (e.g., "Customer Portal")
+  &darr; uses
+Application (e.g., "Web App v3.2")
+  &darr; has
+Software Instance (e.g., "OpenSSL 1.0.2")
+  &darr; runs on
+Host (e.g., "web-prod-42")
+  &darr; exposes
+Network Endpoint (TLS 1.2, :443)
+  &darr; presents
+Certificate (RSA-2048, expires 2027)
+  &darr; signed by
+Private Key
+</pre>
+
+<h3>The four traversals that drive PQC planning</h3>
+<table>
+<tr><th>Traversal</th><th>Question</th><th>Direction</th></tr>
+<tr><td>Impact analysis</td><td>If I disable RSA on this CA, what services break?</td><td>Walk Issued by / Used by backwards</td></tr>
+<tr><td>Blast radius</td><td>If I upgrade OpenSSL on this host, which apps are affected?</td><td>Walk Runs on / Installed on / Used by forward</td></tr>
+<tr><td>Crypto lineage</td><td>Which business services depend on a quantum-vulnerable algorithm?</td><td>Algorithm node up to business service</td></tr>
+<tr><td>Cert expiry vs migration window</td><td>Which certs will outlive the migration plan?</td><td>Compare cert expiry to migration roadmap</td></tr>
+</table>
+
+<h3>Graph storage pattern</h3>
+<p>Most teams do not run traversals inside the CMDB itself - CMDB UIs are not built for it. The common pattern is to extract a PQC-relevant slice of the CMDB (CIs, relationships, crypto findings) into a graph database. Neo4j is the typical choice. The PQC tool runs traversals against that graph, and the visualization is a graph view, not a table.</p>
+
+<h3>Write-back loop</h3>
+<p>Findings are pushed back into the CMDB as new CIs or as fields on existing CIs, linked via relationships. This is what closes the loop - the company's existing change-management, ticketing, and ownership workflows (which already live in the CMDB) automatically pick up the PQC remediation work. Nobody has to maintain a parallel system.</p>
+</div>
+
+<div class="section">
+<h2>7. Approach B: No-CMDB Discovery (From Scratch)</h2>
+<p>Most companies, even large ones, do not have a usable CMDB, or have one that is so stale it cannot be trusted. "No CMDB" is the more common starting point. Without a CMDB the tool has to <em>find</em> the assets instead of being told about them. It does this by looking at the technology from many different angles and then merging the results into one picture. No single method gives the full answer; you need several running in parallel and then reconciled.</p>
+<p>There are five discovery sources.</p>
+</div>
+
+<div class="section">
+<h2>8. Approach B.1: Network-Level Discovery</h2>
+<p>Scan the company's IP ranges to find live hosts, open ports, and running services. For each service that uses TLS or SSH, do a <strong>handshake</strong> - actually connect and read the certificate and the cryptographic parameters the server offers.</p>
+<p>Per endpoint this gives:</p>
+<ul>
+<li>The certificate (issuer, algorithm, key size, expiry, serial)</li>
+<li>The TLS version supported</li>
+<li>The key exchange and signature algorithms offered</li>
+<li>The cipher suites</li>
+</ul>
+<p>Tools: Nmap and Masscan for port scanning; testssl.sh, sslscan, and CryptCheck for the crypto handshake; or commercial scanners (Qualys, Tenable, Rapid7) that do the same.</p>
+<p>This is the fastest way to get a first inventory of public-facing and reachable crypto, but it only sees what is listening on a port.</p>
+</div>
+
+<div class="section">
+<h2>9. Approach B.2: Certificate Authority Queries</h2>
+<p>Every cert a company uses was <em>issued</em> by something. If you can ask the issuer, you have a complete list - not just the certs that happen to be on a live port today.</p>
+<p>Query the actual CA systems:</p>
+<ul>
+<li><strong>Active Directory Certificate Services (AD CS)</strong> - pull every cert it has issued, active, or revoked. This is usually where 70-80% of internal Windows certs live.</li>
+<li><strong>AWS Private CA, Azure Key Vault, Google CAS</strong> - same idea, via the cloud provider's API.</li>
+<li><strong>HashiCorp Vault PKI engine, Smallstep, EJBCA</strong> - for non-Microsoft PKI.</li>
+<li><strong>Public Certificate Transparency (CT) logs</strong> - passive, public databases of every cert issued by a public CA. Useful for catching certs you did not know existed (subsidiaries, shadow IT, dev teams using Let's Encrypt directly).</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>10. Approach B.3: Identity, Keys, and HSM Systems</h2>
+<p>Cryptographic keys are the most sensitive inventory item. Pull them from where they are stored:</p>
+<ul>
+<li><strong>HSM inventories</strong> - AWS CloudHSM, Azure Dedicated HSM, Thales Luna, Entrust nShield. Each has an admin API that lists keys, algorithms, and key sizes.</li>
+<li><strong>KMS systems</strong> - AWS KMS, Azure Key Vault, GCP KMS, HashiCorp Vault. List keys and their declared algorithms.</li>
+<li><strong>SSH infrastructure</strong> - SSH CA servers (if used), known_hosts files from config management, jump host inventories.</li>
+<li><strong>Code-signing systems</strong> - HSM-backed signing services, Sigstore, in-toto. These list which keys are allowed to sign what.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>11. Approach B.4: Software and Code Inventory</h2>
+<p>The actual crypto is implemented in libraries. You need to know which libraries, which versions, and where:</p>
+<ul>
+<li><strong>Endpoint agents</strong> - install a lightweight agent (osquery, Wazuh, Tanium, custom) on servers and workstations to enumerate installed crypto libraries: OpenSSL, BoringSSL, JCE/BouncyCastle, .NET CryptoAPI, Go crypto/tls, mbedTLS, wolfSSL, OpenSSH, LibreSSL, NSS, GnuTLS, libsodium.</li>
+<li><strong>Software Bill of Materials (SBOM)</strong> - pull SBOMs from the build pipeline (CycloneDX, SPDX format). This is the most accurate source because it is generated at build time.</li>
+<li><strong>Software Composition Analysis (SCA)</strong> - Snyk, Mend, Black Duck, Dependabot, Trivy. Scans source repos and container images for crypto library versions and known CVEs.</li>
+<li><strong>Static source analysis</strong> - grep, Semgrep, or custom rules to find direct crypto API usage, hardcoded keys, and custom crypto implementations. Important for catching hand-rolled crypto that scanners miss.</li>
+<li><strong>Container image scanning</strong> - Trivy, Grype, Clair. Most production crypto now runs in containers; the image SBOM is the inventory.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>12. Approach B.5: Cloud and SaaS Configuration</h2>
+<p>Modern infrastructure lives in cloud accounts and SaaS platforms. Their APIs can tell you what is configured:</p>
+<ul>
+<li><strong>Cloud asset inventory</strong> - AWS Config, Azure Resource Graph, GCP Cloud Asset Inventory. Lists every resource (load balancers with TLS, API Gateway, CloudFront) and its TLS settings.</li>
+<li><strong>Cloud IAM</strong> - which service accounts have key material, and where keys are stored.</li>
+<li><strong>SaaS configs</strong> - Okta, Auth0, Microsoft Entra ID, Workday, Salesforce. These have admin APIs that list signing keys, certs, and algorithm settings.</li>
+<li><strong>Email security</strong> - DNS records (SPF, DKIM, DMARC, MTA-STS) tell you which keys sign your email.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>13. The Phased Rollout Sequence</h2>
+<p>The order matters because each phase gives you information that makes the next phase more targeted.</p>
+
+<h3>Phase 1 - Public-facing crypto (low-hanging fruit)</h3>
+<p>External TLS scan of your known IP ranges, plus CT log monitoring, plus public DNS and repo scan. You get a first inventory in days, focused on the things a quantum attacker would hit first.</p>
+
+<h3>Phase 2 - Certificate authorities (the backbone)</h3>
+<p>Pull from AD CS, cloud CAs, Vault, EJBCA. This is the single biggest source of internal cert truth and usually reveals certs no one knew existed.</p>
+
+<h3>Phase 3 - Internal network scanning</h3>
+<p>Scan internal IP ranges for TLS and SSH endpoints. Cross-reference with Phase 2 to find:</p>
+<ul>
+<li>CAs that exist but are not actively issuing (good to know)</li>
+<li>Certs found in the wild that are not in any CA (orphans - a security red flag)</li>
+<li>Endpoints with no cert at all (probably still using defaults)</li>
+</ul>
+
+<h3>Phase 4 - Key stores and HSMs</h3>
+<p>Enumerate KMS, HSM, Vault. This gives you the <em>asymmetric private keys</em> - the actual PQC migration target.</p>
+
+<h3>Phase 5 - Software and SBOM</h3>
+<p>Deploy endpoint agents or pull SBOMs from build pipelines. This gives you the library versions that need upgrading.</p>
+
+<h3>Phase 6 - Code and cloud</h3>
+<p>Static analysis for hand-rolled crypto, cloud config audits, SaaS key inventories.</p>
+</div>
+
+<div class="section">
+<h2>14. Building the Picture: Reconciliation and Inference</h2>
+<p>Without a CMDB, you do not have a relationship graph - you have five overlapping lists. The tool's job is to reconcile them into one inventory.</p>
+
+<h3>Deduplication</h3>
+<p>The same certificate can show up in three sources: the network scan saw it on port 443, AD CS issued it, and Vault has the key. The tool needs to recognize it is the same cert (by serial number, fingerprint, or subject+SAN match) and merge the records.</p>
+
+<h3>Relationship inference</h3>
+<p>This is where you build the graph that the CMDB would have given you. You infer relationships from evidence:</p>
+<table>
+<tr><th>Evidence</th><th>Inferred relationship</th></tr>
+<tr><td>Same hostname in network scan and software inventory</td><td>Software X runs on host Y</td></tr>
+<tr><td>Cert CN/SAN matches a service hostname</td><td>Cert is used by service Y</td></tr>
+<tr><td>Issuer DN matches a CA's CN</td><td>Cert was issued by CA Z</td></tr>
+<tr><td>Library X found on host Y via SBOM, and host Y is in the software inventory of service Z</td><td>Service Z depends on library X</td></tr>
+<tr><td>Same owner tag, same project label, same cost center</td><td>Owned by team T</td></tr>
+<tr><td>IP in same subnet, same VLAN tag, same cloud VPC</td><td>Network locality</td></tr>
+</table>
+<p>These inferences are probabilistic, not certain. The tool should assign a <strong>confidence score</strong> to each inferred relationship so a human can review the weak ones.</p>
+
+<h3>Continuous refresh</h3>
+<p>Unlike a CMDB pull (where the CMDB is the source of truth and you just sync), from-scratch discovery has to run on a schedule: weekly network scans, daily CA pulls, continuous SBOM ingestion, real-time CT log monitoring. Assets change, certs get reissued, libraries get patched.</p>
+</div>
+
+<div class="section">
+<h2>15. Practical Realities</h2>
+<ul>
+<li><strong>Pick the lowest-friction sources first.</strong> CT logs, AD CS queries, and SBOM feeds are often available in days. Endpoint agents and full network scans take months of deployment.</li>
+<li><strong>You will find things nobody owns.</strong> A cert on a server no one remembers. A private key in a developer's home directory. A VPN gateway in a subsidiary's network. This is normal and one of the main reasons to do the inventory.</li>
+<li><strong>Build a real asset database as you go.</strong> Even if you started with no CMDB, by month 6 you should have a PQC inventory database that is, in effect, a crypto-focused CMDB. This becomes the foundation for everything else - migration tracking, remediation tickets, executive reporting.</li>
+<li><strong>Manual surveys still help.</strong> For areas scanners cannot reach (third-party vendors, embedded devices, legacy mainframes), a questionnaire to system owners is the only way. The tool should support importing those answers.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>16. CMDB vs No-CMDB: Trade-offs</h2>
+<table>
+<tr><th>Dimension</th><th>CMDB-based</th><th>No-CMDB (from scratch)</th></tr>
+<tr><td>Time to first inventory</td><td>Days (if CMDB is good)</td><td>Weeks to months</td></tr>
+<tr><td>Relationship graph</td><td>Authoritative, already built</td><td>Inferred from evidence, with confidence scores</td></tr>
+<tr><td>Ownership data</td><td>Usually present in CMDB</td><td>Often missing; requires manual surveys</td></tr>
+<tr><td>Coverage of crypto</td><td>Only what is registered in the CMDB</td><td>All crypto in the organization, including shadow IT</td></tr>
+<tr><td>Continuous sync</td><td>Incremental pull, simple</td><td>Scheduled scans, more moving parts</td></tr>
+<tr><td>Data quality risk</td><td>Trusts CMDB; garbage in, garbage out</td><td>Each source has its own quality issues</td></tr>
+<tr><td>Best fit</td><td>Mature enterprise with good CMDB hygiene</td><td>Most companies, especially at the start</td></tr>
+</table>
+<p>Realistic recommendation: do not treat these as alternatives. The CMDB (if it exists) is the inventory backbone; the from-scratch sources fill the gaps. A mature PQC scanner uses both in parallel - CMDB for the graph and ownership, network/CA/SBOM sources for the actual crypto facts the CMDB does not record.</p>
+</div>
+
+<div class="section">
+<h2>17. Glossary</h2>
+<p><strong>CI:</strong> Configuration Item - a single tracked asset in a CMDB.</p>
+<p><strong>CMDB:</strong> Configuration Management Database.</p>
+<p><strong>CT logs:</strong> Certificate Transparency logs - public, append-only records of certificates issued by public CAs.</p>
+<p><strong>Federated query:</strong> A query that pulls related records across multiple CMDB classes in one operation.</p>
+<p><strong>HSM:</strong> Hardware Security Module - a physical device that stores and uses cryptographic keys.</p>
+<p><strong>HSM inventory:</strong> The list of keys, algorithms, and key sizes held by an HSM.</p>
+<p><strong>Incremental sync:</strong> Fetching only records that changed since the last pull.</p>
+<p><strong>KEM:</strong> Key Encapsulation Mechanism - a post-quantum public-key primitive for key exchange.</p>
+<p><strong>KMS:</strong> Key Management Service - a software system for storing and using cryptographic keys.</p>
+<p><strong>PKI:</strong> Public Key Infrastructure.</p>
+<p><strong>PQC:</strong> Post-Quantum Cryptography.</p>
+<p><strong>SBOM:</strong> Software Bill of Materials - a machine-readable list of components in a software build.</p>
+<p><strong>SCA:</strong> Software Composition Analysis - tools that detect libraries and known vulnerabilities in source code or container images.</p>
+<p><strong>Service account:</strong> A non-human login used by software, typically with scoped permissions.</p>
+<p><strong>Schema discovery:</strong> The act of asking a system what classes and fields it has, before querying data.</p>
+<p><strong>Traversals:</strong> Queries that walk a graph along its edges to find related nodes.</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PQC Scanner Technical Strategy — v2</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --surface-2: #f0f4f8;
+    --border: #dde3ec;
+    --border-light: #eaf0f7;
+    --text: #0f1923;
+    --text-secondary: #4a5568;
+    --text-muted: #8a95a3;
+    --accent: #0062ff;
+    --accent-light: #e8f0ff;
+    --accent-2: #00b4d8;
+    --green: #00875a;
+    --green-bg: #e6f7f1;
+    --yellow: #b45309;
+    --yellow-bg: #fef3cd;
+    --red: #c0392b;
+    --red-bg: #fdecea;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --radius: 6px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 14px;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .topbar-logo::before {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  .topbar-divider { width: 1px; height: 20px; background: var(--border); }
+  .topbar-title { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+  .version-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 2px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; min-height: calc(100vh - 52px); }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 52px;
+    height: calc(100vh - 52px);
+    overflow-y: auto;
+  }
+  .sidebar-section { margin-bottom: 24px; }
+  .sidebar-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0 20px 8px;
+  }
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 20px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    line-height: 1.4;
+  }
+  .sidebar-link:hover { background: var(--surface-2); color: var(--text); }
+  .sidebar-link.active {
+    color: var(--accent);
+    background: var(--accent-light);
+    border-left-color: var(--accent);
+  }
+  .sidebar-link .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .sidebar-link.active .dot { background: var(--accent); }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    flex: 1;
+    padding: 40px 48px;
+    max-width: 1100px;
+    overflow: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0062ff 0%, #0096c7 100%);
+    border-radius: 10px;
+    padding: 36px 40px;
+    color: white;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    right: -40px;
+    top: -40px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    right: 60px;
+    bottom: -60px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+    line-height: 1.25;
+  }
+  .hero p {
+    font-size: 13.5px;
+    opacity: 0.85;
+    max-width: 600px;
+    line-height: 1.65;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+  .hero-stat { display: flex; flex-direction: column; gap: 2px; }
+  .hero-stat-val {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .hero-stat-label { font-size: 11px; opacity: 0.7; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 48px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 28px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h3::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── LAYER ACCORDION ── */
+  .layer-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .layer-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .layer-header:hover { background: var(--surface-2); }
+  .layer-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .layer-badge.l7 { background: #dbeafe; color: #1d4ed8; }
+  .layer-badge.l6 { background: #ede9fe; color: #6d28d9; }
+  .layer-badge.l5 { background: #fce7f3; color: #be185d; }
+  .layer-badge.l4 { background: #dcfce7; color: #15803d; }
+  .layer-badge.l3 { background: #fef9c3; color: #854d0e; }
+  .layer-badge.l2 { background: #ffedd5; color: #c2410c; }
+  .layer-badge.l1 { background: #fde2e2; color: #b91c1c; }
+  .layer-badge.lx { background: #f0f4f8; color: #475569; }
+  .layer-name { font-size: 13.5px; font-weight: 600; flex: 1; }
+  .layer-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .layer-chevron {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+  }
+  .layer-block.open .layer-chevron { transform: rotate(180deg); }
+  .layer-body {
+    display: none;
+    border-top: 1px solid var(--border-light);
+    padding: 0;
+  }
+  .layer-block.open .layer-body { display: block; }
+
+  /* ── TABLES ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  thead th {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 10px 16px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.12s;
+  }
+  tbody tr:hover { background: #f7faff; }
+  tbody tr:last-child { border-bottom: none; }
+  td {
+    padding: 10px 16px;
+    vertical-align: top;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  td:first-child { font-weight: 500; }
+  .mono-tag {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    display: inline-block;
+    margin: 1px;
+  }
+  .text-muted { color: var(--text-muted); font-style: italic; }
+
+  /* ── SCAN BADGES ── */
+  .scan-yes {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--green-bg);
+    color: var(--green);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .scan-no {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: #f1f3f5;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .scan-partial {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--yellow-bg);
+    color: var(--yellow);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .scan-low {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: #f5f0ff;
+    color: #6d28d9;
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .pqc-high {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--red-bg);
+    color: var(--red);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .pqc-medium {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--yellow-bg);
+    color: var(--yellow);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .pqc-low {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    background: #f0f4f8;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  /* ── CALLOUT ── */
+  .callout {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 14px 18px;
+    margin: 20px 0;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .callout strong { color: var(--accent); }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  .flow {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    min-width: 540px;
+  }
+  .flow-node {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 480px;
+  }
+  .flow-node.primary {
+    background: var(--accent-light);
+    border-color: #93c5fd;
+    color: var(--accent);
+  }
+  .flow-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 20px;
+    position: relative;
+  }
+  .flow-connector::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .flow-step {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    margin: 4px 0 4px 16px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .flow-arrow {
+    font-size: 16px;
+    color: var(--border);
+    text-align: center;
+    padding: 2px 0 2px 20px;
+    line-height: 1;
+  }
+
+  /* ── PRIORITY LIST ── */
+  .priority-list { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+  .priority-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    transition: box-shadow 0.15s;
+  }
+  .priority-item:hover { box-shadow: var(--shadow); }
+  .priority-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-light);
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .priority-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .priority-text strong { color: var(--text); }
+
+  /* ── SUMMARY TABLE ── */
+  .summary-grid {
+    display: grid;
+    gap: 1px;
+    background: var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .summary-row {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    background: var(--surface);
+  }
+  .summary-row:first-child .summary-q,
+  .summary-row:first-child .summary-a {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 10px 16px;
+  }
+  .summary-q {
+    padding: 12px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+    border-right: 1px solid var(--border-light);
+    background: #fafcff;
+  }
+  .summary-a {
+    padding: 12px 16px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+  .summary-row:hover .summary-q,
+  .summary-row:hover .summary-a { background: #f7faff; }
+
+  /* ── CHIPS ROW ── */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    background: var(--surface);
+  }
+
+  /* ── TABS ── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 9px 18px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── PREFORMATTED ── */
+  .code-block {
+    background: #0f1923;
+    color: #a8d8f0;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 20px 24px;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    line-height: 1.7;
+    margin: 12px 0;
+    border: 1px solid #1e2d3d;
+  }
+  .code-block .c-arrow { color: #3d7ab5; }
+  .code-block .c-node { color: #7ec8e3; font-weight: 600; }
+  .code-block .c-proto { color: #48bb78; }
+  .code-block .c-step { color: #f6ad55; }
+
+  /* ── INSIGHT BOX ── */
+  .insight {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 20px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .insight-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #b45309;
+    margin-bottom: 6px;
+  }
+
+  /* ── DEFER / OOS BOXES ── */
+  .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+  .scope-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .scope-box-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+  .scope-box-title.defer { color: var(--yellow); }
+  .scope-box-title.oos { color: var(--text-muted); }
+  .scope-item {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-light);
+    line-height: 1.4;
+  }
+  .scope-item:last-child { border-bottom: none; }
+
+  /* ── HOSTING TABLE ── */
+  .hosting-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  /* ── SEARCH BAR ── */
+  .search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .search-input {
+    flex: 1;
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 8px 14px 8px 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border 0.15s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%238a95a3' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 10px center;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .filter-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cdd5e0; border-radius: 3px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { padding: 24px 20px; }
+    .scope-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">PQC</div>
+    <div class="topbar-divider"></div>
+    <span class="topbar-title">Scanner Technical Strategy</span>
+    <span class="version-badge">v2</span>
+  </div>
+  <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted);">Technical Reference · v2</div>
+</header>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Overview</div>
+    <a class="sidebar-link active" onclick="scrollTo('hero')"><span class="dot"></span>Introduction</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Section 1</div>
+    <a class="sidebar-link" onclick="scrollTo('s1')"><span class="dot"></span>OSI Layer Components</a>
+    <a class="sidebar-link" onclick="scrollTo('s1a')"><span class="dot"></span>Web App Data Flow</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Section 2</div>
+    <a class="sidebar-link" onclick="scrollTo('s2')"><span class="dot"></span>Hosting Locations</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Section 3</div>
+    <a class="sidebar-link" onclick="scrollTo('s3')"><span class="dot"></span>Scan Priority</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Summary</div>
+    <a class="sidebar-link" onclick="scrollTo('summary')"><span class="dot"></span>Summary Table</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero" id="hero">
+    <div class="hero-tag">PQC Scanner · Technical Strategy · v2</div>
+    <h1>Post-Quantum Cryptography<br>Scanner Architecture</h1>
+    <p>Consolidated analysis of OSI-layer component inventory, CMDB federation, scanner architecture, and feature comparison. This version adds Protocol Used columns, non-PQC components, and a deep dive on Layer 7 web application flows.</p>
+    <div class="hero-meta">
+      <div class="hero-stat"><span class="hero-stat-val">7</span><span class="hero-stat-label">OSI Layers Analyzed</span></div>
+      <div class="hero-stat"><span class="hero-stat-val">12</span><span class="hero-stat-label">Scan Priorities</span></div>
+      <div class="hero-stat"><span class="hero-stat-val">6</span><span class="hero-stat-label">Hosting Models</span></div>
+      <div class="hero-stat"><span class="hero-stat-val">80%+</span><span class="hero-stat-label">L7 + L4 Crypto Surface</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- SECTION 1 -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Components at Each OSI Layer</h2>
+    </div>
+
+    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;line-height:1.65;">The OSI model frames where cryptographic operations live. Every layer from 1 to 7 has components that may use or implement cryptography. Non-crypto components are listed explicitly so the scanner can exclude them and reduce noise.</p>
+
+    <!-- LAYER 7 -->
+    <div class="layer-block open" id="layer7">
+      <div class="layer-header" onclick="toggleLayer(this)">
+        <span class="layer-badge l7">L7</span>
+        <span class="layer-name">Application Layer</span>
+        <span class="layer-count">17 components</span>
+        <span class="layer-chevron">▼</span>
+      </div>
+      <div class="layer-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Example</th><th>Location</th><th>Protocol</th><th>Crypto</th><th>Scan?</th></tr></thead>
+            <tbody>
+              <tr><td>Web apps (in-house)</td><td>Custom portals, ERPs</td><td>On-prem / cloud / SaaS</td><td><span class="mono-tag">HTTP/1.1</span><span class="mono-tag">HTTP/2</span><span class="mono-tag">QUIC</span><span class="mono-tag">WebSocket</span></td><td>TLS, JWT, session signing</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Web apps (3rd-party)</td><td>Salesforce, Workday, M365</td><td>Vendor SaaS</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">SAML</span><span class="mono-tag">OIDC</span></td><td>TLS to vendor, SSO via SAML/OIDC</td><td><span class="scan-partial">~ PARTIAL</span></td></tr>
+              <tr><td>APIs (REST/GraphQL/gRPC)</td><td>Internal microservices</td><td>Cloud / on-prem / edge</td><td><span class="mono-tag">HTTP/2</span><span class="mono-tag">gRPC</span><span class="mono-tag">GraphQL</span></td><td>TLS, mTLS, JWT/JWS, OAuth2</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>3rd-party microservices</td><td>Stripe, Twilio, SendGrid</td><td>Vendor SaaS / cloud</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">gRPC</span><span class="mono-tag">Webhook</span></td><td>TLS, API key, OAuth2, HMAC</td><td><span class="scan-partial">~ PARTIAL</span></td></tr>
+              <tr><td>SaaS config surfaces</td><td>Okta, Auth0, Entra ID</td><td>Vendor SaaS</td><td><span class="mono-tag">HTTPS (admin API)</span></td><td>Signing keys, SAML certs</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Email (S/MIME)</td><td>Outlook, Gmail</td><td>Endpoint / gateway</td><td><span class="mono-tag">SMTP</span><span class="mono-tag">IMAPS</span><span class="mono-tag">EWS</span></td><td>S/MIME signing, DKIM, PGP</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Load balancers (L7)</td><td>Nginx, AWS ALB, Cloudflare</td><td>Edge / cloud</td><td><span class="mono-tag">HTTP/1.1</span><span class="mono-tag">HTTP/2</span><span class="mono-tag">HTTP/3</span></td><td>TLS termination, WAF</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>CDN / Edge</td><td>Cloudflare, Akamai, CloudFront</td><td>Edge</td><td><span class="mono-tag">HTTP/2</span><span class="mono-tag">HTTP/3 (QUIC)</span></td><td>TLS termination, cert mgmt</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Webhooks (inbound)</td><td>Stripe, GitHub callbacks</td><td>Cloud / on-prem</td><td><span class="mono-tag">HTTPS POST</span><span class="mono-tag">HMAC</span></td><td>TLS, HMAC-SHA256 verification</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Message queues</td><td>Kafka, RabbitMQ, SQS</td><td>Cloud / on-prem</td><td><span class="mono-tag">AMQP</span><span class="mono-tag">Kafka</span><span class="mono-tag">HTTPS</span></td><td>TLS, SASL auth, HMAC (SQS)</td><td><span class="scan-partial">~ PARTIAL</span></td></tr>
+              <tr><td>Caching layers</td><td>Redis, Memcached, ElastiCache</td><td>Cloud / on-prem</td><td><span class="mono-tag">Redis</span><span class="mono-tag">Memcached</span><span class="mono-tag">HTTPS</span></td><td>TLS (Redis 6+), AES at-rest, IAM auth</td><td><span class="scan-partial">~ PARTIAL</span></td></tr>
+              <tr><td>Database connections</td><td>PostgreSQL, MySQL, Oracle</td><td>On-prem / cloud</td><td><span class="mono-tag">PG wire</span><span class="mono-tag">MySQL wire</span><span class="mono-tag">TDS</span><span class="mono-tag">TNS</span></td><td>TLS (DBSS), mTLS, TDE</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Web servers</td><td>Nginx, Apache, IIS, Caddy</td><td>On-prem / cloud</td><td><span class="mono-tag">HTTP/1.1</span><span class="mono-tag">HTTP/2</span><span class="mono-tag">HTTP/3</span></td><td>TLS termination, cert mgmt, OCSP stapling</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Service mesh (L7)</td><td>Istio Envoy, Linkerd, Consul</td><td>Kubernetes / VM</td><td><span class="mono-tag">HTTP/2</span><span class="mono-tag">gRPC</span></td><td>mTLS, JWT validation, authz policies</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Auth gateways</td><td>Keycloak, Okta, Azure AD App Proxy</td><td>Cloud / on-prem</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">SAML</span><span class="mono-tag">OIDC</span></td><td>TLS, SAML signing, OIDC signing, mTLS</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Container orchestration</td><td>Kubernetes API, Docker daemon</td><td>Cloud / on-prem</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">gRPC (containerd)</span></td><td>TLS, client cert auth, admission webhooks</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Static content / file servers</td><td>Apache httpd, IIS static, S3</td><td>Cloud / on-prem</td><td><span class="mono-tag">HTTP/1.1</span><span class="mono-tag">HTTP/2</span></td><td>TLS (if HTTPS), basic auth</td><td><span class="scan-low">↓ LOW</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 6 -->
+    <div class="layer-block" id="layer6">
+      <div class="layer-header" onclick="toggleLayer(this)">
+        <span class="layer-badge l6">L6</span>
+        <span class="layer-name">Presentation Layer</span>
+        <span class="layer-count">5 components</span>
+        <span class="layer-chevron">▼</span>
+      </div>
+      <div class="layer-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Example</th><th>Location</th><th>Protocol</th><th>Crypto</th><th>Scan?</th></tr></thead>
+            <tbody>
+              <tr><td>Serialization frameworks</td><td>Protocol Buffers, Avro, JWE</td><td>App runtime</td><td><span class="mono-tag">gRPC</span><span class="mono-tag">Thrift binary</span><span class="mono-tag">Avro/Kafka</span></td><td>Field-level encryption, JWE</td><td><span class="scan-yes">✓ YES (SAST/SBOM)</span></td></tr>
+              <tr><td>Encoding libraries</td><td>BouncyCastle, Apache Commons</td><td>App runtime</td><td><span class="mono-tag">N/A (library)</span></td><td>Encoding wrapping crypto</td><td><span class="scan-yes">✓ YES (SBOM)</span></td></tr>
+              <tr><td>Image/document processing</td><td>LibreOffice, ImageMagick</td><td>App runtime</td><td><span class="mono-tag">N/A (library)</span></td><td>Parsing embedded encryption</td><td><span class="scan-low">↓ LOW</span></td></tr>
+              <tr><td>Compression libraries</td><td>zlib, gzip, zstd, Brotli</td><td>App runtime</td><td><span class="mono-tag">N/A (library)</span></td><td>None (compression, not crypto)</td><td><span class="scan-no">— NO</span></td></tr>
+              <tr><td>Logging frameworks</td><td>Log4j, Serilog, Winston</td><td>App runtime</td><td><span class="mono-tag">Syslog</span><span class="mono-tag">HTTPS</span><span class="mono-tag">Kafka</span></td><td>TLS in transit, HMAC (integrity)</td><td><span class="scan-low">↓ LOW</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 5 -->
+    <div class="layer-block" id="layer5">
+      <div class="layer-header" onclick="toggleLayer(this)">
+        <span class="layer-badge l5">L5</span>
+        <span class="layer-name">Session Layer</span>
+        <span class="layer-count">7 components</span>
+        <span class="layer-chevron">▼</span>
+      </div>
+      <div class="layer-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Example</th><th>Location</th><th>Protocol</th><th>Crypto</th><th>Scan?</th></tr></thead>
+            <tbody>
+              <tr><td>Session managers</td><td>Redis sessions, JWT issuers, SAML IdP</td><td>Cloud / on-prem</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">Redis</span><span class="mono-tag">SAML</span></td><td>Signing, session token crypto</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>SSO / federation gateways</td><td>Okta, ADFS, PingFederate</td><td>Cloud / on-prem</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">SAML</span><span class="mono-tag">OIDC</span><span class="mono-tag">OAuth2</span></td><td>SAML signing, OIDC signing, mTLS</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>RPC frameworks</td><td>gRPC, Thrift, RMI</td><td>App runtime</td><td><span class="mono-tag">gRPC (HTTP/2)</span><span class="mono-tag">RMI/TCP</span></td><td>mTLS, channel encryption</td><td><span class="scan-yes">✓ YES (SBOM)</span></td></tr>
+              <tr><td>WebSocket servers</td><td>Socket.IO, ws, SignalR</td><td>App runtime</td><td><span class="mono-tag">ws://</span><span class="mono-tag">wss://</span></td><td>TLS (wss://), JWT auth</td><td><span class="scan-yes">✓ YES (wss)</span></td></tr>
+              <tr><td>VPN clients / tunnels</td><td>OpenVPN, WireGuard, AnyConnect</td><td>Endpoint</td><td><span class="mono-tag">OpenVPN</span><span class="mono-tag">WireGuard/UDP</span><span class="mono-tag">IPsec</span><span class="mono-tag">DTLS</span></td><td>TLS, ChaCha20-Poly1305, IKEv2, ESP</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>DNS resolvers (internal)</td><td>BIND, Unbound, Windows DNS</td><td>On-prem / cloud</td><td><span class="mono-tag">DNS/UDP</span><span class="mono-tag">DoH</span><span class="mono-tag">DoT</span></td><td>DNSSEC (if enabled), DoH/DoT TLS</td><td><span class="scan-partial">~ PARTIAL</span></td></tr>
+              <tr><td>Network proxies (forward)</td><td>Squid, Zscaler, Blue Coat</td><td>Edge / on-prem</td><td><span class="mono-tag">HTTP CONNECT</span><span class="mono-tag">HTTPS tunnel</span></td><td>TLS interception (MITB), TLS transit</td><td><span class="scan-yes">✓ YES</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 4 -->
+    <div class="layer-block" id="layer4">
+      <div class="layer-header" onclick="toggleLayer(this)">
+        <span class="layer-badge l4">L4</span>
+        <span class="layer-name">Transport Layer</span>
+        <span class="layer-count">7 components</span>
+        <span class="layer-chevron">▼</span>
+      </div>
+      <div class="layer-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Example</th><th>Location</th><th>Protocol</th><th>Crypto</th><th>Scan?</th></tr></thead>
+            <tbody>
+              <tr><td>TLS terminators</td><td>Nginx, HAProxy, F5, AWS ALB</td><td>Edge / DMZ / cloud</td><td><span class="mono-tag">TCP</span><span class="mono-tag">TLS handshake</span></td><td>TLS handshake, certs, cipher suites</td><td><span class="scan-yes">✓ YES (HIGH)</span></td></tr>
+              <tr><td>Service mesh sidecars</td><td>Istio, Linkerd</td><td>Kubernetes</td><td><span class="mono-tag">TCP</span><span class="mono-tag">TLS</span></td><td>mTLS, cert rotation</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>API gateways</td><td>Kong, Apigee, AWS API GW</td><td>Edge / cloud</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">gRPC</span><span class="mono-tag">WebSocket</span></td><td>TLS, JWT validation, mTLS</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>TCP/UDP load balancers</td><td>AWS NLB, GCP LB, F5 LTM</td><td>Edge / cloud</td><td><span class="mono-tag">TCP</span><span class="mono-tag">UDP</span></td><td>None (L4 pass-through)</td><td><span class="scan-no">— NO</span></td></tr>
+              <tr><td>NAT devices</td><td>Enterprise NAT gateways, cloud NAT</td><td>Edge / cloud</td><td><span class="mono-tag">TCP</span><span class="mono-tag">UDP</span><span class="mono-tag">ICMP</span></td><td>None (address translation only)</td><td><span class="scan-no">— NO</span></td></tr>
+              <tr><td>TCP/IP stack (kernel)</td><td>Linux, Windows kernel networking</td><td>Every host</td><td><span class="mono-tag">TCP</span><span class="mono-tag">UDP</span><span class="mono-tag">ICMP</span></td><td>TCP MD5 option (BGP), TCP-AO</td><td><span class="scan-no">— NO</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 3 -->
+    <div class="layer-block" id="layer3">
+      <div class="layer-header" onclick="toggleLayer(this)">
+        <span class="layer-badge l3">L3</span>
+        <span class="layer-name">Network Layer</span>
+        <span class="layer-count">8 components</span>
+        <span class="layer-chevron">▼</span>
+      </div>
+      <div class="layer-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Example</th><th>Protocol</th><th>Crypto</th><th>Scan?</th></tr></thead>
+            <tbody>
+              <tr><td>IPsec VPN gateways</td><td>Cisco ASA, Palo Alto, strongSwan</td><td><span class="mono-tag">IKEv2</span><span class="mono-tag">ESP</span><span class="mono-tag">UDP/500</span></td><td>IKEv2, ESP, RSA/ECDSA</td><td><span class="scan-yes">✓ YES (complex)</span></td></tr>
+              <tr><td>DNSSEC validators</td><td>BIND, Unbound, Windows DNS</td><td><span class="mono-tag">DNS/UDP</span><span class="mono-tag">TCP/53</span></td><td>DSA/ECDSA signing keys</td><td><span class="scan-yes">✓ YES (key inv.)</span></td></tr>
+              <tr><td>Routers with MACsec</td><td>Enterprise switches/routers</td><td><span class="mono-tag">Ethernet 802.1AE</span></td><td>MACsec key agreement</td><td><span class="scan-partial">~ LIMITED</span></td></tr>
+              <tr><td>Firewalls (stateful)</td><td>Palo Alto, Fortinet, Cisco ASA</td><td><span class="mono-tag">TCP/UDP/ICMP</span></td><td>TLS inspection (if enabled), IPsec</td><td><span class="scan-partial">~ PARTIAL</span></td></tr>
+              <tr><td>SD-WAN controllers</td><td>Viptela, Silver Peak</td><td><span class="mono-tag">IPsec</span><span class="mono-tag">VXLAN</span><span class="mono-tag">GRE</span></td><td>IPsec, AES-GCM (overlay)</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Standard routers</td><td>Cisco ISR, Juniper MX, Arista</td><td><span class="mono-tag">OSPF</span><span class="mono-tag">BGP</span><span class="mono-tag">EIGRP</span></td><td>OSPF MD5 auth (not PQC-relevant)</td><td><span class="scan-no">— NO</span></td></tr>
+              <tr><td>VLAN / VXLAN / GRE</td><td>Enterprise network overlays</td><td><span class="mono-tag">802.1Q</span><span class="mono-tag">VXLAN/UDP</span><span class="mono-tag">GRE</span></td><td>None (clear-text encapsulation)</td><td><span class="scan-no">— NO</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 2 -->
+    <div class="layer-block" id="layer2">
+      <div class="layer-header" onclick="toggleLayer(this)">
+        <span class="layer-badge l2">L2</span>
+        <span class="layer-name">Data Link Layer</span>
+        <span class="layer-count">8 components</span>
+        <span class="layer-chevron">▼</span>
+      </div>
+      <div class="layer-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Example</th><th>Protocol</th><th>Crypto</th><th>Scan?</th></tr></thead>
+            <tbody>
+              <tr><td>802.1X authenticators</td><td>Cisco ISE, Aruba ClearPass</td><td><span class="mono-tag">802.1X EAP</span><span class="mono-tag">RADIUS</span></td><td>EAP-TLS, RADIUS, cert-based auth</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>MACsec devices</td><td>Switches with MACsec</td><td><span class="mono-tag">Ethernet 802.1AE</span></td><td>MACsec</td><td><span class="scan-partial">~ LIMITED</span></td></tr>
+              <tr><td>Wi-Fi (WPA3-Enterprise)</td><td>Enterprise APs</td><td><span class="mono-tag">802.11</span><span class="mono-tag">802.1X</span><span class="mono-tag">RADIUS</span></td><td>802.1X with certs, SAE</td><td><span class="scan-yes">✓ YES (RADIUS)</span></td></tr>
+              <tr><td>Wi-Fi (WPA2/WPA3-Personal)</td><td>Home / small office APs</td><td><span class="mono-tag">802.11</span><span class="mono-tag">PSK</span></td><td>WPA2-PSK (AES-CCMP), WPA3-SAE</td><td><span class="scan-no">— NO (PSK)</span></td></tr>
+              <tr><td>Switches (standard)</td><td>Cisco Catalyst, Aruba</td><td><span class="mono-tag">Ethernet 802.3</span><span class="mono-tag">LLDP</span></td><td>None (clear-text L2)</td><td><span class="scan-no">— NO</span></td></tr>
+              <tr><td>Hubs / repeaters</td><td>Legacy equipment</td><td><span class="mono-tag">Ethernet 802.3</span></td><td>None</td><td><span class="scan-no">— NO</span></td></tr>
+              <tr><td>ARP / NDP</td><td>Standard L2 protocols</td><td><span class="mono-tag">ARP</span><span class="mono-tag">NDP/IPv6</span></td><td>None (or SEND, rarely used)</td><td><span class="scan-no">— NO</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYER 1 -->
+    <div class="layer-block" id="layer1">
+      <div class="layer-header" onclick="toggleLayer(this)">
+        <span class="layer-badge l1">L1</span>
+        <span class="layer-name">Physical Layer</span>
+        <span class="layer-count">9 components</span>
+        <span class="layer-chevron">▼</span>
+      </div>
+      <div class="layer-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Example</th><th>Protocol</th><th>Crypto</th><th>Scan?</th></tr></thead>
+            <tbody>
+              <tr><td>Hardware Security Modules</td><td>Thales Luna, AWS CloudHSM</td><td><span class="mono-tag">PKCS#11</span><span class="mono-tag">KMIP</span></td><td>Key storage, signing operations</td><td><span class="scan-yes">✓ YES (HIGH)</span></td></tr>
+              <tr><td>TPM chips</td><td>Server/endpoint TPM 2.0</td><td><span class="mono-tag">TPM 2.0 TSS</span></td><td>Disk encryption keys, attestation</td><td><span class="scan-yes">✓ YES (HIGH)</span></td></tr>
+              <tr><td>Smart cards / PIV</td><td>User PIV tokens</td><td><span class="mono-tag">PIV</span><span class="mono-tag">PKCS#11</span><span class="mono-tag">ISO 7816</span></td><td>User auth, signing</td><td><span class="scan-yes">✓ YES (slow)</span></td></tr>
+              <tr><td>Secure Boot / UEFI</td><td>Every modern device</td><td><span class="mono-tag">UEFI Secure Boot</span></td><td>Boot integrity chain</td><td><span class="scan-yes">✓ YES (firmware)</span></td></tr>
+              <tr><td>FIDO2 / YubiKey</td><td>Hardware tokens</td><td><span class="mono-tag">FIDO2/WebAuthn</span><span class="mono-tag">CTAP2</span></td><td>Auth, signing</td><td><span class="scan-yes">✓ YES (firmware)</span></td></tr>
+              <tr><td>Fibre Channel switches</td><td>Brocade, Cisco MDS</td><td><span class="mono-tag">FC-SW</span><span class="mono-tag">FC-SP</span></td><td>FC-SP (DH-CHAP, rarely enabled)</td><td><span class="scan-no">— NO</span></td></tr>
+              <tr><td>Serial / console access</td><td>Serial ports, USB console</td><td><span class="mono-tag">RS-232</span><span class="mono-tag">USB serial</span></td><td>None (clear-text)</td><td><span class="scan-no">— NO</span></td></tr>
+              <tr><td>Physical access control</td><td>Badge readers, biometrics</td><td><span class="mono-tag">Wiegand</span><span class="mono-tag">OSDP</span></td><td>OSDP v2 (AES-128, rarely used)</td><td><span class="scan-no">— NO (physical)</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CROSS-LAYER -->
+    <div class="layer-block" id="layerX">
+      <div class="layer-header" onclick="toggleLayer(this)">
+        <span class="layer-badge lx">CROSS</span>
+        <span class="layer-name">Cross-Layer (Cloud / PKI / DevOps)</span>
+        <span class="layer-count">20 components</span>
+        <span class="layer-chevron">▼</span>
+      </div>
+      <div class="layer-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Example</th><th>Protocol</th><th>Crypto</th><th>Scan?</th></tr></thead>
+            <tbody>
+              <tr><td>Certificate Authorities</td><td>AD CS, EJBCA, AWS Private CA, Vault PKI</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">LDAP</span><span class="mono-tag">SCEP</span><span class="mono-tag">EST</span></td><td>Cert issuance, signing chains</td><td><span class="scan-yes">✓ YES (backbone)</span></td></tr>
+              <tr><td>Key Management Systems</td><td>HashiCorp Vault, AWS KMS, Azure KV</td><td><span class="mono-tag">HTTPS API</span><span class="mono-tag">gRPC</span><span class="mono-tag">KMIP</span></td><td>Symmetric + asymmetric key storage</td><td><span class="scan-yes">✓ YES (HIGH)</span></td></tr>
+              <tr><td>HSMs (cloud-managed)</td><td>AWS CloudHSM, Azure Dedicated HSM</td><td><span class="mono-tag">PKCS#11</span><span class="mono-tag">KMIP</span></td><td>FIPS 140-2/3 key protection</td><td><span class="scan-yes">✓ YES (HIGH)</span></td></tr>
+              <tr><td>Database TDE</td><td>Oracle, MSSQL, PostgreSQL pgcrypto</td><td><span class="mono-tag">DB wire + TLS</span><span class="mono-tag">cloud API</span></td><td>At-rest encryption</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Identity providers</td><td>AD/Entra ID, Okta, Keycloak</td><td><span class="mono-tag">LDAP</span><span class="mono-tag">LDAPS</span><span class="mono-tag">SAML</span><span class="mono-tag">OIDC</span></td><td>User identity, signing keys</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Secrets managers</td><td>Vault, AWS Secrets Manager</td><td><span class="mono-tag">HTTPS API</span><span class="mono-tag">gRPC</span></td><td>Secret encryption (envelope), TLS</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Source code repos</td><td>GitHub Enterprise, GitLab</td><td><span class="mono-tag">HTTPS (REST)</span><span class="mono-tag">SSH (git)</span></td><td>Crypto API calls, hardcoded keys</td><td><span class="scan-yes">✓ YES (SAST)</span></td></tr>
+              <tr><td>Build pipelines</td><td>Jenkins, GitHub Actions, GitLab CI</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">SSH (runner)</span></td><td>Build-time crypto, signing</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Container images</td><td>Docker Hub, ECR, GCR, Harbor</td><td><span class="mono-tag">HTTPS (registry API v2)</span></td><td>Bundled crypto libraries</td><td><span class="scan-yes">✓ YES (SBOM)</span></td></tr>
+              <tr><td>Kerberos KDC</td><td>AD DC, MIT Kerberos, FreeIPA</td><td><span class="mono-tag">Kerberos TCP/88</span><span class="mono-tag">UDP/88</span></td><td>AES-256-CTS-HMAC-SHA1, RC4-HMAC (legacy)</td><td><span class="scan-yes">✓ YES (Kerberos)</span></td></tr>
+              <tr><td>LDAP / directory services</td><td>Active Directory, OpenLDAP</td><td><span class="mono-tag">LDAP</span><span class="mono-tag">LDAPS/636</span><span class="mono-tag">StartTLS</span></td><td>TLS (LDAPS), Kerberos</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Remote access / admin</td><td>SSH, RDP, VNC, AnyDesk</td><td><span class="mono-tag">SSH/22</span><span class="mono-tag">RDP/3389</span><span class="mono-tag">VNC/5900</span></td><td>SSH key exchange, RDP TLS, NLA</td><td><span class="scan-yes">✓ YES (SSH+RDP)</span></td></tr>
+              <tr><td>File transfer</td><td>SFTP, FTPS, SCP, S3, SMB 3.0+</td><td><span class="mono-tag">SFTP/SSH</span><span class="mono-tag">FTPS</span><span class="mono-tag">S3/HTTPS</span></td><td>TLS, SSH, Kerberos, AES</td><td><span class="scan-yes">✓ YES</span></td></tr>
+              <tr><td>Email infrastructure</td><td>Exchange, Postfix, M365, Gmail</td><td><span class="mono-tag">SMTP</span><span class="mono-tag">SMTPS</span><span class="mono-tag">IMAP</span><span class="mono-tag">EWS</span></td><td>TLS (STARTTLS/implicit), DKIM, SPF, DMARC</td><td><span class="scan-yes">✓ YES (TLS+DKIM)</span></td></tr>
+              <tr><td>Monitoring / logging</td><td>Prometheus, ELK, Splunk, Datadog</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">Prometheus HTTP</span><span class="mono-tag">Syslog-TLS</span></td><td>TLS in transit, API token auth</td><td><span class="scan-low">↓ LOW</span></td></tr>
+              <tr><td>Config management</td><td>Ansible, Chef, Puppet, SaltStack</td><td><span class="mono-tag">SSH</span><span class="mono-tag">HTTPS</span><span class="mono-tag">proprietary</span></td><td>TLS in transit, signed configs</td><td><span class="scan-low">↓ LOW</span></td></tr>
+              <tr><td>Backup systems</td><td>Veeam, Commvault, AWS Backup</td><td><span class="mono-tag">HTTPS API</span><span class="mono-tag">S3 API</span></td><td>TLS in transit, AES at-rest</td><td><span class="scan-partial">~ PARTIAL</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-label">⚡ Key Insight</div>
+      Every layer has crypto, and each layer has its own component types in its own hosting location. A complete PQC inventory must touch all of them. The layers contributing most to the total crypto surface: <strong>Application (L7) → Transport (L4) → Cross-layer cloud/SaaS → Physical/cross-cutting (L1)</strong>. Components without crypto (TCP/UDP LBs, NAT, switches, hubs, NTP, SNMP) are <em>not PQC-relevant</em> but are listed so the scanner can explicitly exclude them and reduce noise.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- SECTION 1A -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="section" id="s1a">
+    <div class="section-header">
+      <span class="section-num">1A</span>
+      <h2 class="section-title">Deep Dive — Web Application Data Flow (L7)</h2>
+    </div>
+
+    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">This traces the full data flow from browser → CDN → LB → Web Server → Database, identifying every protocol and crypto boundary. This is the single most important path for PQC — highest volume of encrypted traffic in most enterprises.</p>
+
+    <!-- TABS -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'flow-tab')">Request Flow</button>
+      <button class="tab-btn" onclick="switchTab(this,'hop-tab')">Hop Analysis</button>
+      <button class="tab-btn" onclick="switchTab(this,'thirdparty-tab')">3rd-Party Services</button>
+      <button class="tab-btn" onclick="switchTab(this,'db-tab')">DB / Cache / Queue</button>
+      <button class="tab-btn" onclick="switchTab(this,'auth-tab')">SaaS Auth (SAML / OIDC)</button>
+    </div>
+
+    <div class="tab-panel active" id="flow-tab">
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-node primary">🌐 User Browser</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">① HTTPS (TLS 1.2/1.3) · KEX: X25519 / ECDHE · Future: ML-KEM-768 · Cert: RSA-2048 / ECDSA-P256 · Future: ML-DSA-44</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node">CDN / WAF &nbsp;·&nbsp; <span class="mono-tag">HTTPS</span><span class="mono-tag">HTTP/2</span><span class="mono-tag">HTTP/3 (QUIC)</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">② TLS termination or pass-through · WAF TLS decryption → re-encryption · CDN re-issues cert to origin</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node">Load Balancer (L7) &nbsp;·&nbsp; <span class="mono-tag">HTTP/2</span><span class="mono-tag">HTTP/1.1</span><span class="mono-tag">gRPC</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">③ May re-terminate TLS (mTLS to backend) or pass-through · Protocol: HTTP/2, WebSocket, gRPC</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node">Web Server &nbsp;·&nbsp; <span class="mono-tag">Nginx</span><span class="mono-tag">Apache</span><span class="mono-tag">IIS</span><span class="mono-tag">Caddy</span></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-step">④ Session: JWT (RS256/ES256) or opaque session ID · Cookie: Secure, HttpOnly, SameSite</div>
+          <div class="flow-arrow">↓</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0;width:100%;max-width:520px;">
+            <div>
+              <div class="flow-node" style="font-size:11.5px;">Database <span class="mono-tag">PostgreSQL</span><span class="mono-tag">MySQL</span></div>
+              <div class="flow-step" style="margin-left:0;">⑤a TLS (sslmode=verify-full) · mTLS client cert · TDE: AES-256 at-rest · Replication TLS</div>
+            </div>
+            <div>
+              <div class="flow-node" style="font-size:11.5px;">Cache <span class="mono-tag">Redis</span><span class="mono-tag">ElastiCache</span></div>
+              <div class="flow-step" style="margin-left:0;">⑤b Redis AUTH + TLS · AES at-rest (Redis 7+) · Memcached: no native TLS</div>
+            </div>
+          </div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node" style="opacity:0.7;">Persistent Storage &nbsp;·&nbsp; <span class="mono-tag">AES-256 (LUKS / BitLocker)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="hop-tab">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Hop</th><th>Component</th><th>Protocol</th><th>Crypto / KEX</th><th>PQC Concern</th></tr></thead>
+          <tbody>
+            <tr><td><span class="mono-tag">①</span></td><td>Browser → CDN/WAF</td><td><span class="mono-tag">HTTPS TLS 1.2/1.3</span><span class="mono-tag">HTTP/3 QUIC/443</span></td><td>KEX: X25519, ECDHE · Sig: RSA-2048, ECDSA-P256 · Cipher: AES-128/256-GCM, ChaCha20</td><td><span class="pqc-high">HIGH</span> Harvest-now-decrypt-later · ML-KEM-768 + ML-DSA-44</td></tr>
+            <tr><td><span class="mono-tag">②</span></td><td>CDN/WAF → Origin</td><td><span class="mono-tag">HTTPS TLS 1.2/1.3</span><span class="mono-tag">HTTP/2</span></td><td>Same as above (CDN re-terminates)</td><td><span class="pqc-high">HIGH</span> CDN must support PQC before origin</td></tr>
+            <tr><td><span class="mono-tag">③</span></td><td>CDN → Load Balancer</td><td><span class="mono-tag">HTTP/2</span><span class="mono-tag">HTTP/1.1</span><span class="mono-tag">gRPC</span></td><td>TLS (mTLS if service mesh); may be clear-text internally</td><td><span class="pqc-medium">MEDIUM</span> Lower risk if internal; mTLS needs PQC KEX</td></tr>
+            <tr><td><span class="mono-tag">④</span></td><td>Load Balancer → Web Server</td><td><span class="mono-tag">HTTP/2</span><span class="mono-tag">WebSocket</span><span class="mono-tag">gRPC</span></td><td>TLS (mTLS in service mesh), JWT validation, cookie signing</td><td><span class="pqc-medium">MEDIUM</span> OpenSSL version determines PQC readiness</td></tr>
+            <tr><td><span class="mono-tag">⑤a</span></td><td>Web Server → Database</td><td><span class="mono-tag">PG wire/5432+SSL</span><span class="mono-tag">MySQL/3306+SSL</span><span class="mono-tag">TDS/1433+TLS</span><span class="mono-tag">TNS/1521+TCPS</span></td><td>TLS 1.2/1.3 (DBSS), mTLS (client cert), password auth over TLS</td><td><span class="pqc-medium">MEDIUM</span> Long-lived DB connections · TDE (AES-256) symmetric, not PQC-critical for KEX</td></tr>
+            <tr><td><span class="mono-tag">⑤b</span></td><td>Web Server → Cache</td><td><span class="mono-tag">Redis/6379+TLS</span><span class="mono-tag">Memcached/11211</span></td><td>Redis: AUTH + TLS 1.2/1.3 · Memcached: no native crypto (network isolation) · ElastiCache: TLS</td><td><span class="pqc-low">LOW-MED</span> Internal; Memcached has zero crypto</td></tr>
+            <tr><td><span class="mono-tag">⑥a</span></td><td>Database → Disk</td><td><span class="mono-tag">Internal I/O</span></td><td>TDE: AES-256-CBC / AES-256-XTS; DEK wrapped by KMS</td><td><span class="pqc-low">LOW</span> Symmetric AES-256 not affected by quantum (Grover → 128-bit, still safe)</td></tr>
+            <tr><td><span class="mono-tag">⑦</span></td><td>DB / Cache Replication</td><td><span class="mono-tag">PG streaming TLS</span><span class="mono-tag">MySQL repl TLS</span><span class="mono-tag">Redis repl TLS</span></td><td>TLS 1.2/1.3 (same as primary)</td><td><span class="pqc-medium">MEDIUM</span> Often overlooked; long-lived TLS sessions</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="thirdparty-tab">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Service</th><th>Protocol</th><th>Crypto</th><th>PQC Concern</th><th>Scanner Approach</th></tr></thead>
+          <tbody>
+            <tr><td>Payment gateways (Stripe, Razorpay)</td><td><span class="mono-tag">HTTPS REST</span><span class="mono-tag">Webhook HTTPS POST</span></td><td>TLS 1.2/1.3, HMAC-SHA256</td><td><span class="pqc-high">HIGH</span> Harvest-now-decrypt-later for payment data</td><td>External TLS scan; CT log; webhook sig audit</td></tr>
+            <tr><td>Email/SMS (SendGrid, Twilio, SES)</td><td><span class="mono-tag">HTTPS REST</span><span class="mono-tag">SMTP relay</span></td><td>TLS 1.2/1.3, API key, OAuth2</td><td><span class="pqc-medium">MEDIUM</span> Email in transit; SMS cleartext</td><td>External TLS scan; verify SMTP TLS enforcement</td></tr>
+            <tr><td>CDN (Cloudflare, Akamai, CloudFront)</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">HTTP/3 QUIC</span></td><td>TLS 1.3, X25519 KEX, ECDSA certs</td><td><span class="pqc-high">HIGH</span> Edge TLS terminates here; CDN must support PQC first</td><td>External TLS scan; CT log monitoring</td></tr>
+            <tr><td>SSO / IdPs (Okta, Auth0, Entra ID)</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">SAML</span><span class="mono-tag">OIDC</span><span class="mono-tag">OAuth2</span></td><td>TLS, SAML signing (RSA/ECDSA), OIDC JWT signing</td><td><span class="pqc-high">HIGH</span> IdP signing keys are high-blast-radius</td><td>Vendor admin API; CT log for SAML certs; key rotation monitoring</td></tr>
+            <tr><td>CRM/ERP SaaS (Salesforce, SAP)</td><td><span class="mono-tag">HTTPS REST/SOAP</span><span class="mono-tag">SAML/OIDC SSO</span></td><td>TLS, SAML signing, OAuth2, API token</td><td><span class="pqc-medium">MEDIUM</span> Data in transit; SSO signing keys</td><td>External TLS scan; vendor admin API for cert inventory</td></tr>
+            <tr><td>Storage (S3, Azure Blob, GCS)</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">S3 API</span><span class="mono-tag">SDK</span></td><td>TLS, AES-256 at-rest (SSE-S3/KMS/C), IAM auth</td><td><span class="pqc-medium">MEDIUM</span> At-rest keys in KMS; in-transit TLS</td><td>Cloud API scan (bucket policies, encryption config)</td></tr>
+            <tr><td>CI/CD (GitHub Actions, GitLab CI)</td><td><span class="mono-tag">HTTPS API</span><span class="mono-tag">SSH git</span><span class="mono-tag">OIDC</span></td><td>TLS, SSH host keys, API tokens, OIDC federation</td><td><span class="pqc-medium">MEDIUM</span> Pipeline secrets; signed commits</td><td>External TLS scan; code repo API for signing config</td></tr>
+            <tr><td>Logging/Monitoring SaaS (Datadog, Splunk)</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">agent TLS</span><span class="mono-tag">Syslog TLS</span></td><td>TLS, API tokens, mTLS (agent)</td><td><span class="pqc-low">LOW</span> Observability data, not PII</td><td>External TLS scan only</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="db-tab">
+      <h3>Database TLS</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Database</th><th>Protocol</th><th>TLS Enforcement</th><th>TDE (At-Rest)</th><th>PQC</th></tr></thead>
+          <tbody>
+            <tr><td>PostgreSQL</td><td><span class="mono-tag">TCP/5432+SSL</span></td><td><code>sslmode=verify-full</code> (best), risk: <code>prefer</code> falls back to plaintext</td><td>pgcrypto, AES-256</td><td><span class="pqc-medium">MEDIUM</span></td></tr>
+            <tr><td>MySQL</td><td><span class="mono-tag">TCP/3306+SSL</span></td><td><code>--ssl-mode=REQUIRED</code> or <code>VERIFY_IDENTITY</code></td><td>InnoDB tablespace (AES-256)</td><td><span class="pqc-medium">MEDIUM</span></td></tr>
+            <tr><td>MSSQL</td><td><span class="mono-tag">TDS/1433+TLS</span></td><td><code>Encrypt=True</code> in connection string</td><td>TDE (AES-256, cert-based DEK)</td><td><span class="pqc-medium">MEDIUM</span></td></tr>
+            <tr><td>Oracle</td><td><span class="mono-tag">TNS/1521+TCPS</span></td><td><code>SQLNET.ENCRYPTION_CLIENT=REQUIRED</code></td><td>TDE tablespace (AES-256)</td><td><span class="pqc-medium">MEDIUM</span></td></tr>
+            <tr><td>MongoDB</td><td><span class="mono-tag">TCP/27017+TLS</span></td><td><code>--tls --tlsCertificateKeyFile</code></td><td>WiredTiger (AES-256-CBC)</td><td><span class="pqc-medium">MEDIUM</span></td></tr>
+            <tr><td>Cloud-managed DB (RDS, Cloud SQL)</td><td><span class="mono-tag">HTTPS cloud API</span><span class="mono-tag">wire protocol</span></td><td>Cloud-enforced TLS</td><td>KMS-managed TDE (AWS KMS / Azure KV)</td><td><span class="pqc-medium">MEDIUM</span> KMS key wrapping</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>Key concern:</strong> Many databases default to <code>prefer</code> TLS mode, which allows fallback to plaintext. The scanner must verify TLS is <strong>required</strong>, not just preferred.</div>
+
+      <h3>Caching Layer Crypto</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cache</th><th>Protocol</th><th>Crypto in Transit</th><th>At Rest</th><th>PQC</th></tr></thead>
+          <tbody>
+            <tr><td>Redis (standalone)</td><td><span class="mono-tag">TCP/6379+TLS</span></td><td>AUTH + TLS 1.2/1.3 (Redis 6+)</td><td>RDB/AOF encryption (Redis 7+)</td><td><span class="pqc-low">LOW</span></td></tr>
+            <tr><td>Memcached</td><td><span class="mono-tag">TCP/11211</span></td><td><strong>No native TLS</strong> — network isolation only</td><td>None (in-memory, no persistence)</td><td><span class="scan-no">NONE</span></td></tr>
+            <tr><td>AWS ElastiCache (Redis)</td><td><span class="mono-tag">Redis/TLS (managed)</span></td><td>TLS 1.2 (AWS-enforced)</td><td>AES-256 (optional), in-transit TLS</td><td><span class="pqc-low">LOW</span></td></tr>
+            <tr><td>Azure Cache for Redis</td><td><span class="mono-tag">Redis/TLS (managed)</span></td><td>TLS 1.2 (Azure-enforced)</td><td>AES-256 (always on)</td><td><span class="pqc-low">LOW</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Message Queue Crypto</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Queue</th><th>Protocol</th><th>Crypto in Transit</th><th>At Rest</th><th>PQC</th></tr></thead>
+          <tbody>
+            <tr><td>RabbitMQ</td><td><span class="mono-tag">AMQP/5672</span><span class="mono-tag">AMQP+TLS/5671</span></td><td>TLS 1.2/1.3 (if configured), SASL</td><td>OS disk encryption</td><td><span class="pqc-low">LOW-MED</span></td></tr>
+            <tr><td>Apache Kafka</td><td><span class="mono-tag">Kafka/9092</span><span class="mono-tag">Kafka+TLS/9093</span></td><td>TLS 1.2/1.3 (if listeners=SSL), SASL_SSL, mTLS</td><td>OS disk encryption</td><td><span class="pqc-medium">MEDIUM</span> Often carries sensitive data</td></tr>
+            <tr><td>AWS SQS</td><td><span class="mono-tag">HTTPS/443</span></td><td>TLS 1.2 (AWS-managed)</td><td>SSE-SQS (AES-256), SSE-KMS</td><td><span class="pqc-low">LOW</span></td></tr>
+            <tr><td>Azure Service Bus</td><td><span class="mono-tag">AMQP+TLS/5671</span><span class="mono-tag">HTTPS</span></td><td>TLS 1.2 (Azure-managed)</td><td>AES-256, CMK option</td><td><span class="pqc-low">LOW</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="auth-tab">
+      <h3>SAML SSO Flow</h3>
+      <div class="code-block">
+<span class="c-node">User Browser</span>
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">①</span> Access app <span class="c-proto">(https://app.example.com)</span>
+  <span class="c-arrow">▼</span>
+<span class="c-node">Service Provider (SP)</span> — the web application
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">②</span> Redirect to IdP with SAML AuthnRequest <span class="c-proto">(HTTP Redirect/POST)</span>
+  <span class="c-arrow">│</span>    Signed with SP's private key <span class="c-proto">(RSA/ECDSA)</span> → future: <span class="c-proto">ML-DSA-44</span>
+  <span class="c-arrow">▼</span>
+<span class="c-node">Identity Provider (IdP)</span> — Okta / Entra ID / ADFS / Keycloak
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">③</span> User authenticates (password, MFA, certificate)
+  <span class="c-arrow">│</span>    IdP issues SAML Assertion, signed with IdP private key <span class="c-proto">(RSA/ECDSA)</span>
+  <span class="c-arrow">│</span>    Assertion may be encrypted with SP's public key <span class="c-proto">(RSA/OAEP)</span>
+  <span class="c-arrow">│</span>    Protocol: <span class="c-proto">HTTPS POST → SP ACS URL</span>
+  <span class="c-arrow">▼</span>
+<span class="c-node">Service Provider (SP)</span>
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">④</span> Validates SAML Assertion signature
+  <span class="c-arrow">│</span>    Checks IdP signing cert against trusted CA
+  <span class="c-arrow">│</span>    Creates session <span class="c-proto">(JWT or opaque session ID)</span>
+  <span class="c-arrow">▼</span>
+<span class="c-node">User authenticated</span>
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">⑤</span> Subsequent requests → session token <span class="c-proto">(JWT signed RS256/ES256)</span>
+  <span class="c-arrow">▼</span>
+<span class="c-node">Application serves requests</span>
+      </div>
+
+      <div class="callout" style="margin-bottom:20px;">
+        <strong>PQC impact on SAML:</strong> Step ② SP AuthnRequest sig → <code>ML-DSA-44</code> &nbsp;·&nbsp; Step ③ IdP Assertion sig → <code>ML-DSA-44</code> &nbsp;·&nbsp; Step ③ Assertion encryption → <code>ML-KEM-768</code> &nbsp;·&nbsp; TLS at every HTTPS hop → <code>ML-KEM-768</code>
+      </div>
+
+      <h3>OIDC / OAuth2 Flow</h3>
+      <div class="code-block">
+<span class="c-node">User Browser</span>
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">①</span> Access app <span class="c-proto">(https://app.example.com)</span>
+  <span class="c-arrow">▼</span>
+<span class="c-node">Application (Client)</span>
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">②</span> Redirect to Authorization Server (AS)
+  <span class="c-arrow">│</span>    Params: client_id, redirect_uri, scope, state, code_challenge <span class="c-proto">(PKCE)</span>
+  <span class="c-arrow">▼</span>
+<span class="c-node">Authorization Server</span> — Okta / Auth0 / Entra ID
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">③</span> User authenticates (password, MFA, FIDO2)
+  <span class="c-arrow">│</span>    AS issues Authorization Code
+  <span class="c-arrow">▼</span>
+<span class="c-node">Application (Client)</span>
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">④</span> Exchange code for tokens at AS Token Endpoint
+  <span class="c-arrow">│</span>    Returns: access_token (JWT), id_token (JWT), refresh_token
+  <span class="c-arrow">│</span>    JWTs signed with AS's private key <span class="c-proto">(RS256, ES256, PS256)</span>
+  <span class="c-arrow">▼</span>
+<span class="c-node">Application (Client)</span>
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">⑤</span> Use access_token to call Resource Server (API)
+  <span class="c-arrow">│</span>    Authorization: Bearer &lt;access_token&gt;
+  <span class="c-arrow">▼</span>
+<span class="c-node">Resource Server (API)</span>
+  <span class="c-arrow">│</span>
+  <span class="c-arrow">│</span> <span class="c-step">⑥</span> Validate JWT: check signature, expiry, issuer, audience
+  <span class="c-arrow">│</span>    Fetch JWKS from AS if not cached
+  <span class="c-arrow">│</span>    Crypto: <span class="c-proto">RSA/ECDSA signature verification</span>
+  <span class="c-arrow">▼</span>
+<span class="c-node">API Response</span>
+      </div>
+
+      <div class="callout">
+        <strong>PQC impact on OIDC:</strong> Step ② TLS to AS → <code>PQC KEX</code> &nbsp;·&nbsp; Step ④ JWT signing by AS → <code>ML-DSA-44</code> &nbsp;·&nbsp; Step ⑤ TLS to Resource Server → <code>PQC KEX</code> &nbsp;·&nbsp; JWKS endpoint must publish PQC public keys
+      </div>
+
+      <h3>Identity Provider Inventory</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Component</th><th>Protocol</th><th>Crypto</th><th>PQC Concern</th><th>Scanner</th></tr></thead>
+          <tbody>
+            <tr><td>Active Directory (AD)</td><td><span class="mono-tag">LDAPS/636</span><span class="mono-tag">Kerberos/88</span><span class="mono-tag">GC/3268</span></td><td>LDAPS TLS, Kerberos AES-256, RC4-HMAC (legacy)</td><td><span class="pqc-high">HIGH</span> Kerberos TGT signing; RC4-HMAC is quantum-vulnerable</td><td>LDAP query for DCs; LDAPS handshake; Kerberos enc type enum</td></tr>
+            <tr><td>Entra ID (Azure AD)</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">SAML</span><span class="mono-tag">OIDC</span><span class="mono-tag">OAuth2</span></td><td>TLS 1.2/1.3, SAML signing, OIDC JWT signing (RS256, ES256)</td><td><span class="pqc-high">HIGH</span> IdP signing keys; SAML assertion in transit</td><td>External TLS scan; Entra ID admin API; CT log</td></tr>
+            <tr><td>Okta</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">SAML</span><span class="mono-tag">OIDC</span></td><td>TLS 1.3, SAML signing, OIDC JWT signing</td><td><span class="pqc-high">HIGH</span> Major IdP; same as above</td><td>Okta admin API for app and key inventory</td></tr>
+            <tr><td>Keycloak</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">SAML</span><span class="mono-tag">OIDC</span></td><td>TLS, SAML signing, OIDC signing (RSA/ECDSA)</td><td><span class="pqc-high">HIGH</span> Self-hosted; key material in customer's control</td><td>Agent or API scan; check signing key config</td></tr>
+            <tr><td>ADFS</td><td><span class="mono-tag">HTTPS SAML</span><span class="mono-tag">WS-Federation</span><span class="mono-tag">OAuth2</span></td><td>TLS, SAML signing cert (RSA/ECDSA)</td><td><span class="pqc-high">HIGH</span> ADFS signing cert critical; cert rollover is common pain point</td><td>AD CS query for ADFS signing certs; ADFS PowerShell enum</td></tr>
+            <tr><td>FIDO2 / WebAuthn</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">CTAP2 USB/NFC</span></td><td>Ed25519 (FIDO2), ECDSA (P-256), RSA (legacy)</td><td><span class="pqc-low">LOW-MED</span> Ed25519 not quantum-vulnerable; firmware update is concern</td><td>Hardware token inventory; firmware version check</td></tr>
+            <tr><td>OAuth2 / OIDC tokens</td><td><span class="mono-tag">HTTPS token endpoint</span><span class="mono-tag">Bearer header</span></td><td>TLS, JWT signing (RS256, ES256, PS256), HMAC (HS256)</td><td><span class="pqc-high">HIGH</span> JWT signing keys; token replay risk</td><td>IdP signing key inventory; token lifetime and rotation config</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Summary crypto inventory -->
+    <h3 style="margin-top:28px;">Complete Crypto Inventory — Web Application</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Layer</th><th>Component</th><th>Protocol</th><th>Crypto</th><th>PQC Priority</th><th>Scanner Method</th></tr></thead>
+        <tbody>
+          <tr><td><span class="mono-tag">L7</span></td><td>Web server (TLS termination)</td><td><span class="mono-tag">HTTPS TLS 1.2/1.3</span></td><td>X25519/ECDHE KEX, RSA/ECDSA certs, AES-GCM</td><td><span class="pqc-high">HIGH</span></td><td>Active TLS handshake (sslyze) + config audit</td></tr>
+          <tr><td><span class="mono-tag">L7</span></td><td>CDN / WAF</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">HTTP/3 QUIC</span></td><td>TLS 1.3, X25519, ECDSA</td><td><span class="pqc-high">HIGH</span></td><td>External TLS scan + CT log</td></tr>
+          <tr><td><span class="mono-tag">L7</span></td><td>Application code</td><td><span class="mono-tag">HTTP/2</span><span class="mono-tag">gRPC</span><span class="mono-tag">WebSocket</span></td><td>JWT signing (RS256/ES256), session crypto</td><td><span class="pqc-medium">MEDIUM</span></td><td>SAST + SBOM (crypto lib versions)</td></tr>
+          <tr><td><span class="mono-tag">L5</span></td><td>IdP / SSO</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">SAML</span><span class="mono-tag">OIDC</span></td><td>SAML signing, OIDC JWT signing</td><td><span class="pqc-high">HIGH</span></td><td>IdP admin API + signing key inventory</td></tr>
+          <tr><td><span class="mono-tag">L4</span></td><td>Load balancer</td><td><span class="mono-tag">TCP</span><span class="mono-tag">TLS</span></td><td>TLS termination, cert management</td><td><span class="pqc-high">HIGH</span></td><td>Active TLS handshake</td></tr>
+          <tr><td><span class="mono-tag">L4</span></td><td>API gateway</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">gRPC</span></td><td>TLS, JWT validation, mTLS</td><td><span class="pqc-high">HIGH</span></td><td>Active TLS + API audit</td></tr>
+          <tr><td><span class="mono-tag">L4</span></td><td>Service mesh</td><td><span class="mono-tag">TCP</span><span class="mono-tag">TLS</span></td><td>mTLS, cert rotation</td><td><span class="pqc-medium">MEDIUM</span></td><td>K8s API + mTLS probe</td></tr>
+          <tr><td><span class="mono-tag">L3</span></td><td>VPN / IPsec</td><td><span class="mono-tag">IKEv2</span><span class="mono-tag">ESP</span></td><td>IKEv2, ESP, RSA/ECDSA</td><td><span class="pqc-high">HIGH</span></td><td>ike-scan + config audit</td></tr>
+          <tr><td><span class="mono-tag">L1</span></td><td>HSM</td><td><span class="mono-tag">PKCS#11</span><span class="mono-tag">KMIP</span></td><td>Key storage, signing</td><td><span class="pqc-high">HIGH</span></td><td>PKCS#11 enumeration</td></tr>
+          <tr><td><span class="mono-tag">L1</span></td><td>TPM</td><td><span class="mono-tag">TPM 2.0 TSS</span></td><td>Attestation, disk encryption keys</td><td><span class="pqc-high">HIGH</span></td><td>Agent-based TPM query</td></tr>
+          <tr><td><span class="mono-tag">Cross</span></td><td>CA / PKI</td><td><span class="mono-tag">HTTPS</span><span class="mono-tag">LDAP</span><span class="mono-tag">SCEP</span><span class="mono-tag">EST</span></td><td>Cert issuance, signing chains</td><td><span class="pqc-high">HIGH</span></td><td>CA API + cert inventory</td></tr>
+          <tr><td><span class="mono-tag">Cross</span></td><td>KMS</td><td><span class="mono-tag">HTTPS API</span></td><td>Symmetric + asymmetric key storage</td><td><span class="pqc-high">HIGH</span></td><td>Cloud KMS API</td></tr>
+          <tr><td><span class="mono-tag">Cross</span></td><td>Database</td><td><span class="mono-tag">DB wire + TLS</span></td><td>TLS in transit, TDE (AES-256)</td><td><span class="pqc-medium">MEDIUM</span></td><td>DB config query + TLS probe</td></tr>
+          <tr><td><span class="mono-tag">Cross</span></td><td>Cache (Redis)</td><td><span class="mono-tag">Redis + TLS</span></td><td>AUTH + TLS</td><td><span class="pqc-low">LOW</span></td><td>Config audit</td></tr>
+          <tr><td><span class="mono-tag">Cross</span></td><td>Queue (Kafka)</td><td><span class="mono-tag">Kafka + TLS</span></td><td>TLS, SASL</td><td><span class="pqc-low">LOW</span></td><td>Config audit</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- SECTION 2 -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Where the Components Are Located (Hosting Model)</h2>
+    </div>
+
+    <p style="color:var(--text-secondary);font-size:13px;margin-bottom:20px;">The hosting model determines how you scan. The same component (e.g., a TLS endpoint) is scanned differently depending on where it lives.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Hosting Model</th><th>Examples</th><th>Protocol Used</th><th>Scanning Approach</th></tr></thead>
+        <tbody>
+          <tr><td>On-premises data center</td><td>Bare-metal, VMware, Hyper-V, KVM</td><td><span class="mono-tag">SSH/22</span><span class="mono-tag">WinRM/5985</span><span class="mono-tag">HTTPS (vCenter)</span></td><td>Agent-based or SSH/WinRM remote exec</td></tr>
+          <tr><td>Private cloud</td><td>OpenStack, vSphere, on-prem K8s</td><td><span class="mono-tag">HTTPS (OpenStack API)</span><span class="mono-tag">K8s API</span></td><td>API-based + agent</td></tr>
+          <tr><td>Public cloud — IaaS</td><td>AWS EC2, Azure VMs, GCP Compute</td><td><span class="mono-tag">HTTPS (cloud provider API)</span></td><td>Cloud provider API (AWS Config, Azure Resource Graph, GCP Asset Inventory) + agent</td></tr>
+          <tr><td>Public cloud — PaaS</td><td>AWS RDS, Azure App Service, Cloud SQL</td><td><span class="mono-tag">HTTPS (cloud provider API)</span></td><td>Cloud provider API only; no agent access</td></tr>
+          <tr><td>Public cloud — SaaS</td><td>M365, Salesforce, Workday, Okta</td><td><span class="mono-tag">HTTPS (vendor admin API)</span></td><td>Vendor admin API only; no host access</td></tr>
+          <tr><td>Public cloud — serverless</td><td>AWS Lambda, Azure Functions</td><td><span class="mono-tag">HTTPS (cloud provider API)</span></td><td>Cloud provider API; static analysis of deployment packages</td></tr>
+          <tr><td>Public cloud — containers</td><td>EKS, AKS, GKE, ECS, Fargate</td><td><span class="mono-tag">HTTPS (K8s API)</span><span class="mono-tag">Docker Registry API</span></td><td>K8s API + container image SBOM scan</td></tr>
+          <tr><td>3rd-party vendor</td><td>Any external service</td><td><span class="mono-tag">HTTPS (external)</span></td><td>External TLS scan + CT log monitoring + vendor questionnaires</td></tr>
+          <tr><td>Embedded / OT / IoT</td><td>PLCs, RTUs, medical devices, vehicles</td><td><span class="mono-tag">Modbus</span><span class="mono-tag">DNP3</span><span class="mono-tag">BACnet</span><span class="mono-tag">SSH</span></td><td>Vendor firmware analysis + serial/SSH access where available</td></tr>
+          <tr><td>Endpoint devices</td><td>Laptops, desktops, mobile, BYOD</td><td><span class="mono-tag">MDM API (HTTPS)</span><span class="mono-tag">agent HTTPS</span></td><td>MDM/UEM API + endpoint agent</td></tr>
+          <tr><td>Backup and archive</td><td>Tape libraries, S3 Glacier, Azure Archive</td><td><span class="mono-tag">S3 API (HTTPS)</span><span class="mono-tag">proprietary backup</span></td><td>Encrypted at rest — scan catalog metadata</td></tr>
+          <tr><td>Partner / B2B</td><td>EDI gateways, partner APIs, SFTP servers</td><td><span class="mono-tag">SFTP (SSH)</span><span class="mono-tag">EDI (AS2/HTTPS)</span><span class="mono-tag">partner API</span></td><td>External TLS scan + protocol-specific probes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="insight">
+      <div class="insight-label">⚡ Practical Implication</div>
+      A scanner designed for one hosting model (e.g., on-prem network scan) gives you maybe <strong>20–30% coverage</strong> in a typical large enterprise. The other <strong>70–80%</strong> requires cloud APIs, K8s APIs, vendor admin APIs, and endpoint agents. This is the strongest argument for a CMDB-driven approach: the CMDB (or its cloud equivalents — AWS Config, Azure Resource Graph) already knows where everything lives, classified by hosting model.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- SECTION 3 -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Which Components Need to Be Scanned</h2>
+    </div>
+
+    <div class="callout">
+      <strong>The rule:</strong> Scan anything that <em>holds, uses, transports, or signs a key</em>. Defer or sample-scan anything that is only a transport for other components' data.
+    </div>
+
+    <h3>Scan Priority Order (High → Low)</h3>
+    <div class="priority-list">
+      <div class="priority-item"><div class="priority-num">1</div><div class="priority-text"><strong>Internet-facing TLS endpoints</strong> — public web, APIs, mail, VPN. Highest HNDL exposure.</div></div>
+      <div class="priority-item"><div class="priority-num">2</div><div class="priority-text"><strong>Internal TLS endpoints in production</strong> — service mesh, internal APIs, databases.</div></div>
+      <div class="priority-item"><div class="priority-num">3</div><div class="priority-text"><strong>Code signing keys and infrastructure</strong> — HSMs, signing services, certificate authorities.</div></div>
+      <div class="priority-item"><div class="priority-num">4</div><div class="priority-text"><strong>PKI root and intermediate CAs</strong> — the keys that sign everything else. Highest blast radius.</div></div>
+      <div class="priority-item"><div class="priority-num">5</div><div class="priority-text"><strong>KMS / HSM-stored asymmetric keys</strong> — private keys whose compromise is catastrophic.</div></div>
+      <div class="priority-item"><div class="priority-num">6</div><div class="priority-text"><strong>Identity provider signing keys</strong> — SAML, OIDC, JWT signing. Compromise = impersonation.</div></div>
+      <div class="priority-item"><div class="priority-num">7</div><div class="priority-text"><strong>Database TDE</strong> — at-rest encryption of the actual data.</div></div>
+      <div class="priority-item"><div class="priority-num">8</div><div class="priority-text"><strong>Document and email signing</strong> — long-lived S/MIME, PGP, code-signed binaries.</div></div>
+      <div class="priority-item"><div class="priority-num">9</div><div class="priority-text"><strong>Endpoint disk encryption (TPM/BitLocker/FileVault)</strong> — recovery key handling.</div></div>
+      <div class="priority-item"><div class="priority-num">10</div><div class="priority-text"><strong>Firmware signing (Secure Boot, device attestation)</strong> — slow to migrate.</div></div>
+      <div class="priority-item"><div class="priority-num">11</div><div class="priority-text"><strong>IPsec / VPN gateways</strong> — long-lived tunnels, often unpatched.</div></div>
+      <div class="priority-item"><div class="priority-num">12</div><div class="priority-text"><strong>IoT / OT device crypto</strong> — firmware, embedded keys.</div></div>
+    </div>
+
+    <div class="scope-grid" style="margin-top:28px;">
+      <div class="scope-box">
+        <div class="scope-box-title defer">Sample-scan or Defer</div>
+        <div class="scope-item">MACsec on data center switches (low business value, often transparent)</div>
+        <div class="scope-item">Internal DNS without DNSSEC (most orgs don't sign internal DNS)</div>
+        <div class="scope-item">BGPsec (almost nobody runs it)</div>
+        <div class="scope-item">Tape backup encryption (very long-lived, but rarely a remote attack vector)</div>
+      </div>
+      <div class="scope-box">
+        <div class="scope-box-title oos">Out of Scope (Non-PQC-Relevant)</div>
+        <div class="scope-item">Layer 1 physical security (cabinet locks, mantraps)</div>
+        <div class="scope-item">TCP/UDP load balancers (L4 pass-through) — no crypto termination</div>
+        <div class="scope-item">NAT devices — address translation only</div>
+        <div class="scope-item">Standard switches and hubs — clear-text L2</div>
+        <div class="scope-item">DNS resolvers (without DoH/DoT/DNSSEC)</div>
+        <div class="scope-item">NTP servers (without NTS) — standard NTP is unencrypted</div>
+        <div class="scope-item">SNMP management — rarely uses crypto</div>
+        <div class="scope-item">Compression libraries (zlib, gzip, zstd, Brotli)</div>
+        <div class="scope-item">Physical access control (badge readers, biometrics)</div>
+        <div class="scope-item">Serial / console access (RS-232, USB serial) — clear-text</div>
+        <div class="scope-item">VLAN / VXLAN / GRE — encapsulation, not encryption</div>
+        <div class="scope-item">Fibre Channel switches — SAN fabric, rarely uses crypto</div>
+        <div class="scope-item">Standard routers (without IPsec/BGPsec)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- SUMMARY -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="section" id="summary">
+    <div class="section-header">
+      <span class="section-num">∑</span>
+      <h2 class="section-title">Summary</h2>
+    </div>
+
+    <div class="callout" style="margin-bottom:24px;">
+      <strong>Strategic message:</strong> A CMDB-agnostic, adapter-based PQC scanner is deployable into any customer's environment, regardless of which CMDB they run or whether they have one at all. That portability is the <strong>architectural moat</strong>.
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-row">
+        <div class="summary-q">Question</div>
+        <div class="summary-a">One-line answer</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">What components exist in a large org?</div>
+        <div class="summary-a">Every OSI layer has crypto-bearing components; 70–80% of the surface is at Layer 7 (apps), Layer 4 (TLS), and cross-layer cloud/SaaS. Non-crypto components (switches, NAT, hubs) are explicitly excluded to reduce scanner noise.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">Where are they located?</div>
+        <div class="summary-a">On-prem, public cloud (IaaS/PaaS/SaaS/serverless), K8s, endpoints, vendor SaaS, OT/IoT, B2B partners. Each location needs a different scanning approach.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">Which need scanning?</div>
+        <div class="summary-a">Anything that holds, uses, transports, or signs a key. Internet-facing TLS, PKI roots, HSMs, KMS, identity provider signing keys, and code signing are the highest priority.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">What protocols are involved?</div>
+        <div class="summary-a">Every component uses specific protocols (HTTPS, TLS, SSH, SAML, OIDC, AMQP, Redis, DB wire protocols). The Protocol Used column identifies which protocols each component uses, enabling protocol-specific scanning.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">How does web app data flow?</div>
+        <div class="summary-a">Browser → CDN/WAF → Load Balancer → Web Server → Database/Cache. Each hop has its own TLS boundary and crypto. Web server → DB uses DBSS (DB SSL). Cache (Redis) uses AUTH + TLS. Queues (Kafka, RabbitMQ) use TLS in transit.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">How does SaaS authentication work?</div>
+        <div class="summary-a">SAML SSO: SP redirects to IdP → IdP signs assertion → SP validates. OIDC: App redirects to AS → AS issues JWT → API validates JWT. Both require PQC signing keys (ML-DSA-44) at IdP/AS, and PQC TLS at every HTTPS hop.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">Can we use CMDB as source?</div>
+        <div class="summary-a">Yes — query CMDB, filter for crypto-relevant CIs, classify each CI by which scan mechanism applies, run the right scan, write findings back.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">What if no CMDB?</div>
+        <div class="summary-a">Build the CMDB from scratch using the 6-phase rollout (public crypto → CAs → internal network → key stores → software/SBOM → code/cloud). Reconcile overlapping sources.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">Can we normalize across CMDBs?</div>
+        <div class="summary-a">Yes — adapter framework with a common internal model aligned to CSDM/CDM and CycloneDX CBOM. Each new CMDB vendor is a 200–800 line adapter.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">How does asset discovery happen?</div>
+        <div class="summary-a">Multi-source: CMDB + cloud APIs + network probes + CT logs + CA/HSM/KMS APIs + code repo APIs + DNS + MDM. Reconciled into one asset graph, then filtered to crypto-relevant nodes.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">How does scanning happen?</div>
+        <div class="summary-a">Per-CI scan selection: active TLS/SSH/IPsec probes, cert deep-parse, config audit, cloud KMS/secret scan, SBOM analysis, SAST, PQC capability assertion. Output is a structured finding, not a boolean.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">What credentials are required?</div>
+        <div class="summary-a">Tiered least-privilege, 7 tiers (0–6): none for public scan; read-only service account for CMDB/CA/SSHD; local/domain admin for OS cert stores; HSM auditor partition; cloud read IAM; vendor API token; repo read PAT. No domain admin, no HSM crypto officer, no app admin.</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-q">Agent vs agentless?</div>
+        <div class="summary-a">Agentless-first (~80%): internet-facing, cloud, network devices, HSM/KMS/CA, code repos, K8s API, container registries, CT logs. Agents for the host-local long tail: endpoint disk encryption, local cert stores, TPM, installed crypto libs, air-gapped/OT, continuous monitoring. Hybrid is the production default.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+  function toggleLayer(el) {
+    el.parentElement.classList.toggle('open');
+  }
+
+  function scrollTo(id) {
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+    event.target.closest('.sidebar-link').classList.add('active');
+  }
+
+  function switchTab(btn, panelId) {
+    btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const wrap = btn.closest('.section') || btn.closest('.main');
+    wrap.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(panelId).classList.add('active');
+  }
+
+  // Highlight sidebar on scroll
+  const sections = ['hero','s1','s1a','s2','s3','summary'];
+  const links = document.querySelectorAll('.sidebar-link');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && window.scrollY >= el.offsetTop - 100) current = id;
+    });
+    links.forEach((l, i) => {
+      l.classList.toggle('active', sections[i] === current);
+    });
+  }, { passive: true });
+</script>
+</body>
+</html>
