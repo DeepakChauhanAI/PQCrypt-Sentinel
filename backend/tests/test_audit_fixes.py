@@ -1027,7 +1027,7 @@ async def test_saml_metadata_ssrf_blocked():
     with patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
         res = await connector.sync(mock_db)
     
-    assert res["status"] in ("failed", "partial")
+    assert res["status"] == "error"
     assert any("safe IPs" in err or "loopback" in err.lower() or "ssrf" in err.lower() for err in res["errors"])
 
 

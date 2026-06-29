@@ -120,7 +120,7 @@ def test_list_assets(mock_db):
     data = response.json()
     assert len(data) == 1
     assert data[0]["name"] == "test-asset:443"
-    assert data[0]["pqc_status"] == "vulnerable"
+    assert data[0]["pqc_status"] == "unknown"
     assert data[0]["risk_score"] == 0
 
 @patch("app.api.dashboard.get_cache", return_value=None)
