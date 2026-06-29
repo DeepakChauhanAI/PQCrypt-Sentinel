@@ -15,6 +15,10 @@ import {
   Eye,
   Settings2,
   Loader2,
+  Copy,
+  Check,
+  Clock,
+  Shield,
 } from "lucide-react";
 
 interface Algorithm {
@@ -86,6 +90,26 @@ interface Asset {
   first_scan_group_id?: string | null;
   first_scan_group_name?: string | null;
 }
+
+  // Copy helper
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copyToClipboard = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // fallback for older browsers
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
 
 export default function Assets() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -343,6 +367,36 @@ export default function Assets() {
         </div>
       </div>
 
+      {/* Summary Cards — derived from the current filtered data */}
+      {!loading && !error && assets.length > 0 && (() => {
+        const total = assets.length;
+        const vulnerable = assets.filter(a => a.pqc_status === "vulnerable").length;
+        const hybrid = assets.filter(a => a.pqc_status === "hybrid").length;
+        const pqcReady = assets.filter(a => a.pqc_status === "pqc_ready").length;
+        const safe = assets.filter(a => a.pqc_status === "safe").length;
+        const avgRisk = Math.round(assets.reduce((s, a) => s + a.risk_score, 0) / total);
+        return (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            {[
+              { label: "Total Assets", value: total, icon: Server, color: "text-gray-200", bg: "bg-gray-800/50", border: "border-gray-700/50" },
+              { label: "Vulnerable", value: vulnerable, icon: ShieldAlert, color: "text-red-400", bg: "bg-red-950/30", border: "border-red-800/50" },
+              { label: "Hybrid", value: hybrid, icon: Shield, color: "text-blue-400", bg: "bg-blue-950/30", border: "border-blue-800/50" },
+              { label: "PQC Ready", value: pqcReady, icon: ShieldCheck, color: "text-green-400", bg: "bg-green-950/30", border: "border-green-800/50" },
+              { label: "Safe", value: safe, icon: Check, color: "text-emerald-400", bg: "bg-emerald-950/30", border: "border-emerald-800/50" },
+              { label: "Avg Risk Score", value: avgRisk, icon: AlertTriangle, color: avgRisk >= 50 ? "text-orange-400" : "text-yellow-400", bg: "bg-yellow-950/20", border: "border-yellow-800/40" },
+            ].map((card) => (
+              <div key={card.label} className={`rounded-lg border ${card.border} ${card.bg} px-4 py-3 flex items-center gap-3`}>
+                <card.icon className={`h-5 w-5 shrink-0 ${card.color}`} />
+                <div>
+                  <div className={`text-lg font-bold ${card.color}`}>{card.value}</div>
+                  <div className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{card.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
       {/* Main Table */}
       <div className="overflow-hidden rounded-lg border border-border bg-surface">
         {loading ? (
@@ -351,9 +405,17 @@ export default function Assets() {
           </div>
         ) : error ? (
           <div className="flex h-64 items-center justify-center p-4 text-center">
-            <div className="space-y-2">
-              <AlertTriangle className="mx-auto h-8 w-8 text-red-500" />
-              <p className="text-gray-200">{error}</p>
+            <div className="space-y-3">
+              <AlertTriangle className="mx-auto h-10 w-10 text-red-500" />
+              <p className="text-gray-200 font-medium">Failed to load assets</p>
+              <p className="text-sm text-gray-400">{error}</p>
+              <button
+                onClick={fetchAssets}
+                className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-semibold text-gray-200 hover:bg-border transition-colors"
+              >
+                <RefreshCw className="h-3.5 w-3.5 inline mr-1.5" />
+                Retry
+              </button>
             </div>
           </div>
         ) : assets.length === 0 ? (
@@ -614,19 +676,47 @@ export default function Assets() {
                               {selectedAsset.algorithms.map((algo) => (
                                 <div
                                   key={algo.id}
-                                  className="flex items-center justify-between rounded-lg border border-border bg-background p-3.5"
+                                  className="flex items-start justify-between gap-4 rounded-lg border border-border bg-background p-4"
                                 >
-                                  <div className="space-y-1">
+                                  <div className="space-y-1.5 min-w-0">
                                     <div className="flex items-center gap-2">
-                                      <Key className="h-4 w-4 text-cyan-400" />
-                                      <span className="font-mono text-sm text-gray-200">{algo.algorithm_name}</span>
+                                      <Key className="h-4 w-4 text-cyan-400 shrink-0" />
+                                      <span className="font-mono text-sm text-gray-200 font-semibold">{algo.algorithm_name}</span>
                                     </div>
-                                    <div className="text-xs text-gray-500 capitalize">
-                                      {algo.algorithm_type.replace("_", " ")} &bull; Size: {algo.key_size || "N/A"}{" "}
-                                      {algo.curve ? `(${algo.curve})` : ""}
+                                    <div className="text-xs text-gray-500 space-x-2">
+                                      <span className="capitalize">{algo.algorithm_type.replace(/_/g, " ")}</span>
+                                      {algo.key_size && <span>· Size: {algo.key_size} bits</span>}
+                                      {algo.curve && <span>· Curve: {algo.curve}</span>}
                                     </div>
+                                    {algo.protocol && (
+                                      <div className="text-xs text-gray-500">
+                                        Protocol: <span className="font-mono text-gray-400">{algo.protocol}</span>
+                                        {algo.protocol_version && <span className="text-gray-600"> v{algo.protocol_version}</span>}
+                                      </div>
+                                    )}
+                                    {algo.cipher_suite && (
+                                      <div className="text-xs text-gray-500 font-mono text-gray-400">
+                                        Cipher Suite: {algo.cipher_suite}
+                                      </div>
+                                    )}
+                                    {algo.oid && (
+                                      <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
+                                        OID: <code className="bg-surface rounded px-1.5 py-0.5 text-gray-500 font-mono">{algo.oid}</code>
+                                        <button
+                                          onClick={() => copyToClipboard(algo.oid!, `oid:${algo.id}`)}
+                                          className="text-gray-600 hover:text-gray-400"
+                                          title="Copy OID"
+                                        >
+                                          {copiedId === `oid:${algo.id}` ? (
+                                            <Check className="h-3 w-3 text-green-400" />
+                                          ) : (
+                                            <Copy className="h-3 w-3" />
+                                          )}
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div>{getPqcStatusBadge(algo.pqc_status)}</div>
+                                  <div className="shrink-0 pt-0.5">{getPqcStatusBadge(algo.pqc_status)}</div>
                                 </div>
                               ))}
                             </div>
@@ -648,20 +738,20 @@ export default function Assets() {
                               {selectedAsset.certificates.map((cert) => (
                                 <div
                                   key={cert.id}
-                                  className="rounded-lg border border-border bg-background p-4 space-y-2"
+                                  className="rounded-lg border border-border bg-background p-4 space-y-3"
                                 >
-                                  <div className="flex items-start justify-between">
-                                    <div className="space-y-1">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="space-y-1 min-w-0">
                                       <div className="flex items-center gap-2">
-                                        <FileBadge className="h-4 w-4 text-purple-400" />
-                                        <span className="font-semibold text-sm text-gray-200">
+                                        <FileBadge className="h-4 w-4 text-purple-400 shrink-0" />
+                                        <span className="font-semibold text-sm text-gray-200 truncate">
                                           {cert.subject.split("CN=")[1]?.split(",")[0] || cert.subject}
                                         </span>
                                       </div>
                                       <div className="text-xs text-gray-500">Issuer: {cert.issuer}</div>
                                     </div>
                                     <span
-                                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold border ${
+                                      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold border shrink-0 ${
                                         cert.pqc_capable
                                           ? "bg-green-950/40 text-green-400 border-green-800/50"
                                           : "bg-red-950/40 text-red-400 border-red-800/50"
@@ -671,12 +761,59 @@ export default function Assets() {
                                     </span>
                                   </div>
 
-                                  <div className="grid grid-cols-2 gap-2 text-xs border-t border-border/50 pt-2 text-gray-400 font-mono">
-                                    <div>Thumbprint: {cert.thumbprint.slice(0, 16)}...</div>
-                                    <div>Serial: {cert.serial_number || "N/A"}</div>
-                                    <div>Signature: {cert.sig_algorithm}</div>
-                                    <div>Key Alg: {cert.pub_key_algorithm}</div>
-                                    <div>Expires: {new Date(cert.not_after).toLocaleDateString()}</div>
+                                  <div className="space-y-1.5 text-xs border-t border-border/50 pt-2.5">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="text-gray-500">Thumbprint</span>
+                                      <button
+                                        onClick={() => copyToClipboard(cert.thumbprint, `thumb:${cert.id}`)}
+                                        className="flex items-center gap-1.5 font-mono text-cyan-400 hover:text-cyan-300 transition-colors"
+                                        title="Copy thumbprint"
+                                      >
+                                        <span className="text-gray-300">{cert.thumbprint.slice(0, 24)}…</span>
+                                        {copiedId === `thumb:${cert.id}` ? (
+                                          <Check className="h-3 w-3 text-green-400" />
+                                        ) : (
+                                          <Copy className="h-3 w-3" />
+                                        )}
+                                      </button>
+                                    </div>
+                                    {cert.serial_number && (
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-gray-500">Serial</span>
+                                        <span className="font-mono text-gray-400">{cert.serial_number}</span>
+                                      </div>
+                                    )}
+                                    <div className="grid grid-cols-2 gap-2 text-gray-400">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-gray-600">Signature:</span>
+                                        <span className="font-mono truncate">{cert.sig_algorithm}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-gray-600">Key:</span>
+                                        <span className="font-mono truncate">{cert.pub_key_algorithm}</span>
+                                      </div>
+                                    </div>
+                                    {cert.pub_key_size && (
+                                      <div className="text-gray-400">
+                                        Key Size: <span className="font-mono text-gray-300">{cert.pub_key_size} bits</span>
+                                      </div>
+                                    )}
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="text-gray-500 flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        Expires
+                                      </span>
+                                      <span className="font-mono text-gray-300">{new Date(cert.not_after).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="text-gray-500">Valid From</span>
+                                      <span className="font-mono text-gray-300">{new Date(cert.not_before).toLocaleDateString()}</span>
+                                    </div>
+                                    {cert.curve_name && (
+                                      <div className="text-gray-400">
+                                        Curve: <span className="font-mono text-gray-300">{cert.curve_name}</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               ))}

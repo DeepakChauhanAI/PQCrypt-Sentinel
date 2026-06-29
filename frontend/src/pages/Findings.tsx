@@ -15,9 +15,21 @@ import {
   ArrowRight,
   X,
   FileWarning,
+  AlertCircle,
+  Flame,
+  Info,
 } from "lucide-react";
 import { useAuth } from "@/lib/authContext";
 import { EvidenceRenderer } from "../components/evidence/EvidenceRenderer";
+
+// Severity configuration map for consistent badge styling
+const SEVERITY_CONFIG: Record<string, { className: string; icon: typeof AlertTriangle }> = {
+  critical: { className: "bg-red-950/40 text-red-400 border-red-800/50", icon: Flame },
+  high:     { className: "bg-orange-950/40 text-orange-400 border-orange-800/50", icon: AlertCircle },
+  medium:   { className: "bg-yellow-950/40 text-yellow-400 border-yellow-800/50", icon: AlertTriangle },
+  low:      { className: "bg-green-950/40 text-green-400 border-green-800/50", icon: CheckCircle },
+  info:     { className: "bg-blue-950/40 text-blue-400 border-blue-800/50", icon: Info },
+};
 
 interface Asset {
   id: string;
@@ -51,7 +63,6 @@ interface Finding {
   last_verified_at?: string;
   resolved_at?: string;
   asset?: Asset;
-  // Phase B — scan context enrichment
   scan_type?: string;
   scan_target?: string;
   scan_target_label?: string;
@@ -301,22 +312,6 @@ export default function Findings() {
     }
   };
 
-  const getSeverityBadge = (sev: string) => {
-    const map = {
-      critical: "bg-red-950/40 text-red-400 border-red-800/50",
-      high: "bg-orange-950/40 text-orange-400 border-orange-800/50",
-      medium: "bg-yellow-950/40 text-yellow-400 border-yellow-800/50",
-      low: "bg-green-950/40 text-green-400 border-green-800/50",
-      info: "bg-blue-950/40 text-blue-400 border-blue-800/50",
-    };
-    const style = map[sev as keyof typeof map] || "bg-gray-950/40 text-gray-400 border-gray-800/50";
-    return (
-      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold border ${style}`}>
-        {sev.toUpperCase()}
-      </span>
-    );
-  };
-
   const getStatusBadge = (status: string) => {
     const map = {
       open: "bg-red-900/30 text-red-400 border-red-800/50",
@@ -333,94 +328,194 @@ export default function Findings() {
     );
   };
 
+  const getSeverityBadge = (sev: string) => {
+    const cfg = SEVERITY_CONFIG[sev];
+    if (!cfg) {
+      return (
+        <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold border bg-gray-800 text-gray-400 border-gray-700">
+          {sev.toUpperCase()}
+        </span>
+      );
+    }
+    return (
+      <span className={"inline-flex rounded-full px-2 py-0.5 text-xs font-semibold border " + cfg.className}>
+        {sev.toUpperCase()}
+      </span>
+    );
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+
+      {/* Summary Cards */}
+      {(() => {
+        const _bySev: Record<string, number> = {};
+        const _byStatus: Record<string, number> = {};
+        for (const _f of findings) {
+          _bySev[_f.severity] = (_bySev[_f.severity] || 0) + 1;
+          _byStatus[_f.status] = (_byStatus[_f.status] || 0) + 1;
+        }
+        const _avg = findings.length
+          ? Math.round(findings.reduce((_s, _x) => _s + (_x.risk_score ?? 0), 0) / findings.length)
+          : 0;
+        const cards: { label: string; value: number; icon: any; color: string; bg: string; border: string }[] = [
+          { label: "Total Findings", value: findings.length, icon: FileWarning, color: "text-gray-200", bg: "bg-gray-800/50", border: "border-gray-700/50" },
+          { label: "Open", value: _byStatus.open ?? 0, icon: AlertTriangle, color: "text-red-400", bg: "bg-red-950/30", border: "border-red-800/50" },
+          { label: "In Progress", value: _byStatus.in_progress ?? 0, icon: Loader2, color: "text-yellow-400", bg: "bg-yellow-950/30", border: "border-yellow-800/40" },
+          { label: "Critical", value: _bySev.critical ?? 0, icon: Flame, color: "text-red-400", bg: "bg-red-950/30", border: "border-red-800/50" },
+          { label: "High", value: _bySev.high ?? 0, icon: AlertCircle, color: "text-orange-400", bg: "bg-orange-950/30", border: "border-orange-800/50" },
+          { label: "Avg Risk", value: _avg, icon: AlertTriangle, color: _avg >= 70 ? "text-red-400" : _avg >= 40 ? "text-orange-400" : "text-yellow-400", bg: "bg-yellow-950/20", border: "border-yellow-800/40" },
+        ];
+        return (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            {cards.map((card) => (
+              <div key={card.label} className={"rounded-lg border " + card.border + " " + card.bg + " px-4 py-3 flex items-center gap-3"}>
+                <card.icon className={"h-5 w-5 shrink-0 " + card.color} />
+                <div>
+                  <div className={"text-lg font-bold " + card.color}>{card.value}</div>
+                  <div className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{card.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Filters */}
-      <div className="grid gap-4 rounded-lg border border-border bg-surface p-4 md:grid-cols-4">
-        {/* Severity */}
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-gray-400 shrink-0" />
-          <select
-            className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
-            value={severity}
-            onChange={(e) => setSeverity(e.target.value)}
-          >
-            <option value="">All Severities</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-            <option value="info">Info</option>
-          </select>
+      <div className="space-y-3">
+        <div className="grid gap-3 rounded-lg border border-border bg-surface p-4 md:grid-cols-5">
+          {/* Search */}
+          <div className="relative md:col-span-1">
+            <Filter className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search findings…"
+              className="w-full rounded-md border border-border bg-background py-2 pl-9 pr-4 text-sm text-gray-200 placeholder-gray-500 focus:border-cyan-500 focus:outline-none"
+            />
+          </div>
+
+          {/* Severity */}
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-400 shrink-0" />
+            <select
+              className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
+              value={severity}
+              onChange={(e) => setSeverity(e.target.value)}
+            >
+              <option value="">All Severities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+              <option value="info">Info</option>
+            </select>
+          </div>
+
+          {/* Status */}
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-gray-400 shrink-0" />
+            <select
+              className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">All Statuses</option>
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="accepted">Accepted</option>
+              <option value="false_positive">False Positive</option>
+            </select>
+          </div>
+
+          {/* Finding Type */}
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4 text-gray-400 shrink-0" />
+            <select
+              className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
+              value={findingType}
+              onChange={(e) => setFindingType(e.target.value)}
+            >
+              <option value="">All Finding Types</option>
+              <option value="weak_algorithm">Weak Algorithm</option>
+              <option value="weak_key_size">Weak Key Size</option>
+              <option value="tls_version">Weak TLS Version</option>
+              <option value="pqc_not_supported">PQC Not Supported</option>
+              <option value="pqc_downgrade">PQC Downgrade Drift</option>
+              <option value="cert_expiring">Cert Expiring</option>
+              <option value="cert_expired">Cert Expired</option>
+              <option value="self_signed">Self-Signed Cert</option>
+              <option value="ssh_weak_kex">SSH Weak KEX</option>
+              <option value="config_drift">Config Drift</option>
+            </select>
+          </div>
+
+          {/* Assignment */}
+          <div className="flex items-center gap-2">
+            <UserIcon className="h-4 w-4 text-gray-400 shrink-0" />
+            <select
+              className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
+              value={assignedToFilter}
+              onChange={(e) => setAssignedToFilter(e.target.value)}
+            >
+              <option value="">All Assignments</option>
+              {user && <option value={user.id}>Assigned to Me</option>}
+            </select>
+          </div>
         </div>
 
-        {/* Status */}
-        <div className="flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-gray-400 shrink-0" />
-          <select
-            className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Statuses</option>
-            <option value="open">Open</option>
-            <option value="in_progress">In Progress</option>
-            <option value="resolved">Resolved</option>
-            <option value="accepted">Accepted</option>
-            <option value="false_positive">False Positive</option>
-          </select>
-        </div>
+        {/* Severity quick-filter pills + group mode + clear */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mr-1">Quick:</span>
+          {(["", "critical", "high", "medium", "low", "info"] as const).map((sev) => {
+            const active = severity === sev;
+            const cfg = sev ? SEVERITY_CONFIG[sev] : null;
+            const count = sev ? (() => {
+              const c: Record<string, number> = {};
+              for (const f of findings) c[f.severity] = (c[f.severity] || 0) + 1;
+              return c[sev] ?? 0;
+            })() : findings.length;
+            return (
+              <button
+                key={sev || "all"}
+                onClick={() => setSeverity(sev)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold border transition-colors ${
+                  active
+                    ? cfg
+                      ? `${cfg.className} ring-1 ring-offset-1 ring-offset-surface ring-current`
+                      : "bg-gray-700 text-gray-200 border-gray-500"
+                    : "border-border bg-surface text-gray-400 hover:text-gray-200 hover:border-gray-500"
+                }`}
+              >
+                {sev ? sev.toUpperCase() : "ALL"} ({count})
+              </button>
+            );
+          })}
 
-        {/* Finding Type */}
-        <div className="flex items-center gap-2">
-          <ShieldAlert className="h-4 w-4 text-gray-400 shrink-0" />
-          <select
-            className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
-            value={findingType}
-            onChange={(e) => setFindingType(e.target.value)}
-          >
-            <option value="">All Finding Types</option>
-            <option value="weak_algorithm">Weak Algorithm</option>
-            <option value="weak_key_size">Weak Key Size</option>
-            <option value="tls_version">Weak TLS Version</option>
-            <option value="pqc_not_supported">PQC Not Supported</option>
-            <option value="pqc_downgrade">PQC Downgrade Drift</option>
-            <option value="cert_expiring">Cert Expiring</option>
-            <option value="cert_expired">Cert Expired</option>
-            <option value="self_signed">Self-Signed Cert</option>
-            <option value="ssh_weak_kex">SSH Weak KEX</option>
-            <option value="config_drift">Config Drift</option>
-          </select>
-        </div>
+          <div className="h-5 w-px bg-border mx-2" />
 
-        {/* Assignment */}
-        <div className="flex items-center gap-2">
-          <UserIcon className="h-4 w-4 text-gray-400 shrink-0" />
-          <select
-            className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
-            value={assignedToFilter}
-            onChange={(e) => setAssignedToFilter(e.target.value)}
-          >
-            <option value="">All Assignments</option>
-            {user && <option value={user.id}>Assigned to Me</option>}
-          </select>
-        </div>
+          <div className="flex items-center gap-2">
+            <Layers className="h-3.5 w-3.5 text-gray-500" />
+            <select
+              className="rounded-md border border-border bg-background py-1 pl-2 pr-6 text-xs text-gray-300 focus:border-cyan-500 focus:outline-none"
+              value={groupMode}
+              onChange={(e) => setGroupMode(e.target.value as typeof groupMode)}
+            >
+              <option value="scan_group">Group: scan group</option>
+              <option value="scan">Group: scan</option>
+              <option value="off">Flat list</option>
+            </select>
+          </div>
 
-        {/* Group By (Phase B) */}
-        <div className="flex items-center gap-2">
-          <Layers className="h-4 w-4 text-gray-400 shrink-0" />
-          <select
-            className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
-            value={groupMode}
-            onChange={(e) => setGroupMode(e.target.value as GroupMode)}
-            aria-label="Group findings by"
-            title="Group findings by their parent scan group, by scan, or no grouping"
-          >
-            <option value="scan_group">Group by scan group</option>
-            <option value="scan">Group by scan</option>
-            <option value="off">No grouping</option>
-          </select>
+          {(severity || statusFilter || findingType || assignedToFilter) && (
+            <button
+              onClick={() => { setSeverity(""); setStatusFilter(""); setFindingType(""); setAssignedToFilter(""); }}
+              className="ml-auto rounded-md border border-border bg-surface px-3 py-1 text-xs font-semibold text-gray-300 hover:text-gray-100 hover:bg-border transition-colors"
+            >
+              <X className="h-3 w-3 inline mr-1" />
+              Clear filters
+            </button>
+          )}
         </div>
       </div>
 
@@ -432,9 +527,17 @@ export default function Findings() {
           </div>
         ) : error ? (
           <div className="flex h-64 items-center justify-center p-4 text-center">
-            <div className="space-y-2">
-              <AlertTriangle className="mx-auto h-8 w-8 text-red-500" />
-              <p className="text-gray-200">{error}</p>
+            <div className="space-y-3">
+              <AlertTriangle className="mx-auto h-10 w-10 text-red-500" />
+              <p className="text-gray-200 font-medium">Failed to load findings</p>
+              <p className="text-sm text-gray-400">{error}</p>
+              <button
+                onClick={fetchFindings}
+                className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-semibold text-gray-200 hover:bg-border transition-colors"
+              >
+                <RefreshCw className="h-3.5 w-3.5 inline mr-1.5" />
+                Retry
+              </button>
             </div>
           </div>
         ) : findings.length === 0 ? (
@@ -471,15 +574,15 @@ export default function Findings() {
                   const headerRow = (
                     <tr
                       key={`hdr:${group.key}`}
-                      className="bg-background/60 border-b border-border"
+                      className="bg-background/80 border-y border-border"
                     >
-                      <td colSpan={7} className="py-2 px-4">
+                      <td colSpan={7} className="py-2.5 px-4">
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center gap-2.5 min-w-0">
                             {isGroupable && (
                               <button
                                 onClick={() => toggleGroup(group.key)}
-                                className="rounded p-0.5 text-gray-400 hover:bg-border hover:text-gray-200"
+                                className="rounded p-1 text-gray-400 hover:bg-border hover:text-gray-200 transition-colors shrink-0"
                                 aria-label={isCollapsed ? "Expand group" : "Collapse group"}
                               >
                                 {isCollapsed ? (
@@ -494,40 +597,45 @@ export default function Findings() {
                             ) : (
                               <ScanSearch className="h-4 w-4 text-gray-500 shrink-0" />
                             )}
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex items-center gap-2">
+                              <span className="text-[10px] font-mono text-gray-600 shrink-0">
+                                {group.scanGroupId ? "GROUP" : "SCAN"}
+                              </span>
                               {group.scanGroupId ? (
                                 <Link
                                   to={`/scan-groups/${group.scanGroupId}`}
-                                  className="font-semibold text-cyan-300 hover:underline truncate"
+                                  className="font-semibold text-cyan-300 hover:underline truncate text-sm transition-colors hover:text-cyan-200"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {group.label}
                                 </Link>
                               ) : (
-                                <span className="font-semibold text-gray-200 truncate">
+                                <span className="font-semibold text-gray-200 truncate text-sm">
                                   {group.label}
                                 </span>
                               )}
                               {group.sublabel && (
-                                <div className="text-[10px] text-gray-500 capitalize truncate">
-                                  {group.sublabel}
-                                </div>
+                                <span className="hidden sm:inline text-[10px] text-gray-500 capitalize truncate">
+                                  · {group.sublabel}
+                                </span>
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 shrink-0 text-[11px]">
-                            {Object.entries(sevCounts).map(([sev, n]) => (
-                              <span
-                                key={sev}
-                                className={`rounded border px-2 py-0.5 font-semibold ${getSeverityBadge(sev)
-                                  .props.className}`}
-                                title={`${n} ${sev}`}
-                              >
-                                {n} {sev.toUpperCase()}
-                              </span>
-                            ))}
-                            <span className="rounded border border-border bg-surface px-2 py-0.5 font-mono text-gray-300">
-                              {group.findings.length} finding{group.findings.length === 1 ? "" : "s"}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {Object.entries(sevCounts).map(([sev, n]) => {
+                              const cfg = SEVERITY_CONFIG[sev];
+                              return (
+                                <span
+                                  key={sev}
+                                  className={`rounded border px-1.5 py-0.5 text-[10px] font-bold ${cfg ? cfg.className : "bg-gray-800 text-gray-400 border-gray-700"}`}
+                                  title={`${n} ${sev}`}
+                                >
+                                  {n} {sev.slice(0, 1).toUpperCase()}
+                                </span>
+                              );
+                            })}
+                            <span className="rounded border border-border bg-surface px-2 py-0.5 font-mono text-gray-300 text-[11px]">
+                              {group.findings.length}
                             </span>
                           </div>
                         </div>
@@ -542,11 +650,11 @@ export default function Findings() {
                   const dataRows = group.findings.map((finding) => (
                     <tr
                       key={finding.id}
-                      className="hover:bg-border/30 transition-colors cursor-pointer"
+                      className="hover:bg-border/30 hover:pl-2 transition-all cursor-pointer group"
                       onClick={() => setSelectedFindingId(finding.id)}
                     >
                       <td className="py-3 px-4">
-                        <div className="font-semibold text-gray-200">{finding.title}</div>
+                        <div className="font-semibold text-gray-200 group-hover:text-cyan-200 transition-colors">{finding.title}</div>
                         <div className="text-xs text-gray-500">
                           {finding.asset?.name || "Unknown asset"}
                           {finding.scan_target_label && (
@@ -558,27 +666,57 @@ export default function Findings() {
                         {finding.scan_group_name ? (
                           <Link
                             to={`/scan-groups/${finding.scan_group_id}`}
-                            className="text-cyan-400 hover:underline"
+                            className="text-cyan-400 hover:underline inline-flex items-center gap-1"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {finding.scan_group_name}
+                            <Layers className="h-3 w-3 shrink-0" />
+                            <span className="truncate max-w-[120px]">{finding.scan_group_name}</span>
+                          </Link>
+                        ) : finding.scan_id ? (
+                          <Link
+                            to={`/scans/${finding.scan_id}`}
+                            className="text-gray-400 hover:text-gray-200 hover:underline inline-flex items-center gap-1 font-mono"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ScanSearch className="h-3 w-3 shrink-0" />
+                            scan #{finding.scan_id.slice(0, 8)}
                           </Link>
                         ) : (
                           <span className="text-gray-500">—</span>
                         )}
-                        <div className="text-[10px] text-gray-500 capitalize">
+                        <div className="text-[10px] text-gray-500 capitalize mt-0.5">
                           {finding.scan_type?.replace(/_/g, " ") || "scan"}
                         </div>
                       </td>
-                      <td className="py-3 px-4">{getSeverityBadge(finding.severity)}</td>
+                       <td className="py-3 px-4">
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold border ${SEVERITY_CONFIG[finding.severity]?.className || "bg-gray-800 text-gray-400 border-gray-700"}`}>
+                          {finding.severity.toUpperCase()}
+                        </span>
+                      </td>
                       <td className="py-3 px-4">
-                        <span className="capitalize">{finding.pqc_status || "Classical"}</span>
+                        <span className={`capitalize font-medium ${
+                          finding.pqc_status === "vulnerable" ? "text-red-400" :
+                          finding.pqc_status === "transitioning" ? "text-yellow-400" :
+                          finding.pqc_status === "hybrid" ? "text-blue-400" :
+                          finding.pqc_status === "pqc_ready" ? "text-green-400" :
+                          "text-gray-400"
+                        }`}>
+                          {finding.pqc_status || "Classical"}
+                        </span>
                       </td>
                       <td className="py-3 px-4">{getStatusBadge(finding.status)}</td>
-                      <td className="py-3 px-4 font-semibold text-gray-300">{finding.risk_score ?? "N/A"}</td>
+                      <td className="py-3 px-4">
+                        <span className={`font-bold ${
+                          (finding.risk_score ?? 0) >= 80 ? "text-red-400" :
+                          (finding.risk_score ?? 0) >= 50 ? "text-orange-400" :
+                          (finding.risk_score ?? 0) >= 20 ? "text-yellow-400" : "text-green-400"
+                        }`}>
+                          {finding.risk_score ?? "—"}
+                        </span>
+                      </td>
                       <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <button
-                          className="rounded border border-border px-2.5 py-1.5 text-xs text-gray-300 hover:bg-border hover:text-gray-100"
+                          className="rounded border border-border px-2.5 py-1.5 text-xs font-semibold text-gray-300 hover:bg-cyan-900/30 hover:text-cyan-200 hover:border-cyan-700/50 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                           onClick={() => setSelectedFindingId(finding.id)}
                         >
                           Inspect
