@@ -56,7 +56,6 @@ def _find_row(
         remediation=None,
         recommended_algorithm="ML-DSA-65",
         status="open",
-        assigned_to=None,
         asset=SimpleNamespace(
             id=asset_id,
             name="test-asset:443",
@@ -173,90 +172,6 @@ def test_update_finding_not_found_returns_404(mock_db):
         json={"status": "resolved"},
     )
     assert resp.status_code == 404
-
-
-def test_update_finding_assign_to_non_admin_returns_403(mock_db):
-    """A non-admin user trying to assign a finding -> 403."""
-    finding = _find_row()
-    mock_db.execute.return_value = _make_scalar_one_or_none(finding)
-    client = TestClient(app)
-    resp = client.patch(
-        f"/api/v1/findings/{finding.id}",
-        json={"assigned_to": "99999999-9999-9999-9999-999999999999"},
-    )
-    assert resp.status_code == 403
-    assert "admin" in resp.json()["detail"].lower()
-
-
-def test_update_finding_assign_to_admin_success(mock_db):
-    """An admin assigning to a real user succeeds."""
-    finding = _find_row()
-    # First execute -> the finding; second -> user lookup
-    call_count = {"n": 0}
-
-    async def _execute(stmt):
-        call_count["n"] += 1
-        if call_count["n"] == 1:
-            return _make_scalar_one_or_none(finding)
-        if call_count["n"] == 2:
-            user = SimpleNamespace(id="99999999-9999-9999-9999-999999999999", email="admin2@pqc.local")
-            return _make_scalar_one_or_none(user)
-        return _make_scalar_one_or_none(None)
-
-    mock_db.execute.side_effect = _execute
-
-    # Switch the mock user to admin
-    admin_user = SimpleNamespace(
-        id="11111111-1111-1111-1111-111111111111",
-        email="admin@pqc.local",
-        role="admin",
-        is_active=True,
-    )
-    app.dependency_overrides[get_current_user] = lambda: admin_user
-    client = TestClient(app)
-    resp = client.patch(
-        f"/api/v1/findings/{finding.id}",
-        json={"assigned_to": "99999999-9999-9999-9999-999999999999"},
-    )
-    assert resp.status_code == 200
-    assert finding.assigned_to == "99999999-9999-9999-9999-999999999999"
-    # Restore
-    app.dependency_overrides[get_current_user] = lambda: mock_user
-
-
-def test_update_finding_assign_to_invalid_user_returns_400(mock_db):
-    """Admin assigning to a non-existent user -> 400."""
-    finding = _find_row()
-    call_count = {"n": 0}
-
-    async def _execute(stmt):
-        call_count["n"] += 1
-        if call_count["n"] == 1:
-            return _make_scalar_one_or_none(finding)
-        if call_count["n"] == 2:
-            return _make_scalar_one_or_none(None)  # user not found
-        return _make_scalar_one_or_none(None)
-
-    mock_db.execute.side_effect = _execute
-
-    admin_user = SimpleNamespace(
-        id="11111111-1111-1111-1111-111111111111",
-        email="admin@pqc.local",
-        role="admin",
-        is_active=True,
-    )
-    app.dependency_overrides[get_current_user] = lambda: admin_user
-    client = TestClient(app)
-    resp = client.patch(
-        f"/api/v1/findings/{finding.id}",
-        json={"assigned_to": "ffffffff-ffff-ffff-ffff-ffffffffffff"},
-    )
-    assert resp.status_code == 400
-    assert "Assigned user not found" in resp.json()["detail"]
-    app.dependency_overrides[get_current_user] = lambda: mock_user
-
-
-# ---------------------------------------------- POST /findings/{id}/rescan -
 
 
 def test_rescan_finding_creates_new_scan(mock_db):

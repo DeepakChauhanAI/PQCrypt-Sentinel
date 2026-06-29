@@ -889,7 +889,6 @@ async def generate_csv_findings_export(
         "last_verified_at",
         "remediation",
         "recommended_algorithm",
-        "ticket_id",
     ]
 
     buffer = io.StringIO()
@@ -925,7 +924,6 @@ async def generate_csv_findings_export(
             "last_verified_at": _fmt(finding.last_verified_at),
             "remediation": _fmt(finding.remediation),
             "recommended_algorithm": _fmt(finding.recommended_algorithm),
-            "ticket_id": _fmt(finding.ticket_id),
         })
 
     with open(file_path, "w", encoding="utf-8", newline="") as f:

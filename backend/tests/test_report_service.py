@@ -235,7 +235,7 @@ def test_generate_csv_findings_export_with_rows():
         risk_score=70, status="open", first_detected_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         last_verified_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         remediation="Use ML-DSA-65", recommended_algorithm="ML-DSA-65",
-        ticket_id="T-1", deleted_at=None,
+        deleted_at=None,
     )
     asset = SimpleNamespace(
         id="a-1", name="app.example.com", asset_type="server", environment="prod",
@@ -252,7 +252,7 @@ def test_generate_csv_findings_export_with_rows():
             content = f.read()
         assert "RSA" in content
         assert "app.example.com" in content
-        assert "T-1" in content
+
 
 
 # ------------------- PDF (HTML fallback) --------------------
