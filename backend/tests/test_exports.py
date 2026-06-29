@@ -49,7 +49,6 @@ async def test_generate_csv_findings_export(tmp_path):
         finding.last_verified_at = datetime(2024, 1, 2, tzinfo=timezone.utc)
         finding.remediation = "Migrate to ML-DSA-65"
         finding.recommended_algorithm = "ML-DSA-65"
-        finding.ticket_id = "TICKET-1"
         finding.asset = asset
 
         # Mock session.execute to return finding rows

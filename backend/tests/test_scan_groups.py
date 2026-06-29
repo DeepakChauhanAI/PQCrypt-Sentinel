@@ -334,7 +334,6 @@ def test_finding_enrichment_populates_scan_group_name(mock_db, client):
         remediation=None,
         recommended_algorithm="ML-DSA-65",
         status="open",
-        assigned_to=None,
         asset=SimpleNamespace(
             id="a-1", name="api.example.com:443", asset_type="server",
             fqdn="api.example.com", ip_address=None, port=443, environment="production",
@@ -383,7 +382,7 @@ def test_finding_enrichment_handles_missing_scan_gracefully(mock_db, client):
         description=None, algorithm=None, algorithm_type=None,
         pqc_status=None, risk_score=None, layer=None, hndl_exposure=None,
         evidence=None, remediation=None, recommended_algorithm=None,
-        status="open", assigned_to=None, asset=None,
+        status="open", asset=None,
         first_detected_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         last_verified_at=None, resolved_at=None,
         created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),

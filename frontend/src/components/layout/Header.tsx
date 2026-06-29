@@ -22,15 +22,11 @@ const ROUTE_META: Record<string, RouteMeta> = {
   },
   "/findings": {
     title: "Findings Console",
-    subtitle: "Manage, assign, and remediate discovered cryptographic vulnerabilities and configuration drifts."
+    subtitle: "Manage and remediate discovered cryptographic vulnerabilities and configuration drifts."
   },
   "/reports": {
     title: "Reports & Export Centre",
     subtitle: "Generate and export CycloneDX 1.5 Cryptographic Bill of Materials (CBOM) inventories."
-  },
-  "/migration": {
-    title: "Migration Tracking",
-    subtitle: "Monitor your organization's transition from classical public key cryptography to post-quantum safe alternatives."
   },
   "/connectors": {
     title: "Integration Connectors",

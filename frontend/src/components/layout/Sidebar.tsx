@@ -5,7 +5,6 @@ import {
   FileWarning,
   LayoutDashboard,
   Layers,
-  LineChart,
   Plug2,
   PanelLeftClose,
   PanelLeftOpen,
@@ -22,7 +21,6 @@ const NAV_ITEMS = [
   { to: "/assets", label: "Assets", icon: Boxes },
   { to: "/findings", label: "Findings", icon: FileWarning },
   { to: "/reports", label: "Reports", icon: BarChart3 },
-  { to: "/migration", label: "Migration", icon: LineChart },
   { to: "/connectors", label: "Connectors", icon: Plug2 },
   { to: "/settings", label: "Settings", icon: Settings2 },
 ];

@@ -10,7 +10,6 @@ import {
   RefreshCw,
   Filter,
   ScanSearch,
-  User as UserIcon,
   ShieldAlert,
   ArrowRight,
   X,
@@ -19,7 +18,6 @@ import {
   Flame,
   Info,
 } from "lucide-react";
-import { useAuth } from "@/lib/authContext";
 import { EvidenceRenderer } from "../components/evidence/EvidenceRenderer";
 
 // Severity configuration map for consistent badge styling
@@ -57,8 +55,6 @@ interface Finding {
   remediation?: string;
   recommended_algorithm?: string;
   status: "open" | "in_progress" | "resolved" | "accepted" | "false_positive";
-  assigned_to?: string;
-  ticket_id?: string;
   first_detected_at: string;
   last_verified_at?: string;
   resolved_at?: string;
@@ -73,7 +69,6 @@ interface Finding {
 }
 
 export default function Findings() {
-  const { user } = useAuth();
   const [findings, setFindings] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +77,6 @@ export default function Findings() {
   const [severity, setSeverity] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [findingType, setFindingType] = useState("");
-  const [assignedToFilter, setAssignedToFilter] = useState("");
 
   // Grouping (Phase B). When a finding has a scan_group_id, the page
   // groups findings under that group; otherwise it falls back to the
@@ -101,7 +95,6 @@ export default function Findings() {
   const [updating, setUpdating] = useState(false);
   const [statusUpdate, setStatusUpdate] = useState("");
   const [reasonUpdate, setReasonUpdate] = useState("");
-  const [assigneeUpdate, setAssigneeUpdate] = useState("");
   const [rescanning, setRescanning] = useState(false);
   const [rescanSuccess, setRescanSuccess] = useState<string | null>(null);
 
@@ -190,7 +183,6 @@ export default function Findings() {
       if (severity) queryParams.append("severity", severity);
       if (statusFilter) queryParams.append("status", statusFilter);
       if (findingType) queryParams.append("finding_type", findingType);
-      if (assignedToFilter) queryParams.append("assigned_to", assignedToFilter);
 
       const response = await fetch(`/api/v1/findings?${queryParams.toString()}`, { headers });
       if (!response.ok) {
@@ -207,7 +199,7 @@ export default function Findings() {
 
   useEffect(() => {
     fetchFindings();
-  }, [severity, statusFilter, findingType, assignedToFilter]);
+  }, [severity, statusFilter, findingType]);
 
   const fetchFindingDetails = async (id: string) => {
     try {
@@ -222,7 +214,6 @@ export default function Findings() {
       const data = await response.json();
       setSelectedFinding(data);
       setStatusUpdate(data.status);
-      setAssigneeUpdate(data.assigned_to ?? "");
       setReasonUpdate(data.evidence?.status_change_reason ?? "");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to load finding details");
@@ -256,9 +247,6 @@ export default function Findings() {
         if (["accepted", "false_positive", "resolved"].includes(statusUpdate) && reasonUpdate) {
           payload.reason = reasonUpdate;
         }
-      }
-      if (assigneeUpdate !== (selectedFinding.assigned_to ?? "")) {
-        payload.assigned_to = assigneeUpdate || null;
       }
 
       if (Object.keys(payload).length === 0) {
@@ -450,18 +438,6 @@ export default function Findings() {
             </select>
           </div>
 
-          {/* Assignment */}
-          <div className="flex items-center gap-2">
-            <UserIcon className="h-4 w-4 text-gray-400 shrink-0" />
-            <select
-              className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
-              value={assignedToFilter}
-              onChange={(e) => setAssignedToFilter(e.target.value)}
-            >
-              <option value="">All Assignments</option>
-              {user && <option value={user.id}>Assigned to Me</option>}
-            </select>
-          </div>
         </div>
 
         {/* Severity quick-filter pills + group mode + clear */}
@@ -494,28 +470,31 @@ export default function Findings() {
 
           <div className="h-5 w-px bg-border mx-2" />
 
-          <div className="flex items-center gap-2">
-            <Layers className="h-3.5 w-3.5 text-gray-500" />
-            <select
-              className="rounded-md border border-border bg-background py-1 pl-2 pr-6 text-xs text-gray-300 focus:border-cyan-500 focus:outline-none"
-              value={groupMode}
-              onChange={(e) => setGroupMode(e.target.value as typeof groupMode)}
-            >
-              <option value="scan_group">Group: scan group</option>
-              <option value="scan">Group: scan</option>
-              <option value="off">Flat list</option>
-            </select>
-          </div>
+        {/* Group By (Phase B) */}
+        <div className="flex items-center gap-2">
+          <Layers className="h-3.5 w-3.5 text-gray-500" />
+          <select
+            className="rounded-md border border-border bg-background py-1 pl-2 pr-6 text-xs text-gray-300 focus:border-cyan-500 focus:outline-none"
+            value={groupMode}
+            onChange={(e) => setGroupMode(e.target.value as GroupMode)}
+            aria-label="Group findings by"
+            title="Group findings by their parent scan group, by scan, or no grouping"
+          >
+            <option value="scan_group">Group: scan group</option>
+            <option value="scan">Group: scan</option>
+            <option value="off">Flat list</option>
+          </select>
+        </div>
 
-          {(severity || statusFilter || findingType || assignedToFilter) && (
-            <button
-              onClick={() => { setSeverity(""); setStatusFilter(""); setFindingType(""); setAssignedToFilter(""); }}
-              className="ml-auto rounded-md border border-border bg-surface px-3 py-1 text-xs font-semibold text-gray-300 hover:text-gray-100 hover:bg-border transition-colors"
-            >
-              <X className="h-3 w-3 inline mr-1" />
-              Clear filters
-            </button>
-          )}
+        {(severity || statusFilter || findingType) && (
+          <button
+            onClick={() => { setSeverity(""); setStatusFilter(""); setFindingType(""); }}
+            className="ml-auto rounded-md border border-border bg-surface px-3 py-1 text-xs font-semibold text-gray-300 hover:text-gray-100 hover:bg-border transition-colors"
+          >
+            <X className="h-3 w-3 inline mr-1" />
+            Clear filters
+          </button>
+        )}
         </div>
       </div>
 
@@ -826,12 +805,6 @@ export default function Findings() {
                               {new Date(selectedFinding.first_detected_at).toLocaleString()}
                             </div>
                           </div>
-                          <div>
-                            <div className="text-xs text-gray-500">Assigned To</div>
-                            <div className="text-sm text-gray-350">
-                              {selectedFinding.assigned_to ? "Configured" : "Unassigned"}
-                            </div>
-                          </div>
                         </div>
 
                         {/* Phase B - scan context: which group/scan this finding belongs to */}
@@ -938,21 +911,6 @@ export default function Findings() {
                                 <option value="resolved">Resolved</option>
                                 <option value="accepted">Accepted (Risk Exception)</option>
                                 <option value="false_positive">False Positive</option>
-                              </select>
-                            </div>
-
-                            {/* Assignee */}
-                            <div>
-                              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                                Assignee
-                              </label>
-                              <select
-                                className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
-                                value={assigneeUpdate}
-                                onChange={(e) => setAssigneeUpdate(e.target.value)}
-                              >
-                                <option value="">Unassigned</option>
-                                {user && <option value={user.id}>Assign to Me ({user.email})</option>}
                               </select>
                             </div>
                           </div>

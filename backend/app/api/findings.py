@@ -9,7 +9,6 @@ from app.api.auth import get_current_user
 from app.db import get_session
 from app.models.models import Finding, Asset, Scan, ScanGroup, User
 from app.models.schemas import FindingOut, FindingUpdate
-from app.models.models import User
 from app.utils.target_classifier import classify_target
 
 router = APIRouter(prefix="/api/v1/findings", tags=["findings"])
@@ -78,7 +77,6 @@ async def list_findings(
     severity: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     finding_type: Optional[str] = Query(None),
-    assigned_to: Optional[str] = Query(None),
     asset_id: Optional[str] = Query(None),
     scan_id: Optional[str] = Query(None),
     scan_group_id: Optional[str] = Query(None, description="Phase B: filter by scan group"),
@@ -96,8 +94,6 @@ async def list_findings(
         stmt = stmt.where(Finding.status == status.lower())
     if finding_type:
         stmt = stmt.where(Finding.finding_type == finding_type)
-    if assigned_to:
-        stmt = stmt.where(Finding.assigned_to == assigned_to)
     if asset_id:
         stmt = stmt.where(Finding.asset_id == asset_id)
     if scan_id:
@@ -164,25 +160,11 @@ async def update_finding(
         finding.status = payload.status.lower()
         if payload.status in ["resolved", "accepted", "false_positive"]:
             finding.resolved_at = datetime.now(timezone.utc)
-            # Store the reason if false_positive/accepted
             if payload.reason:
                 if not finding.evidence:
                     finding.evidence = {}
                 finding.evidence["status_change_reason"] = payload.reason
                 
-    if payload.assigned_to is not None:
-        if current_user.role != "admin":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only admins can assign findings"
-            )
-        # Check if user exists
-        user_res = await session.execute(select(User).where(User.id == payload.assigned_to))
-        user = user_res.scalar_one_or_none()
-        if not user:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assigned user not found")
-        finding.assigned_to = payload.assigned_to
-        
     finding.updated_at = datetime.now(timezone.utc)
     await session.commit()
     await session.refresh(finding)

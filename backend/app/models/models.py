@@ -388,8 +388,6 @@ class Finding(Base):
         nullable=False,
         server_default="open",
     )
-    assigned_to: Mapped[Optional[str]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    ticket_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     first_detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -423,9 +421,6 @@ class Report(Base):
             "cbom",
             "executive",
             "findings",
-            "sast",
-            "compliance",
-            "migration_progress",
             name="report_type_enum",
             native_enum=False,
         ),

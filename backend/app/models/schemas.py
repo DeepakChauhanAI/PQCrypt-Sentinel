@@ -274,8 +274,6 @@ class FindingOut(BaseModel):
     remediation: Optional[str] = None
     recommended_algorithm: Optional[str] = None
     status: str
-    assigned_to: Optional[str] = None
-    ticket_id: Optional[str] = None
     first_detected_at: datetime
     last_verified_at: Optional[datetime] = None
     resolved_at: Optional[datetime] = None
@@ -298,7 +296,7 @@ class FindingOut(BaseModel):
         "from_attributes": True,
     }
 
-    @field_validator("id", "asset_id", "scan_id", "assigned_to", "scan_group_id", mode="before")
+    @field_validator("id", "asset_id", "scan_id", "scan_group_id", mode="before")
     @classmethod
     def coerce_uuid_to_str(cls, value):
         if hasattr(value, "hex"):
@@ -308,7 +306,6 @@ class FindingOut(BaseModel):
 
 class FindingUpdate(BaseModel):
     status: Optional[str] = None
-    assigned_to: Optional[str] = None
     reason: Optional[str] = None # For marking false positive/accepting with reason
 
 
@@ -342,32 +339,6 @@ class DashboardProgressItem(BaseModel):
 class DashboardLayerCoverage(BaseModel):
     layers: List[dict]
     overall_coverage_pct: float
-
-
-class DashboardMigrationHistoryItem(BaseModel):
-    month: str
-    classical: int
-    hybrid: int
-    pqc_ready: int
-
-
-class DashboardMigration(BaseModel):
-    overall_pqc_transition_pct: float
-    hybrid_deployment_pct: float
-    pqc_ready_count: int
-    safe_count: int
-    estimated_deadline: str
-    mosca_risk_level: str
-    data_longevity_d: int
-    migration_duration_t: int
-    cryptographic_collapse_y: int
-    history: List[DashboardMigrationHistoryItem]
-
-
-class ReportCreate(BaseModel):
-    report_type: str
-    format: str
-    scope_filters: Optional[dict] = {}
 
 
 class ReportOut(BaseModel):

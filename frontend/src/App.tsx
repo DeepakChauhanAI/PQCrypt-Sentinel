@@ -18,7 +18,6 @@ const Assets = lazy(() => import("@/pages/Assets"));
 const Findings = lazy(() => import("@/pages/Findings"));
 const Reports = lazy(() => import("@/pages/Reports"));
 const Connectors = lazy(() => import("@/pages/Connectors"));
-const Migration = lazy(() => import("@/pages/Migration"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const Users = lazy(() => import("@/pages/Users"));
 
@@ -192,16 +191,6 @@ export default function App() {
               <ProtectedRoute allowedRoles={["admin", "analyst"]}>
                 <AppShell>
                   <Connectors />
-                </AppShell>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/migration"
-            element={
-              <ProtectedRoute>
-                <AppShell>
-                  <Migration />
                 </AppShell>
               </ProtectedRoute>
             }
