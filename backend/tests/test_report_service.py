@@ -919,6 +919,125 @@ def test_generate_pdf_executive_report_weasyprint_success_mocked():
         assert os.path.exists(out_path)
 
 
+def test_generate_compliance_report_no_data():
+    """Empty data produces a valid compliance JSON structure."""
+    from app.services.report_service import generate_compliance_report
+
+    session = AsyncMock()
+    session.execute.side_effect = lambda stmt: MagicMock(
+        scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
+    )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        with patch("app.services.report_service.os.path.dirname") as mock_dirname:
+            mock_dirname.return_value = tmp
+            out_path = asyncio.run(generate_compliance_report(session, "report-c1"))
+        with open(out_path) as f:
+            data = json.load(f)
+        assert data["report_metadata"]["report_type"] == "compliance"
+        assert data["executive_summary"]["total_assets"] == 0
+        assert data["executive_summary"]["total_findings"] == 0
+        assert data["findings_by_asset"] == []
+        assert data["compliance_mapping"] == []
+
+
+def test_generate_compliance_report_with_findings():
+    """Findings appear grouped by asset with NIST controls."""
+    from app.services.report_service import generate_compliance_report
+
+    asset = SimpleNamespace(
+        id="a-1", name="app.example.com", asset_type="web_app", environment="prod",
+        fqdn="app.example.com", ip_address="10.0.0.1", business_service="payments",
+        owner_id=None, deleted_at=None,
+    )
+    algo = SimpleNamespace(pqc_status="pqc_ready", asset_id="a-1")
+    algo_rows = [("pqc_ready", "a-1")]
+
+    finding1 = SimpleNamespace(
+        id="f-1", asset_id="a-1", scan_id="s-1", finding_type="weak_algorithm",
+        severity="critical", title="RSA-1024", description="Weak algorithm",
+        algorithm="RSA", pqc_status="vulnerable", hndl_exposure="high",
+        risk_score=95, status="open",
+        first_detected_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        last_verified_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        resolved_at=None,
+        remediation="Migrate to ML-KEM-768", recommended_algorithm="ML-KEM-768",
+        priority_queue="P1",
+        deleted_at=None,
+    )
+    finding2 = SimpleNamespace(
+        id="f-2", asset_id="a-1", scan_id="s-1", finding_type="cert_expiring",
+        severity="medium", title="Cert expiring", description="Expires soon",
+        algorithm=None, pqc_status="vulnerable", hndl_exposure="low",
+        risk_score=20, status="in_progress",
+        first_detected_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        last_verified_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        resolved_at=None,
+        remediation="Renew certificate", recommended_algorithm="ECDSA-P256",
+        priority_queue="P3",
+        deleted_at=None,
+    )
+    rows = [(finding1, asset), (finding2, asset)]
+
+    call_count = {"n": 0}
+
+    async def _execute(stmt):
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            return MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[asset]))))
+        if call_count["n"] == 2:
+            return MagicMock(all=MagicMock(return_value=rows))
+        return MagicMock(all=MagicMock(return_value=algo_rows))
+
+    session = AsyncMock()
+    session.execute.side_effect = _execute
+
+    with tempfile.TemporaryDirectory() as tmp:
+        with patch("app.services.report_service.os.path.dirname") as mock_dirname:
+            mock_dirname.return_value = tmp
+            out_path = asyncio.run(generate_compliance_report(session, "report-c2"))
+        with open(out_path) as f:
+            data = json.load(f)
+
+    assert data["report_metadata"]["framework"] == "NIST / SBI Cryptographic Posture Audit"
+    assert data["executive_summary"]["total_assets"] == 1
+    assert data["executive_summary"]["total_findings"] == 2
+    assert data["executive_summary"]["findings_by_severity"]["critical"] == 1
+    assert data["executive_summary"]["findings_by_severity"]["medium"] == 1
+
+    asset_entries = data["findings_by_asset"]
+    assert len(asset_entries) == 1
+    a1 = asset_entries[0]
+    assert a1["asset_name"] == "app.example.com"
+    assert a1["pqc_readiness_pct"] > 0
+    assert len(a1["findings"]) == 2
+
+    first = a1["findings"][0]
+    assert first["nist_control"] == "SC-17 (PKI) / SA-11 (Developer Security)"
+    assert first["priority_queue"] == "P1"
+
+    mapping = data["compliance_mapping"]
+    assert len(mapping) == 2
+    assert mapping[0]["risk_score"] == 95
+
+
+def test_generate_report_dispatch_compliance():
+    """`compliance`/`json` dispatches to `generate_compliance_report`."""
+    from app.services.report_service import generate_report
+
+    report = SimpleNamespace(id="r-5", status="queued", scope_filters={})
+    session = AsyncMock()
+    session.execute.return_value = MagicMock(scalar_one_or_none=MagicMock(return_value=report))
+    session.commit = AsyncMock()
+    session.refresh = AsyncMock()
+
+    with patch("app.services.report_service.generate_compliance_report", new=AsyncMock(return_value="/tmp/c.json")) as m:
+        out = asyncio.run(generate_report(session, "r-5", "compliance", "json"))
+    assert out == "/tmp/c.json"
+    m.assert_called_once()
+    assert report.status == "ready"
+
+
 def test_generate_pdf_executive_report_weasyprint_failure():
     """If WeasyPrint throws an exception during write_pdf, it falls back to HTML."""
     from app.services.report_service import generate_pdf_executive_report

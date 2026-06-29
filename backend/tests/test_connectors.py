@@ -34,19 +34,15 @@ def test_list_connectors():
     response = client.get("/api/v1/connectors")
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 14
-    assert data[0]["id"] == "csv_cmdb"
-    assert data[1]["id"] == "servicenow"
-    assert data[2]["id"] == "aws_discovery"
-    assert data[3]["id"] == "pkcs11_hsm"
-    assert data[4]["id"] == "kmip_kms"
-    assert data[5]["id"] == "adcs_ldap"
-    assert data[6]["id"] == "ssh_agentless"
-    assert data[7]["id"] == "winrm_agentless"
-    assert data[8]["id"] == "oracle_tde"
-    assert data[9]["id"] == "sqlserver_tde"
-    assert data[10]["id"] == "kubernetes"
-    assert data[11]["id"] == "sast_native"
+    ids = {item["id"] for item in data}
+    for expected_id in [
+        "csv_cmdb", "servicenow", "aws_discovery",
+        "pkcs11_hsm", "kmip_kms", "adcs_ldap", "saml_metadata",
+        "ssh_agentless", "winrm_agentless", "oracle_tde",
+        "sqlserver_tde", "kubernetes", "sast_native",
+        "jwt_audit", "windows_cert_store",
+    ]:
+        assert expected_id in ids, f"{expected_id} missing from connector list"
 
 @pytest.mark.asyncio
 async def test_csv_connector_sync():
@@ -363,6 +359,50 @@ def test_sync_jwt(mock_db):
         assert response.status_code == 200
 
 
+def test_sync_saml_metadata(mock_db):
+    payload = {
+        "metadata_url": "https://idp.example.com/metadata",
+    }
+    with patch("app.connectors.saml_connector.SAMLMetadataConnector.sync", new_callable=AsyncMock) as mock_sync:
+        mock_sync.return_value = {"status": "success", "imported": 2, "updated": 0, "errors": []}
+        response = client.post("/api/v1/connectors/sync/saml", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+
+
+def test_scan_saml_direct_url(mock_db):
+    payload = {
+        "metadata_url": "https://idp.example.com/metadata",
+    }
+    mock_sync_result = {"status": "success", "imported": 1, "updated": 0, "errors": []}
+    mock_count_result = MagicMock()
+    mock_count_result.scalar_one.return_value = 0
+    mock_db.execute.return_value = mock_count_result
+    with patch("app.connectors.saml_connector.SAMLMetadataConnector.sync", new_callable=AsyncMock) as mock_sync:
+        mock_sync.return_value = mock_sync_result
+        response = client.post("/api/v1/connectors/scan/saml-direct", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+
+
+def test_scan_saml_direct_xml_input(mock_db):
+    payload = {
+        "xml_blob": '<?xml version="1.0"?><EntityDescriptor entityID="https://idp.example.com/metadata"><EntityDescriptor>',
+    }
+    mock_sync_result = {"status": "success", "imported": 1, "updated": 0, "errors": []}
+    mock_count_result = MagicMock()
+    mock_count_result.scalar_one.return_value = 0
+    mock_db.execute.return_value = mock_count_result
+    with patch("app.connectors.saml_connector.SAMLMetadataConnector.sync", new_callable=AsyncMock) as mock_sync:
+        mock_sync.return_value = mock_sync_result
+        response = client.post("/api/v1/connectors/scan/saml-direct", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+
+
 def test_sync_windows_cert_store(mock_db):
     payload = {
         "provider": "windows_cert_store",
@@ -373,6 +413,38 @@ def test_sync_windows_cert_store(mock_db):
         mock_sync.return_value = {"status": "success"}
         response = client.post("/api/v1/connectors/sync/windows-cert-store", json=payload)
         assert response.status_code == 200
+
+
+def test_sync_vault_scanner(mock_db):
+    payload = {
+        "provider": "vault_secrets",
+        "vault_url": "https://vault.internal:8200",
+        "token": "s.A1b2C3d4E5",
+        "mount_point": "secret",
+        "path": "app/data"
+    }
+    with patch("app.api.connectors.VaultScannerConnector.sync", new_callable=AsyncMock) as mock_sync:
+        mock_sync.return_value = {"status": "success", "imported": 3, "updated": 1, "errors": [], "total_processed": 4}
+        response = client.post("/api/v1/connectors/sync/vault-scanner", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["total_processed"] == 4
+
+
+def test_sync_git_secrets(mock_db):
+    payload = {
+        "provider": "git_secrets",
+        "repo_path": "D:/project-files/myrepo",
+        "scan_history": True
+    }
+    with patch("app.api.connectors.GitSecretsConnector.sync", new_callable=AsyncMock) as mock_sync:
+        mock_sync.return_value = {"status": "success", "imported": 1, "updated": 0, "errors": [], "total_processed": 1}
+        response = client.post("/api/v1/connectors/sync/git-secrets", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["imported"] == 1
 
 
 def test_scan_winrm_direct_success(mock_db):

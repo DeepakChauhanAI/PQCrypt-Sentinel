@@ -22,6 +22,9 @@ ALLOWED_REPORT_COMBOS = {
     ("cbom", "json"),
     ("findings", "csv"),
     ("executive", "pdf"),
+    ("executive", "html"),
+    ("compliance", "json"),
+    ("compliance", "html"),
     ("sast", "sarif"),
 }
 

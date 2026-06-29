@@ -82,7 +82,7 @@ class SAMLMetadataConnector(BaseConnector):
 
         if not xml_content:
             return {
-                "status": "failed",
+                "status": "error",
                 "imported": 0,
                 "updated": 0,
                 "errors": errors or ["No XML content or metadata URL provided."],
@@ -124,7 +124,7 @@ class SAMLMetadataConnector(BaseConnector):
             xml_parsed: Dict[str, List[str]] = await asyncio.to_thread(parse_xml)
         except Exception as exc:
             return {
-                "status": "failed",
+                "status": "error",
                 "imported": 0,
                 "updated": 0,
                 "errors": [f"XML parsing failed: {exc}"],

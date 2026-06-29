@@ -49,13 +49,18 @@ ASSET_TO_LAYER = {
     # L4 Application
     "application": "L4",
     "container": "L4",
+    "kubernetes_cluster": "L4",
+    "kubernetes": "L4",
     "jwt": "L4",
+    "saml": "L4",
+    "saml_metadata": "L4",
     "saas": "L4",
+    "source_code": "L4",
     # L5 Data
     "database": "L5",
     "tde": "L5",
-    "saml_metadata": "L5",
-    "saml": "L5",
+    "backup": "L5",
+    "backup_encryption": "L5",
     "cloud_resource": "L5",
     # L6 Infrastructure
     "ssh_host_key": "L6",

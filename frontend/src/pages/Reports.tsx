@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Clock,
   RefreshCw,
+
 } from "lucide-react";
 
 interface Report {
@@ -23,16 +24,47 @@ interface Report {
   updated_at: string;
 }
 
+const FORMATS_BY_TYPE: Record<string, { value: string; label: string }[]> = {
+  cbom: [{ value: "json", label: "JSON (CycloneDX Compliant)" }],
+  executive: [
+    { value: "html", label: "HTML Document" },
+    { value: "pdf", label: "PDF Document" },
+  ],
+  compliance: [
+    { value: "html", label: "HTML Audit Report" },
+    { value: "json", label: "JSON (Structured Audit)" },
+  ],
+  findings: [{ value: "csv", label: "CSV Spreadsheet" }],
+  sast: [{ value: "sarif", label: "SARIF 2.1.0 JSON" }],
+};
+
+const REPORT_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "cbom", label: "CycloneDX CBOM Inventory" },
+  { value: "executive", label: "Executive Posture Summary" },
+  { value: "compliance", label: "NIST / SBI Compliance Audit" },
+  { value: "findings", label: "Findings Export (CSV)" },
+  { value: "sast", label: "SAST SARIF Report" },
+];
+
 export default function Reports() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Form State
   const [reportType, setReportType] = useState("cbom");
   const [format, setFormat] = useState("json");
   const [generating, setGenerating] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const availableFormats = FORMATS_BY_TYPE[reportType] || [];
+
+  const handleReportTypeChange = (value: string) => {
+    setReportType(value);
+    const first = FORMATS_BY_TYPE[value]?.[0];
+    if (first) {
+      setFormat(first.value);
+    }
+  };
 
   const fetchReports = async () => {
     try {
@@ -94,7 +126,9 @@ export default function Reports() {
         throw new Error(errPayload.detail ?? "Failed to generate report");
       }
 
-      setSuccessMsg("CBOM inventory generation triggered successfully.");
+      const label =
+        REPORT_TYPE_OPTIONS.find((o) => o.value === reportType)?.label || reportType;
+      setSuccessMsg(`${label} generation triggered successfully.`);
       await fetchReports();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error starting report generation");
@@ -103,9 +137,9 @@ export default function Reports() {
     }
   };
 
-  const handleDownload = async (reportId: string, format: string) => {
+  const handleDownload = async (report: Report) => {
     try {
-      const response = await fetch(`/api/v1/reports/${reportId}/download`, {
+      const response = await fetch(`/api/v1/reports/${report.id}/download`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
         },
@@ -119,7 +153,7 @@ export default function Reports() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `cbom-inventory-${reportId}.${format}`;
+      a.download = `${report.report_type}-report-${report.id}.${report.format}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -188,9 +222,7 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Left Form Panel */}
         <div className="md:col-span-1 rounded-lg border border-border bg-surface p-6 h-fit space-y-4">
           <h2 className="text-lg font-bold text-gray-200">New Export Job</h2>
           <form onSubmit={handleGenerateReport} className="space-y-4">
@@ -202,18 +234,16 @@ export default function Reports() {
                 className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
                 onChange={(e) => {
                   const v = e.target.value;
-                  if (v !== "cbom") return;
-                  setReportType(v);
+                  if (!v) return;
+                  handleReportTypeChange(v);
                 }}
                 value={reportType}
               >
-                <option value="cbom">CycloneDX CBOM Inventory</option>
-                <option value="executive" disabled>
-                  Executive Posture Summary (PDF - Phase 5)
-                </option>
-                <option value="compliance" disabled>
-                  NIST / CISA Compliance Audit (Phase 5)
-                </option>
+                {REPORT_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -223,17 +253,19 @@ export default function Reports() {
               </label>
               <select
                 className="w-full rounded-md border border-border bg-background py-2 px-3 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (v !== "json") return;
-                  setFormat(v);
-                }}
+                onChange={(e) => setFormat(e.target.value)}
                 value={format}
               >
-                <option value="json">JSON (CycloneDX Compliant)</option>
-                <option value="pdf" disabled>
-                  PDF Document (Phase 5)
-                </option>
+                {availableFormats.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+                {availableFormats.length === 0 && (
+                  <option value="" disabled>
+                    Select a format
+                  </option>
+                )}
               </select>
             </div>
 
@@ -264,7 +296,6 @@ export default function Reports() {
           </form>
         </div>
 
-        {/* Right List Panel */}
         <div className="md:col-span-2 rounded-lg border border-border bg-surface p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-200">Export History</h2>
@@ -286,8 +317,8 @@ export default function Reports() {
               <div className="flex h-48 flex-col items-center justify-center p-8 text-center space-y-3">
                 <FileText className="h-10 w-10 text-gray-500" />
                 <div>
-                  <p className="text-sm font-medium text-gray-200">No reports exported yet</p>
-                  <p className="text-xs text-gray-500">Configure parameters on the left to start a CBOM export.</p>
+                  <p className="text-sm font-medium text-gray-200">No reports generated yet</p>
+                  <p className="text-xs text-gray-500">Configure the report type and format on the left to start.</p>
                 </div>
               </div>
             ) : (
@@ -321,7 +352,7 @@ export default function Reports() {
                             {report.status === "ready" && (
                               <button
                                 className="rounded p-1.5 text-cyan-400 hover:bg-border hover:text-cyan-300"
-                                onClick={() => handleDownload(report.id, report.format)}
+                                onClick={() => handleDownload(report)}
                                 title="Download File"
                               >
                                 <Download className="h-4 w-4" />

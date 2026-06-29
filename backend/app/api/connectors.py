@@ -19,6 +19,11 @@ from app.connectors.winrm_connector import WinRMConnector
 from app.connectors.tde_connector import OracleTDEConnector, SQLServerTDEConnector
 from app.connectors.k8s_connector import KubernetesConnector
 from app.connectors.sast_connector import SASTConnector
+from app.connectors.jwt_connector import JWTConnector
+from app.connectors.winstore_connector import WindowsCertStoreConnector
+from app.connectors.saml_connector import SAMLMetadataConnector
+from app.connectors.vault_scanner import VaultScannerConnector
+from app.connectors.git_secrets_connector import GitSecretsConnector
 
 logger = logging.getLogger(__name__)
 
@@ -47,21 +52,27 @@ class VaultCredentialRef(BaseModel):
 
 class AWSKMSSyncRequest(BaseModel):
     provider: str = "aws_kms"
-    credentials: VaultCredentialRef
+    credentials: Optional[VaultCredentialRef] = None
     region: str = Field(default="us-east-1", min_length=1)
+    access_key_id: Optional[str] = Field(None, min_length=1)
+    secret_access_key: Optional[str] = Field(None, min_length=1)
 
 
 class AzureKeyVaultSyncRequest(BaseModel):
     provider: str = "azure_key_vault"
-    credentials: VaultCredentialRef
+    credentials: Optional[VaultCredentialRef] = None
     tenant_id: str = Field(min_length=1)
     vault_url: str = Field(min_length=1)
+    client_id: Optional[str] = Field(None, min_length=1)
+    client_secret: Optional[str] = Field(None, min_length=1)
 
 
 class GCPKMSSyncRequest(BaseModel):
     provider: str = "gcp_kms"
     project_id: str = Field(min_length=1)
-    credentials: VaultCredentialRef
+    credentials: Optional[VaultCredentialRef] = None
+    credentials_path: Optional[str] = Field(None, min_length=1)
+    credentials_json: Optional[str] = Field(None, min_length=1)
 
 
 class PKCS11SyncRequest(BaseModel):
@@ -158,6 +169,20 @@ class WindowsCertStoreSyncRequest(BaseModel):
     dump: Optional[str] = Field(
         None, description="Raw text of a `certutil -store` dump."
     )
+
+
+class VaultScannerSyncRequest(BaseModel):
+    provider: str = "vault_secrets"
+    vault_url: str = Field(min_length=1, description="HashiCorp Vault URL, e.g. https://vault.internal:8200")
+    token: str = Field(min_length=1, description="Vault token with read permissions")
+    mount_point: str = Field(default="secret", description="KV secrets engine mount point")
+    path: str = Field(default="", description="Optional sub-path within the mount point")
+
+
+class GitSecretsSyncRequest(BaseModel):
+    provider: str = "git_secrets"
+    repo_path: str = Field(min_length=1, description="Local path to a git repository")
+    scan_history: bool = Field(default=True, description="Scan recent commit history for secrets")
 
 
 class AWSPQCScanRequest(BaseModel):
@@ -258,8 +283,20 @@ class JWTDirectScanRequest(BaseModel):
 
 class WindowsCertStoreDirectScanRequest(BaseModel):
     store_name: str = Field("My")
-    store_kind: str = Field("user", pattern="^(user|enterprise)$")
+    store_kind: str = Field("user", pattern="^(user|enterprise|machine)$")
     dump: str = Field(..., min_length=1, description="Raw certutil store text dump")
+
+
+class SAMLSyncRequest(BaseModel):
+    provider: str = "saml_metadata"
+    metadata_url: Optional[str] = Field(None, description="URL of SAML metadata XML")
+    credentials: Optional[VaultCredentialRef] = None
+
+
+class SAMLDirectScanRequest(BaseModel):
+    metadata_url: Optional[str] = Field(None, description="SAML metadata URL to fetch and parse")
+    xml_blob: Optional[str] = Field(None, description="Raw SAML metadata XML string")
+    token: Optional[str] = Field(None, description="Bearer token for authenticated metadata URLs")
 
 
 @router.get("")
@@ -312,7 +349,7 @@ async def list_connectors(
         },
         {
             "id": "adcs_ldap",
-            "name": "ADCS/LDAP Certificate Enumeration",
+            "name": "ADCS/LDAP Scanner",
             "type": "pki",
             "status": "configured",
             "last_sync": None,
@@ -320,19 +357,19 @@ async def list_connectors(
         },
         {
             "id": "ssh_agentless",
-            "name": "SSH Agentless Enumeration",
-            "type": "agentless",
+            "name": "SSH Linux Scanner",
+            "type": "host",
             "status": "configured",
             "last_sync": None,
-            "description": "SSH into Linux hosts to enumerate keystores, certs, OpenSSL, SSH config, Kerberos."
+            "description": "SSH agentless scan of certificate stores, OpenSSL, SSH config, and ciphers."
         },
         {
             "id": "winrm_agentless",
-            "name": "WinRM Agentless Enumeration",
-            "type": "agentless",
+            "name": "WinRM Windows Scanner",
+            "type": "host",
             "status": "configured",
             "last_sync": None,
-            "description": "WinRM into Windows hosts to enumerate cert stores, CNG keys, Schannel, IIS, BitLocker, firmware."
+            "description": "Audit Windows hosts for certificate stores, Schannel TLS, and IIS."
         },
         {
             "id": "oracle_tde",
@@ -340,47 +377,87 @@ async def list_connectors(
             "type": "database",
             "status": "configured",
             "last_sync": None,
-            "description": "Oracle TDE via V$ENCRYPTION_WALLET, encrypted tablespaces, master keys, column encryption."
+            "description": "Enumerate Oracle tablespace encryption and TDE wallet master keys."
         },
         {
             "id": "sqlserver_tde",
-            "name": "SQL Server TDE Scanner",
+            "name": "SQL Server TDE",
             "type": "database",
             "status": "configured",
             "last_sync": None,
-            "description": "SQL Server TDE via dm_database_encryption_keys, Always Encrypted, certificates."
+            "description": "Audit SQL Server database encryption (TDE) keys and certificates."
         },
         {
             "id": "kubernetes",
-            "name": "Kubernetes Cluster Scanner",
-            "type": "kubernetes",
+            "name": "Kubernetes Scanner",
+            "type": "container",
             "status": "configured",
             "last_sync": None,
-            "description": "K8s TLS secrets, cert-manager, CSRs, etcd encryption, API server cert, kubelet certs."
+            "description": "Scan ingress TLS, secrets, etcd encryption, and cluster components."
         },
         {
             "id": "sast_native",
-            "name": "Native SAST Crypto Detection",
+            "name": "Native SAST Scanner",
             "type": "sast",
             "status": "configured",
             "last_sync": None,
-            "description": "Python/Java/Go AST analysis for crypto APIs + dependency manifest scanning."
-        },
-        {
-            "id": "jwt_audit",
-            "name": "JWT Token Audit (L4)",
-            "type": "application",
-            "status": "configured",
-            "last_sync": None,
-            "description": "Decode and classify JWTs (alg, kty, key size) for the L4 Application layer."
+            "description": "Scan codebases (Python/Java/Go/NodeJS) for crypto usage and lockfiles."
         },
         {
             "id": "windows_cert_store",
-            "name": "Windows Certificate Store Inventory (L7)",
+            "name": "Windows Cert Store",
             "type": "endpoint",
             "status": "configured",
             "last_sync": None,
-            "description": "Parse `certutil -store` dumps to inventory endpoint certificates for the L7 layer."
+            "description": "Enumerate local Windows certificate stores via certutil dump."
+        },
+        {
+            "id": "jwt_audit",
+            "name": "JWT Token Auditor",
+            "type": "app",
+            "status": "configured",
+            "last_sync": None,
+            "description": "Audit JWT signing algorithms and keys offline or via JWKS endpoints."
+        },
+        {
+            "id": "azure_key_vault",
+            "name": "Azure Key Vault Sync",
+            "type": "cloud",
+            "status": "configured",
+            "last_sync": None,
+            "description": "Sync keys and configuration from Azure Key Vault."
+        },
+        {
+            "id": "gcp_kms",
+            "name": "GCP KMS Sync",
+            "type": "cloud",
+            "status": "configured",
+            "last_sync": None,
+            "description": "Sync keys and keyring algorithms from GCP KMS."
+        },
+        {
+            "id": "vault_scanner",
+            "name": "HashiCorp Vault Secrets Scanner",
+            "type": "secrets",
+            "status": "configured",
+            "last_sync": None,
+            "description": "Discover cryptographic material (PKI certs, transit keys) in HashiCorp Vault secrets."
+        },
+        {
+            "id": "git_secrets",
+            "name": "Git Repository Secrets Scanner",
+            "type": "sast",
+            "status": "configured",
+            "last_sync": None,
+            "description": "Scan git repositories for exposed private keys, certificates, and credentials in history."
+        },
+        {
+            "id": "saml_metadata",
+            "name": "SAML Metadata Certificate Scanner",
+            "type": "pki",
+            "status": "configured",
+            "last_sync": None,
+            "description": "Parse SAML metadata XML or URLs to inventory signing/encryption certificates for PQC readiness."
         }
     ]
 
@@ -435,8 +512,15 @@ async def sync_aws_kms(
 ):
     if current_user.role not in ["admin", "analyst"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
-    connector = AWSKMSConnector(credentials_ref=payload.credentials, region=payload.region)
+    credentials_ref: Any = payload.credentials
+    if payload.access_key_id or payload.secret_access_key:
+        credentials_ref = {
+            "aws_access_key_id": payload.access_key_id,
+            "aws_secret_access_key": payload.secret_access_key,
+        }
+    connector = AWSKMSConnector(credentials_ref=credentials_ref, region=payload.region)
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -448,8 +532,16 @@ async def sync_azure_key_vault(
 ):
     if current_user.role not in ["admin", "analyst"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
-    connector = AzureKeyVaultConnector(credentials_ref=payload.credentials, tenant_id=payload.tenant_id, vault_url=payload.vault_url)
+    creds_ref: Any = payload.credentials
+    if payload.client_id or payload.client_secret:
+        creds_ref = {
+            "client_id": payload.client_id,
+            "client_secret": payload.client_secret,
+            "tenant_id": payload.tenant_id,
+        }
+    connector = AzureKeyVaultConnector(credentials_ref=creds_ref, tenant_id=payload.tenant_id, vault_url=payload.vault_url)
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -461,8 +553,19 @@ async def sync_gcp_kms(
 ):
     if current_user.role not in ["admin", "analyst"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
-    connector = GCPKMSConnector(project_id=payload.project_id, credentials_ref=payload.credentials)
+    credentials_json = payload.credentials_json
+    if not credentials_json and payload.credentials_path:
+        import pathlib
+        try:
+            credentials_json = pathlib.Path(payload.credentials_path).read_text(encoding="utf-8")
+        except Exception as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Could not read credentials_path: {exc}")
+    credentials_ref: Any = payload.credentials
+    if credentials_json:
+        credentials_ref = {"credentials_json": credentials_json}
+    connector = GCPKMSConnector(project_id=payload.project_id, credentials_ref=credentials_ref)
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -481,6 +584,7 @@ async def sync_pkcs11_hsm(
         token_label=payload.token_label,
     )
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -501,6 +605,7 @@ async def sync_kmip_kms(
         ca_cert_path=payload.ca_cert_path,
     )
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -519,6 +624,7 @@ async def sync_adcs_ldap(
         use_ldaps=payload.use_ldaps,
     )
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -538,6 +644,7 @@ async def sync_ssh_agentless(
         sudo_password_ref=payload.sudo_password_ref,
     )
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -558,6 +665,7 @@ async def sync_winrm_agentless(
         verify_ssl=payload.verify_ssl,
     )
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -577,6 +685,7 @@ async def sync_oracle_tde(
         use_wallet=payload.use_wallet,
     )
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -596,6 +705,7 @@ async def sync_sqlserver_tde(
         domain=payload.domain,
     )
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -613,6 +723,7 @@ async def sync_kubernetes(
         kubeconfig_path=payload.kubeconfig_path,
     )
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -647,6 +758,7 @@ async def sync_jwt(
         credentials_ref=payload.credentials,
     )
     result = await connector.sync(session)
+    await session.commit()
     return result
 
 
@@ -659,13 +771,130 @@ async def sync_windows_cert_store(
     if current_user.role not in ["admin", "analyst"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     from app.connectors.winstore_connector import WindowsCertStoreConnector
-    if payload.store_kind not in {"user", "enterprise"}:
+    normalized_kind = "enterprise" if payload.store_kind == "machine" else payload.store_kind
+    if normalized_kind not in {"user", "enterprise"}:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="store_kind must be 'user' or 'enterprise'")
     connector = WindowsCertStoreConnector(
         store_name=payload.store_name,
-        store_kind=payload.store_kind,
+        store_kind=normalized_kind,
     )
     result = await connector.sync(session, dump_text=payload.dump)
+    await session.commit()
+    return result
+
+
+@router.post("/sync/saml", status_code=status.HTTP_200_OK)
+async def sync_saml(
+    payload: SAMLSyncRequest,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role not in ["admin", "analyst"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+    connector = SAMLMetadataConnector(
+        metadata_url=payload.metadata_url,
+        credentials_ref=payload.credentials,
+    )
+    result = await connector.sync(session)
+    await session.commit()
+    return result
+
+
+@router.post("/scan/saml-direct", status_code=status.HTTP_200_OK)
+async def scan_saml_direct(
+    payload: SAMLDirectScanRequest,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role not in ["admin", "analyst"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+    scan = Scan(
+        scan_type="saml_metadata",
+        target=f"saml:{payload.metadata_url or 'offline'}",
+        status="running",
+        config="saml_direct_scan",
+        created_by=current_user.id,
+        started_at=datetime.now(timezone.utc),
+    )
+    _apply_target_classification(scan)
+    session.add(scan)
+    await session.commit()
+    await session.refresh(scan)
+    scan_id = str(scan.id)
+    try:
+        connector = SAMLMetadataConnector(
+            metadata_url=payload.metadata_url,
+            xml_blob=payload.xml_blob,
+            credentials_ref={"token": payload.token} if payload.token else None,
+        )
+        result = await connector.sync(session)
+        if result.get("status") == "error":
+            scan.status = "failed"
+            scan.error_message = ", ".join(result.get("errors", ["Unknown SAML error"]))
+            scan.completed_at = datetime.now(timezone.utc)
+            if scan.started_at:
+                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            await session.commit()
+            return {"status": "error", "scan_id": scan_id, "errors": result.get("errors", [])}
+        scan.status = "completed"
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
+        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        scan.findings_created = findings_res.scalar_one() or 0
+        if scan.started_at:
+            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+        await session.commit()
+        return {
+            "status": "success",
+            "scan_id": scan_id,
+            "assets_found": scan.assets_found,
+            "findings_created": scan.findings_created,
+            "errors": result.get("errors", []),
+        }
+    except Exception as exc:
+        scan.status = "failed"
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.error_message = str(exc)[:500]
+        if scan.started_at:
+            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+        await session.commit()
+        logger.exception(f"SAML direct scan failed: {exc}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"SAML direct scan failed: {exc}")
+
+
+@router.post("/sync/vault-scanner", status_code=status.HTTP_200_OK)
+async def sync_vault_scanner(
+    payload: VaultScannerSyncRequest,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role not in ["admin", "analyst"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+    connector = VaultScannerConnector(
+        vault_url=payload.vault_url,
+        token=payload.token,
+        mount_point=payload.mount_point,
+        path=payload.path,
+    )
+    result = await connector.sync(session)
+    await session.commit()
+    return result
+
+
+@router.post("/sync/git-secrets", status_code=status.HTTP_200_OK)
+async def sync_git_secrets(
+    payload: GitSecretsSyncRequest,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role not in ["admin", "analyst"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+    connector = GitSecretsConnector(
+        repo_path=payload.repo_path,
+        scan_history=payload.scan_history,
+    )
+    result = await connector.sync(session)
+    await session.commit()
     return result
 
 

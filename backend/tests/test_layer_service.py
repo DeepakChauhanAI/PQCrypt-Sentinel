@@ -49,6 +49,31 @@ def test_layer_for_asset_uses_discovery_source():
     assert layer_for_asset(a) == "L5"
 
 
+def test_layer_for_asset_kubernetes_cluster_maps_to_l4():
+    a = SimpleNamespace(asset_type="kubernetes_cluster", discovery_source=None, asset_metadata={})
+    assert layer_for_asset(a) == "L4"
+
+
+def test_layer_for_asset_kubernetes_maps_to_l4():
+    a = SimpleNamespace(asset_type="kubernetes", discovery_source=None, asset_metadata={})
+    assert layer_for_asset(a) == "L4"
+
+
+def test_layer_for_asset_saml_maps_to_l4():
+    a = SimpleNamespace(asset_type="saml", discovery_source=None, asset_metadata={})
+    assert layer_for_asset(a) == "L4"
+
+
+def test_layer_for_asset_saml_metadata_maps_to_l4():
+    a = SimpleNamespace(asset_type="saml_metadata", discovery_source=None, asset_metadata={})
+    assert layer_for_asset(a) == "L4"
+
+
+def test_layer_for_asset_backup_encryption_maps_to_l5():
+    a = SimpleNamespace(asset_type="backup_encryption", discovery_source=None, asset_metadata={})
+    assert layer_for_asset(a) == "L5"
+
+
 def test_layer_for_asset_uses_metadata_key_type():
     a = SimpleNamespace(asset_type="other", discovery_source=None, asset_metadata={"key_type": "AWS_HSM"})
     assert layer_for_asset(a) == "L3"

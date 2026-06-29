@@ -132,22 +132,26 @@ class AzureKeyVaultConnector(BaseConnector):
         except ImportError as exc:
             raise RuntimeError("azure-identity and azure-keyvault-keys are required") from exc
 
-        # Resolve Vault credential reference
-        vault_path = ""
-        version = None
-        if isinstance(self.credentials_ref, dict):
-            vault_path = self.credentials_ref.get("vault_path", "")
-            version = self.credentials_ref.get("version")
-        elif hasattr(self.credentials_ref, "vault_path"):
-            vault_path = getattr(self.credentials_ref, "vault_path", "")
-            version = getattr(self.credentials_ref, "version", None)
+        if isinstance(self.credentials_ref, dict) and (
+            "client_id" in self.credentials_ref or "client_secret" in self.credentials_ref
+        ):
+            secret = self.credentials_ref
+        else:
+            vault_path = ""
+            version = None
+            if isinstance(self.credentials_ref, dict):
+                vault_path = self.credentials_ref.get("vault_path", "")
+                version = self.credentials_ref.get("version")
+            elif hasattr(self.credentials_ref, "vault_path"):
+                vault_path = getattr(self.credentials_ref, "vault_path", "")
+                version = getattr(self.credentials_ref, "version", None)
 
-        from app.connectors.vault_helper import get_vault_secret
-        secret = await get_vault_secret(vault_path, version)
+            from app.connectors.vault_helper import get_vault_secret
+            secret = await get_vault_secret(vault_path, version)
 
-        client_id = secret.get("client_id")
-        client_secret = secret.get("client_secret")
-        tenant_id = self.tenant_id or secret.get("tenant_id")
+        client_id = secret.get("client_id") if isinstance(secret, dict) else None
+        client_secret = secret.get("client_secret") if isinstance(secret, dict) else None
+        tenant_id = (self.tenant_id or (secret.get("tenant_id") if isinstance(secret, dict) else None))
 
         if client_id and client_secret and tenant_id:
             credential = ClientSecretCredential(
@@ -232,29 +236,37 @@ class GCPKMSConnector(BaseConnector):
         except ImportError as exc:
             raise RuntimeError("google-cloud-kms is required") from exc
 
-        # Resolve Vault credential reference
-        vault_path = ""
-        version = None
-        if isinstance(self.credentials_ref, dict):
-            vault_path = self.credentials_ref.get("vault_path", "")
-            version = self.credentials_ref.get("version")
-        elif hasattr(self.credentials_ref, "vault_path"):
-            vault_path = getattr(self.credentials_ref, "vault_path", "")
-            version = getattr(self.credentials_ref, "version", None)
+        if isinstance(self.credentials_ref, dict) and (
+            "credentials_json" in self.credentials_ref or "private_key" in self.credentials_ref
+        ):
+            secret = self.credentials_ref
+        else:
+            vault_path = ""
+            version = None
+            if isinstance(self.credentials_ref, dict):
+                vault_path = self.credentials_ref.get("vault_path", "")
+                version = self.credentials_ref.get("version")
+            elif hasattr(self.credentials_ref, "vault_path"):
+                vault_path = getattr(self.credentials_ref, "vault_path", "")
+                version = getattr(self.credentials_ref, "version", None)
 
-        from app.connectors.vault_helper import get_vault_secret
-        secret = await get_vault_secret(vault_path, version)
+            from app.connectors.vault_helper import get_vault_secret
+            secret = await get_vault_secret(vault_path, version)
+
+        # Allow direct credentials_json passed from API payload kwargs (frontend path)
+        if not secret and kwargs.get("credentials_json"):
+            secret = {"credentials_json": kwargs["credentials_json"]}
 
         import json
         client = None
         credentials_info = None
 
-        if "credentials_json" in secret and secret["credentials_json"]:
+        if isinstance(secret, dict) and "credentials_json" in secret and secret["credentials_json"]:
             try:
                 credentials_info = json.loads(secret["credentials_json"])
             except Exception:
                 pass
-        elif "private_key" in secret and "client_email" in secret:
+        elif isinstance(secret, dict) and "private_key" in secret and "client_email" in secret:
             credentials_info = secret
 
         if credentials_info:

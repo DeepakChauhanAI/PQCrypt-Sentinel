@@ -159,6 +159,24 @@ def test_determine_layer_default_l1():
     assert _determine_layer_for_asset(a) == "L1"
 
 
+def test_determine_layer_kubernetes_cluster_maps_to_l4():
+    """kubernetes_cluster assets are bucketed into L4 Application."""
+    a = _asset(asset_type="kubernetes_cluster")
+    assert _determine_layer_for_asset(a) == "L4"
+
+
+def test_determine_layer_saml_maps_to_l4():
+    """SAML assets are bucketed into L4 Application."""
+    a = _asset(asset_type="saml_metadata")
+    assert _determine_layer_for_asset(a) == "L4"
+
+
+def test_determine_layer_backup_encryption_maps_to_l5():
+    """Backup encryption assets are bucketed into L5 Data."""
+    a = _asset(asset_type="backup_encryption")
+    assert _determine_layer_for_asset(a) == "L5"
+
+
 def test_determine_layer_metadata_not_dict():
     """Non-dict asset_metadata is gracefully ignored."""
     a = _asset(asset_type="mystery", discovery_source="mystery", asset_metadata="not a dict")
@@ -182,6 +200,7 @@ def test_summary_cache_hit_returns_cached(mock_db):
         "vulnerable_count": 5,
         "hybrid_count": 7,
         "pqc_ready_count": 88,
+        "safe_count": 0,
         "critical_findings": 1,
         "high_findings": 2,
         "drift_alerts_count": 0,

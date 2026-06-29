@@ -421,6 +421,8 @@ class Report(Base):
             "cbom",
             "executive",
             "findings",
+            "compliance",
+            "sast",
             name="report_type_enum",
             native_enum=False,
         ),

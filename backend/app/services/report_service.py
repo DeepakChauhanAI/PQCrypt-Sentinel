@@ -937,11 +937,16 @@ async def generate_pdf_executive_report(
     session: AsyncSession,
     report_id: str,
     scope_filters: Optional[Dict[str, Any]] = None,
+    fmt: str = "pdf",
 ) -> str:
     """
-    Render an executive-ready PDF report summarising the cryptographic
-    posture of the inventory. Uses WeasyPrint; falls back to a simple HTML
-    report if WeasyPrint is not installed in the runtime.
+    Render an executive-ready PDF/HTML report summarising the cryptographic
+    posture of the inventory. Uses WeasyPrint for PDF; falls back to the HTML
+    file if WeasyPrint is not installed or rendering fails. When ``fmt`` is
+    ``html`` the HTML file is returned directly.
+
+    Includes: total assets, findings by severity, PQC readiness percentage,
+    top vulnerable assets, and average risk score.
     """
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     reports_dir = os.path.join(base_dir, "static", "reports")
@@ -949,6 +954,10 @@ async def generate_pdf_executive_report(
 
     html_path = os.path.join(reports_dir, f"report_{report_id}.html")
     file_path = os.path.join(reports_dir, f"report_{report_id}.pdf")
+
+    fmt = fmt.lower()
+    if fmt not in ("pdf", "html"):
+        raise ValueError(f"Unsupported executive report format: {fmt}")
 
     # Gather summary metrics
     asset_stmt = select(Asset).where(Asset.deleted_at.is_(None))
@@ -962,6 +971,9 @@ async def generate_pdf_executive_report(
         if scope_filters.get("business_service"):
             asset_stmt = asset_stmt.where(Asset.business_service == scope_filters["business_service"])
             finding_stmt = finding_stmt.join(Asset).where(Asset.business_service == scope_filters["business_service"])
+        if scope_filters.get("owner_id"):
+            asset_stmt = asset_stmt.where(Asset.owner_id == scope_filters["owner_id"])
+            finding_stmt = finding_stmt.join(Asset).where(Asset.owner_id == scope_filters["owner_id"])
 
     assets = (await session.execute(asset_stmt)).scalars().all()
     findings = (await session.execute(finding_stmt)).scalars().all()
@@ -984,10 +996,38 @@ async def generate_pdf_executive_report(
     pqc_ready_total = algo_status_counts.get("pqc_ready", 0) + algo_status_counts.get("hybrid", 0) + algo_status_counts.get("safe", 0)
     readiness_pct = (pqc_ready_total / total_assets * 100) if total_assets else 0
 
+    # Average risk score across open findings
+    risk_scores = [f.risk_score for f in findings if f.risk_score is not None]
+    avg_risk_score = sum(risk_scores) / len(risk_scores) if risk_scores else 0.0
+
     # Top 10 highest-risk findings
     top_findings = sorted(
         [f for f in findings if f.risk_score is not None],
         key=lambda f: f.risk_score or 0,
+        reverse=True,
+    )[:10]
+
+    # Top 10 vulnerable assets by open finding count and cumulative risk
+    asset_map = {str(a.id): a for a in assets}
+    asset_finding_stats: Dict[str, Dict[str, Any]] = {}
+    for f in findings:
+        aid = str(f.asset_id)
+        asset_name = asset_map[aid].name if aid in asset_map else "Unknown"
+        entry = asset_finding_stats.setdefault(aid, {
+            "asset_id": aid,
+            "asset_name": asset_name,
+            "open_findings": 0,
+            "max_risk": 0,
+            "total_risk": 0,
+        })
+        entry["open_findings"] += 1
+        score = f.risk_score or 0
+        entry["total_risk"] += score
+        entry["max_risk"] = max(entry["max_risk"], score)
+
+    top_vulnerable_assets = sorted(
+        asset_finding_stats.values(),
+        key=lambda x: (x["open_findings"], x["total_risk"]),
         reverse=True,
     )[:10]
 
@@ -1008,6 +1048,11 @@ async def generate_pdf_executive_report(
         for f in top_findings
     ) or "<tr><td colspan='5'>No open findings</td></tr>"
 
+    vulnerable_asset_rows = "\n".join(
+        f"<tr><td>{_esc(a['asset_name'])}</td><td>{_esc(a['open_findings'])}</td><td>{_esc(a['max_risk'])}</td><td>{_esc(a['total_risk'])}</td></tr>"
+        for a in top_vulnerable_assets
+    ) or "<tr><td colspan='4'>No vulnerable assets recorded</td></tr>"
+
     algo_rows = "\n".join(
         f"<tr><td>{_esc(k)}</td><td>{_esc(v)}</td></tr>"
         for k, v in sorted(algo_status_counts.items(), key=lambda x: -x[1])
@@ -1020,7 +1065,7 @@ async def generate_pdf_executive_report(
   h1 {{ color: #0d1117; border-bottom: 2px solid #1f6feb; padding-bottom: 8px; }}
   h2 {{ color: #1f6feb; margin-top: 32px; }}
   .meta {{ color: #6e7681; font-size: 12px; }}
-  .kpi-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }}
+  .kpi-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }}
   .kpi {{ padding: 12px; border: 1px solid #d0d7de; border-radius: 6px; background: #f6f8fa; }}
   .kpi-value {{ font-size: 28px; font-weight: bold; }}
   .kpi-label {{ color: #6e7681; font-size: 12px; }}
@@ -1041,14 +1086,21 @@ async def generate_pdf_executive_report(
   <div class="kpi"><div class="kpi-label">Total Assets</div><div class="kpi-value">{total_assets}</div></div>
   <div class="kpi"><div class="kpi-label">PQC Readiness</div><div class="kpi-value">{readiness_pct:.1f}%</div></div>
   <div class="kpi"><div class="kpi-label">Open Findings</div><div class="kpi-value">{len(findings)}</div></div>
+  <div class="kpi"><div class="kpi-label">Average Risk Score</div><div class="kpi-value">{avg_risk_score:.1f}</div></div>
   <div class="kpi critical"><div class="kpi-label">Critical</div><div class="kpi-value">{findings_by_severity.get('critical', 0)}</div></div>
   <div class="kpi high"><div class="kpi-label">High</div><div class="kpi-value">{findings_by_severity.get('high', 0)}</div></div>
   <div class="kpi medium"><div class="kpi-label">Medium</div><div class="kpi-value">{findings_by_severity.get('medium', 0)}</div></div>
+  <div class="kpi low"><div class="kpi-label">Low / Info</div><div class="kpi-value">{findings_by_severity.get('low', 0) + findings_by_severity.get('info', 0)}</div></div>
 </div>
 
 <h2>Algorithm Distribution</h2>
 <table><thead><tr><th>PQC Status</th><th>Asset Count</th></tr></thead><tbody>
 {algo_rows}
+</tbody></table>
+
+<h2>Top 10 Vulnerable Assets</h2>
+<table><thead><tr><th>Asset</th><th>Open Findings</th><th>Max Risk</th><th>Total Risk</th></tr></thead><tbody>
+{vulnerable_asset_rows}
 </tbody></table>
 
 <h2>Top 10 Risk Findings</h2>
@@ -1061,6 +1113,10 @@ async def generate_pdf_executive_report(
 
     with open(html_path, "w", encoding="utf-8") as out_f:
         out_f.write(html)
+
+    if fmt == "html":
+        logger.info(f"HTML executive report {report_id} generated at {html_path}")
+        return html_path
 
     try:
         from weasyprint import HTML  # type: ignore
@@ -1076,6 +1132,358 @@ async def generate_pdf_executive_report(
         return html_path
 
     return file_path
+
+
+async def generate_compliance_report(
+    session: AsyncSession,
+    report_id: str,
+    scope_filters: Optional[Dict[str, Any]] = None,
+    fmt: str = "json",
+) -> str:
+    """
+    Produce a NIST / SBI-style compliance audit report. ``fmt`` controls the
+    output representation:
+
+    * ``json`` — structured audit document with asset inventory, findings,
+      remediation status, and NIST control mapping.
+    * ``html`` — human-readable HTML document containing the same data,
+      suitable for download and review.
+
+    Groups findings by asset, computes PQC readiness per asset, and renders
+    remediation status broken down by lifecycle state.
+    """
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    reports_dir = os.path.join(base_dir, "static", "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+
+    fmt = fmt.lower()
+    if fmt not in ("json", "html"):
+        raise ValueError(f"Unsupported compliance report format: {fmt}")
+
+    json_path = os.path.join(reports_dir, f"compliance_{report_id}.json")
+    html_path = os.path.join(reports_dir, f"compliance_{report_id}.html")
+
+    asset_stmt = select(Asset).where(Asset.deleted_at.is_(None))
+    finding_stmt = (
+        select(Finding, Asset)
+        .join(Asset, Finding.asset_id == Asset.id)
+        .where(Finding.deleted_at.is_(None))
+    )
+    algo_stmt = (
+        select(Algorithm.pqc_status, Algorithm.asset_id)
+        .join(Asset, Asset.id == Algorithm.asset_id)
+        .where(Asset.deleted_at.is_(None))
+    )
+
+    if scope_filters:
+        for key in ("environment", "business_service", "owner_id"):
+            val = scope_filters.get(key)
+            if val:
+                asset_stmt = asset_stmt.where(getattr(Asset, key) == val)
+                finding_stmt = finding_stmt.where(getattr(Asset, key) == val)
+                algo_stmt = algo_stmt.where(getattr(Asset, key) == val)
+
+    assets = (await session.execute(asset_stmt)).scalars().all()
+    rows = (await session.execute(finding_stmt)).all()
+    algo_rows = (await session.execute(algo_stmt)).all()
+
+    algo_counts: Dict[str, int] = {}
+    asset_algo_counts: Dict[str, Dict[str, int]] = {}
+    for status, aid in algo_rows:
+        algo_counts[status] = algo_counts.get(status, 0) + 1
+        asset_algo_counts.setdefault(str(aid), {}).setdefault(status, 0)
+        asset_algo_counts[str(aid)][status] += 1
+
+    total_assets = len(assets)
+    findings_by_severity: Dict[str, int] = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
+    remediation_counts: Dict[str, int] = {"open": 0, "in_progress": 0, "resolved": 0, "accepted": 0, "false_positive": 0}
+
+    findings_by_asset: Dict[str, Dict[str, Any]] = {}
+    for finding, asset in rows:
+        sev = (finding.severity or "info").lower()
+        findings_by_severity[sev] = findings_by_severity.get(sev, 0) + 1
+        remediation_counts[finding.status] = remediation_counts.get(finding.status, 0) + 1
+
+        aid = str(asset.id)
+        entry = findings_by_asset.setdefault(aid, {
+            "asset_id": aid,
+            "asset_name": asset.name,
+            "asset_type": asset.asset_type,
+            "environment": asset.environment,
+            "fqdn": asset.fqdn,
+            "ip_address": asset.ip_address,
+            "business_service": asset.business_service,
+            "owner_id": str(asset.owner_id) if asset.owner_id else None,
+            "algo_summary": asset_algo_counts.get(aid, {}),
+            "pqc_readiness_pct": 0.0,
+            "findings": [],
+        })
+        entry["findings"].append({
+            "finding_id": str(finding.id),
+            "finding_type": finding.finding_type,
+            "severity": finding.severity,
+            "title": finding.title,
+            "description": finding.description,
+            "algorithm": finding.algorithm,
+            "pqc_status": finding.pqc_status,
+            "hndl_exposure": finding.hndl_exposure,
+            "risk_score": finding.risk_score,
+            "status": finding.status,
+            "priority_queue": finding.priority_queue,
+            "remediation": finding.remediation,
+            "recommended_algorithm": finding.recommended_algorithm,
+            "first_detected_at": finding.first_detected_at.isoformat() if finding.first_detected_at else None,
+            "last_verified_at": finding.last_verified_at.isoformat() if finding.last_verified_at else None,
+            "resolved_at": finding.resolved_at.isoformat() if finding.resolved_at else None,
+            "nist_control": _finding_type_to_nist_control(finding.finding_type),
+        })
+
+    pqc_ready_algos = algo_counts.get("pqc_ready", 0) + algo_counts.get("hybrid", 0) + algo_counts.get("safe", 0)
+    overall_readiness = (pqc_ready_algos / total_assets * 100) if total_assets else 0.0
+
+    for aid, entry in findings_by_asset.items():
+        ac = entry["algo_summary"]
+        ready = ac.get("pqc_ready", 0) + ac.get("hybrid", 0) + ac.get("safe", 0)
+        denom = sum(ac.values()) if ac else 1
+        entry["pqc_readiness_pct"] = round((ready / denom) * 100, 1)
+
+    report = {
+        "report_metadata": {
+            "report_id": report_id,
+            "report_type": "compliance",
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "scope_filters": scope_filters or {},
+            "framework": "NIST / SBI Cryptographic Posture Audit",
+        },
+        "executive_summary": {
+            "total_assets": total_assets,
+            "total_findings": len(rows),
+            "overall_pqc_readiness_pct": round(overall_readiness, 1),
+            "findings_by_severity": findings_by_severity,
+            "remediation_status": remediation_counts,
+            "algorithm_distribution": dict(sorted(algo_counts.items(), key=lambda x: -x[1])),
+        },
+        "findings_by_asset": list(findings_by_asset.values()),
+        "compliance_mapping": _build_compliance_mapping(findings_by_asset),
+    }
+
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2, default=str)
+
+    if fmt == "html":
+        html = _render_compliance_html(report)
+        with open(html_path, "w", encoding="utf-8") as f:
+            f.write(html)
+        logger.info("Compliance HTML report %s generated at %s with %d assets", report_id, html_path, total_assets)
+        return html_path
+
+    logger.info("Compliance report %s generated at %s with %d assets", report_id, json_path, total_assets)
+    return json_path
+
+
+_NIST_CONTROL_MAP: Dict[str, str] = {
+    "weak_algorithm": "SC-17 (PKI) / SA-11 (Developer Security)",
+    "weak_key_size": "SC-17 (PKI) / SA-11",
+    "tls_version": "SC-8 (Transmission Confidentiality)",
+    "pqc_not_supported": "SA-11 / PM-28 (PQC Migration)",
+    "pqc_downgrade": "SC-8 / IA-5 (Authenticator Management)",
+    "cert_expiring": "SC-17 (PKI) / SI-2 (Flaw Remediation)",
+    "cert_expired": "SC-17 (PKI)",
+    "self_signed": "SC-17 (PKI)",
+    "unknown_ca": "SC-17 (PKI)",
+    "ssh_weak_kex": "SC-8 / IA-5",
+    "ssh_weak_host_key": "SC-8 / IA-5",
+    "vpn_weak_ike": "SC-8 / IA-5",
+    "hsm_vulnerable": "SC-12 (Cryptographic Key Establishment)",
+    "kms_vulnerable": "SC-12 / SA-11",
+    "code_weak_crypto": "SA-11 / SI-10 (Information Input Validation)",
+    "sbom_vulnerable_lib": "SA-11 / CM-7 (Least Functionality)",
+    "config_drift": "CM-2 (Baseline Configuration) / SI-2",
+    "other": "SA-11 (Developer Security)",
+}
+
+
+def _finding_type_to_nist_control(finding_type: str) -> str:
+    return _NIST_CONTROL_MAP.get(finding_type, "SA-11 (Developer Security)")
+
+
+def _build_compliance_mapping(findings_by_asset: Dict[str, Dict[str, Any]]) -> list:
+    mapping: list = []
+    for aid, entry in findings_by_asset.items():
+        for f in entry.get("findings", []):
+            mapping.append({
+                "asset_name": entry["asset_name"],
+                "environment": entry["environment"],
+                "finding_id": f["finding_id"],
+                "finding_type": f["finding_type"],
+                "nist_control": f["nist_control"],
+                "risk_score": f["risk_score"],
+                "remediation": f["remediation"],
+                "status": f["status"],
+                "recommended_algorithm": f["recommended_algorithm"],
+            })
+    mapping.sort(key=lambda x: -(x.get("risk_score") or 0))
+    return mapping
+
+
+def _render_compliance_html(report: Dict[str, Any]) -> str:
+    """Render the compliance report dictionary as an HTML document."""
+
+    def _esc(text: Any) -> str:
+        if text is None:
+            return ""
+        return (
+            str(text)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+        )
+
+    meta = report.get("report_metadata", {})
+    summary = report.get("executive_summary", {})
+    generated_at = meta.get("generated_at", "")
+    scope = meta.get("scope_filters", {})
+
+    sev = summary.get("findings_by_severity", {})
+    remediation = summary.get("remediation_status", {})
+    algo_dist = summary.get("algorithm_distribution", {})
+
+    # Executive summary cards
+    summary_cards = f"""
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Total Assets</div><div class="kpi-value">{summary.get('total_assets', 0)}</div></div>
+      <div class="kpi"><div class="kpi-label">Total Findings</div><div class="kpi-value">{summary.get('total_findings', 0)}</div></div>
+      <div class="kpi"><div class="kpi-label">PQC Readiness</div><div class="kpi-value">{summary.get('overall_pqc_readiness_pct', 0.0):.1f}%</div></div>
+      <div class="kpi critical"><div class="kpi-label">Critical</div><div class="kpi-value">{sev.get('critical', 0)}</div></div>
+      <div class="kpi high"><div class="kpi-label">High</div><div class="kpi-value">{sev.get('high', 0)}</div></div>
+      <div class="kpi medium"><div class="kpi-label">Medium</div><div class="kpi-value">{sev.get('medium', 0)}</div></div>
+      <div class="kpi low"><div class="kpi-label">Low / Info</div><div class="kpi-value">{sev.get('low', 0) + sev.get('info', 0)}</div></div>
+    </div>
+    """
+
+    # Remediation status rows
+    remediation_rows = "\n".join(
+        f"<tr><td>{_esc(status)}</td><td>{_esc(count)}</td></tr>"
+        for status, count in sorted(remediation.items(), key=lambda x: -x[1])
+    ) or "<tr><td colspan='2'>No remediation data</td></tr>"
+
+    # Algorithm distribution rows
+    algo_rows = "\n".join(
+        f"<tr><td>{_esc(status)}</td><td>{_esc(count)}</td></tr>"
+        for status, count in sorted(algo_dist.items(), key=lambda x: -x[1])
+    ) or "<tr><td colspan='2'>No algorithms recorded</td></tr>"
+
+    # Asset inventory rows
+    asset_entries = report.get("findings_by_asset", [])
+    inventory_rows = "\n".join(
+        f"""<tr>
+          <td>{_esc(a.get('asset_name'))}</td>
+          <td>{_esc(a.get('asset_type'))}</td>
+          <td>{_esc(a.get('environment'))}</td>
+          <td>{_esc(a.get('fqdn'))}</td>
+          <td>{_esc(a.get('ip_address'))}</td>
+          <td>{_esc(a.get('pqc_readiness_pct'))}%</td>
+          <td>{_esc(len(a.get('findings', [])))}</td>
+        </tr>"""
+        for a in asset_entries
+    ) or "<tr><td colspan='7'>No assets in scope</td></tr>"
+
+    # Findings rows across all assets
+    all_findings: List[Dict[str, Any]] = []
+    for a in asset_entries:
+        for f in a.get("findings", []):
+            f["_asset_name"] = a.get("asset_name")
+            f["_asset_environment"] = a.get("environment")
+            all_findings.append(f)
+    all_findings.sort(key=lambda x: -(x.get("risk_score") or 0))
+
+    findings_rows = "\n".join(
+        f"""<tr>
+          <td>{_esc(f.get('_asset_name'))}</td>
+          <td>{_esc(f.get('finding_type'))}</td>
+          <td class="{_esc(f.get('severity'))}">{_esc(f.get('severity'))}</td>
+          <td>{_esc(f.get('risk_score'))}</td>
+          <td>{_esc(f.get('status'))}</td>
+          <td>{_esc(f.get('recommended_algorithm') or '-')}</td>
+          <td>{_esc(f.get('remediation') or '-')}</td>
+          <td>{_esc(f.get('nist_control'))}</td>
+        </tr>"""
+        for f in all_findings
+    ) or "<tr><td colspan='8'>No findings recorded</td></tr>"
+
+    # Compliance mapping rows
+    mapping_rows = "\n".join(
+        f"""<tr>
+          <td>{_esc(m.get('asset_name'))}</td>
+          <td>{_esc(m.get('finding_type'))}</td>
+          <td>{_esc(m.get('nist_control'))}</td>
+          <td>{_esc(m.get('risk_score'))}</td>
+          <td>{_esc(m.get('status'))}</td>
+          <td>{_esc(m.get('recommended_algorithm') or '-')}</td>
+          <td>{_esc(m.get('remediation') or '-')}</td>
+        </tr>"""
+        for m in report.get("compliance_mapping", [])
+    ) or "<tr><td colspan='7'>No compliance mapping data</td></tr>"
+
+    scope_items = ", ".join(f"{_esc(k)}={_esc(v)}" for k, v in scope.items()) or "None"
+
+    return f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>NIST / SBI Compliance Audit — {_esc(meta.get('report_id'))}</title>
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 32px; color: #1a1a1a; }}
+  h1 {{ color: #0d1117; border-bottom: 2px solid #1f6feb; padding-bottom: 8px; }}
+  h2 {{ color: #1f6feb; margin-top: 32px; }}
+  h3 {{ color: #24292f; margin-top: 24px; }}
+  .meta {{ color: #6e7681; font-size: 12px; }}
+  .kpi-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }}
+  .kpi {{ padding: 12px; border: 1px solid #d0d7de; border-radius: 6px; background: #f6f8fa; }}
+  .kpi-value {{ font-size: 28px; font-weight: bold; }}
+  .kpi-label {{ color: #6e7681; font-size: 12px; }}
+  table {{ width: 100%; border-collapse: collapse; margin-top: 8px; }}
+  th, td {{ border: 1px solid #d0d7de; padding: 6px 10px; text-align: left; font-size: 12px; }}
+  th {{ background: #f6f8fa; }}
+  .critical {{ color: #cf222e; font-weight: bold; }}
+  .high {{ color: #d1242f; font-weight: bold; }}
+  .medium {{ color: #9a6700; }}
+  .low {{ color: #1a7f37; }}
+  .info {{ color: #6e7681; }}
+</style>
+</head><body>
+<h1>PQCrypt Sentinel — NIST / SBI Compliance Audit</h1>
+<p class="meta">Report ID: {_esc(meta.get('report_id'))} &middot; Framework: {_esc(meta.get('framework'))}</p>
+<p class="meta">Generated: {_esc(generated_at)} &middot; Scope filters: {scope_items}</p>
+
+<h2>Executive Summary</h2>
+{summary_cards}
+
+<h2>Remediation Status</h2>
+<table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>
+{remediation_rows}
+</tbody></table>
+
+<h2>Algorithm Distribution</h2>
+<table><thead><tr><th>PQC Status</th><th>Count</th></tr></thead><tbody>
+{algo_rows}
+</tbody></table>
+
+<h2>Asset Inventory</h2>
+<table><thead><tr><th>Asset</th><th>Type</th><th>Environment</th><th>FQDN</th><th>IP</th><th>PQC Readiness</th><th>Findings</th></tr></thead><tbody>
+{inventory_rows}
+</tbody></table>
+
+<h2>Findings Detail</h2>
+<table><thead><tr><th>Asset</th><th>Finding Type</th><th>Severity</th><th>Risk</th><th>Status</th><th>Recommended Algorithm</th><th>Remediation</th><th>NIST Control</th></tr></thead><tbody>
+{findings_rows}
+</tbody></table>
+
+<h2>Compliance Mapping</h2>
+<table><thead><tr><th>Asset</th><th>Finding Type</th><th>NIST Control</th><th>Risk</th><th>Status</th><th>Recommended Algorithm</th><th>Remediation</th></tr></thead><tbody>
+{mapping_rows}
+</tbody></table>
+
+<p class="meta">Generated by PQCrypt Sentinel</p>
+</body></html>"""
 
 
 async def generate_report(
@@ -1108,8 +1516,10 @@ async def generate_report(
             file_path = await generate_cbom(session, report_id)
         elif report_type == "findings" and fmt == "csv":
             file_path = await generate_csv_findings_export(session, report_id, scope_filters)
-        elif report_type == "executive" and fmt == "pdf":
-            file_path = await generate_pdf_executive_report(session, report_id, scope_filters)
+        elif report_type == "executive" and fmt in ("pdf", "html"):
+            file_path = await generate_pdf_executive_report(session, report_id, scope_filters, fmt=fmt)
+        elif report_type == "compliance" and fmt in ("json", "html"):
+            file_path = await generate_compliance_report(session, report_id, scope_filters, fmt=fmt)
         elif report_type == "sast" and fmt == "sarif":
             file_path = await generate_sarif_report(session, report_id, scan_ids or [])
         else:

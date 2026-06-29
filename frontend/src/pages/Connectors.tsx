@@ -22,6 +22,7 @@ import {
   ChevronUp,
   Terminal,
   FileCode,
+  GitBranch,
 } from "lucide-react";
 
 interface Connector {
@@ -233,6 +234,27 @@ const SIDEBAR_ITEMS = [
     description: "Discover certificates and CA structures from AD Certificate Services.",
     icon: <Server className="h-4 w-4 text-teal-400" />,
     category: "hsm_kms_pki"
+  },
+  {
+    id: "saml_metadata",
+    name: "SAML Metadata Scanner",
+    description: "Inventory SAML signing/encryption certificates from IdP metadata URLs or XML.",
+    icon: <ShieldAlert className="h-4 w-4 text-fuchsia-400" />,
+    category: "hsm_kms_pki"
+  },
+  {
+    id: "vault_scanner",
+    name: "HashiCorp Vault Secrets Scanner",
+    description: "Discover cryptographic material (PKI certs, transit keys) in HashiCorp Vault secrets.",
+    icon: <HardDrive className="h-4 w-4 text-slate-400" />,
+    category: "cloud_cmdb"
+  },
+  {
+    id: "git_secrets",
+    name: "Git Repository Secrets Scanner",
+    description: "Scan git repositories for exposed keys, certificates, and credentials.",
+    icon: <GitBranch className="h-4 w-4 text-pink-400" />,
+    category: "cloud_cmdb"
   }
 ] as const;
 
@@ -460,6 +482,12 @@ export default function Connectors() {
   const [jwtToken, setJwtToken] = useState("");
   const [jwtMode, setJwtMode] = useState<"offline" | "online">("offline");
 
+  // SAML Form Inputs
+  const [samlMetadataUrl, setSamlMetadataUrl] = useState("");
+  const [samlXmlBlob, setSamlXmlBlob] = useState("");
+  const [samlAuthToken, setSamlAuthToken] = useState("");
+  const [samlMode, setSamlMode] = useState<"url" | "xml">("url");
+
   // Windows Cert Store Scan state
   const [winstoreLoading, setWinstoreLoading] = useState(false);
   const [winstoreResult, setWinstoreResult] = useState<{
@@ -471,10 +499,49 @@ export default function Connectors() {
   } | null>(null);
   const [winstoreError, setWinstoreError] = useState<string | null>(null);
 
+  // SAML Scan state
+  const [samlLoading, setSamlLoading] = useState(false);
+  const [samlResult, setSamlResult] = useState<{
+    status: string;
+    scan_id: string;
+    assets_found: number;
+    findings_created: number;
+    errors: string[];
+  } | null>(null);
+  const [samlError, setSamlError] = useState<string | null>(null);
+
   // Windows Cert Store Form Inputs
   const [winstoreName, setWinstoreName] = useState("My");
   const [winstoreKind, setWinstoreKind] = useState("user");
   const [winstoreDump, setWinstoreDump] = useState("");
+
+  // Vault Scanner State
+  const [vaultLoading, setVaultLoading] = useState(false);
+  const [vaultResult, setVaultResult] = useState<{
+    status: string;
+    imported: number;
+    updated: number;
+  } | null>(null);
+  const [vaultError, setVaultError] = useState<string | null>(null);
+
+  // Vault Form Inputs
+  const [vaultUrl, setVaultUrl] = useState("");
+  const [vaultToken, setVaultToken] = useState("");
+  const [vaultMountPoint, setVaultMountPoint] = useState("secret");
+  const [vaultPath, setVaultPath] = useState("");
+
+  // Git Secrets State
+  const [gitLoading, setGitLoading] = useState(false);
+  const [gitResult, setGitResult] = useState<{
+    status: string;
+    imported: number;
+    updated: number;
+  } | null>(null);
+  const [gitError, setGitError] = useState<string | null>(null);
+
+  // Git Form Inputs
+  const [gitRepoPath, setGitRepoPath] = useState("");
+  const [gitScanHistory, setGitScanHistory] = useState(true);
 
   const [selectedTab, setSelectedTab] = useState<string>("aws_discovery");
 
@@ -1013,6 +1080,101 @@ export default function Connectors() {
     }
   };
 
+  const handleSamlScan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSamlLoading(true);
+    setSamlError(null);
+    setSamlResult(null);
+    try {
+      const payload: Record<string, any> = {};
+      if (samlMode === "url") {
+        payload.metadata_url = samlMetadataUrl || null;
+      } else {
+        payload.xml_blob = samlXmlBlob || null;
+      }
+      if (samlAuthToken) payload.token = samlAuthToken;
+      const response = await fetch("/api/v1/connectors/scan/saml-direct", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errPayload = await response.json().catch(() => ({}));
+        throw new Error(errPayload.detail ?? "SAML metadata scan failed");
+      }
+      const data = await response.json();
+      if (data.status === "error") throw new Error(data.errors?.join(", ") ?? "SAML metadata scan failed");
+      setSamlResult(data);
+    } catch (err) {
+      setSamlError(err instanceof Error ? err.message : "SAML metadata scan error");
+    } finally {
+      setSamlLoading(false);
+    }
+  };
+
+  const handleVaultSync = async () => {
+    setVaultLoading(true);
+    setVaultError(null);
+    setVaultResult(null);
+    try {
+      const response = await fetch("/api/v1/connectors/sync/vault-scanner", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+        },
+        body: JSON.stringify({
+          vault_url: vaultUrl,
+          token: vaultToken,
+          mount_point: vaultMountPoint,
+          path: vaultPath,
+        }),
+      });
+      if (!response.ok) {
+        const errPayload = await response.json().catch(() => ({}));
+        throw new Error(errPayload.detail ?? "Vault scan failed");
+      }
+      const data = await response.json();
+      setVaultResult(data);
+    } catch (err) {
+      setVaultError(err instanceof Error ? err.message : "Vault scan error");
+    } finally {
+      setVaultLoading(false);
+    }
+  };
+
+  const handleGitSync = async () => {
+    setGitLoading(true);
+    setGitError(null);
+    setGitResult(null);
+    try {
+      const response = await fetch("/api/v1/connectors/sync/git-secrets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token") ?? ""}`,
+        },
+        body: JSON.stringify({
+          repo_path: gitRepoPath,
+          scan_history: gitScanHistory,
+        }),
+      });
+      if (!response.ok) {
+        const errPayload = await response.json().catch(() => ({}));
+        throw new Error(errPayload.detail ?? "Git secrets scan failed");
+      }
+      const data = await response.json();
+      setGitResult(data);
+    } catch (err) {
+      setGitError(err instanceof Error ? err.message : "Git secrets scan error");
+    } finally {
+      setGitLoading(false);
+    }
+  };
+
   const getStatusBadge = (status: Connector["status"]) => {
     switch (status) {
       case "configured":
@@ -1206,7 +1368,7 @@ export default function Connectors() {
             )}
             {cloudResult && awsMode === "sync" && (
               <div className="rounded-lg border border-border bg-background p-4 space-y-2">
-                <div className="flex items-center gap-2 text-xs text-gray-305">
+                 <div className="flex items-center gap-2 text-xs text-gray-300">
                   <CheckCircle className="h-4 w-4 text-green-400" />
                   <span className="font-semibold">KMS Sync Complete</span>
                   <button type="button" className="ml-auto text-[10px] text-gray-500 underline" onClick={() => setCloudResult(null)}>clear</button>
@@ -1298,7 +1460,7 @@ export default function Connectors() {
             </div>
             <button
               type="button"
-              className="flex items-center justify-center gap-2 rounded-lg bg-red-650 px-5 py-2.5 text-xs font-semibold text-white hover:bg-red-550 disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50"
               disabled={cloudLoading || !gcpProject}
               onClick={() =>
                 handleCloudSync("/api/v1/connectors/sync/gcp-kms", {
@@ -1538,8 +1700,8 @@ export default function Connectors() {
                     onChange={(e) => setWinrmTransport(e.target.value)}
                   >
                     <option value="ntlm">NTLM</option>
-                    <option value="basic">Basic</option>
                     <option value="kerberos">Kerberos</option>
+                    <option value="credssp">CredSSP</option>
                   </select>
                 </div>
               </div>
@@ -1586,7 +1748,7 @@ export default function Connectors() {
                     onChange={(e) => setWinstoreKind(e.target.value)}
                   >
                     <option value="user">Current User</option>
-                    <option value="machine">Local Machine</option>
+                    <option value="enterprise">Local Machine (Enterprise)</option>
                   </select>
                 </div>
               </div>
@@ -1600,6 +1762,156 @@ export default function Connectors() {
               </button>
             </form>
             <ScanResultDisplay result={winstoreResult} error={winstoreError} loading={winstoreLoading} title="Cert Store Scan" onClear={() => setWinstoreResult(null)} onClearError={() => setWinstoreError(null)} />
+          </div>
+        );
+
+      case "vault_scanner":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-start justify-between border-b border-border/50 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-slate-950/50 p-2.5 border border-slate-800/30">
+                  <HardDrive className="h-6 w-6 text-slate-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-200">HashiCorp Vault Secrets Scanner</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Discover cryptographic material (PKI certificates, transit keys) in Vault secrets.</p>
+                </div>
+              </div>
+              {getStatusBadge(getConnectorStatus("vault_scanner"))}
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); handleVaultSync(); }} className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <FormInput label="Vault URL" value={vaultUrl} onChange={setVaultUrl} required className="col-span-2" placeholder="https://vault.internal:8200" />
+                <FormInput label="Vault Token" value={vaultToken} onChange={setVaultToken} required type="password" placeholder="s.xxx" className="col-span-2" />
+                <FormInput label="Mount Point" value={vaultMountPoint} onChange={setVaultMountPoint} required placeholder="secret" />
+                <FormInput label="Path (Optional)" value={vaultPath} onChange={setVaultPath} placeholder="app/data" />
+              </div>
+              <div className="rounded-lg border border-border/60 bg-background/50 p-3 text-[11px] leading-relaxed text-gray-400 space-y-1">
+                <div className="font-semibold text-gray-300">Scanned for:</div>
+                <div className="grid grid-cols-2 gap-1 text-[10px]">
+                  <div>• X.509 / TLS certificates</div>
+                  <div>• Private keys (RSA/EC/PKCS#8)</div>
+                  <div>• PKI secret metadata</div>
+                  <div>• Transit key locations</div>
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-slate-600 to-slate-500 px-5 py-2.5 text-xs font-bold text-white hover:from-slate-500 hover:to-slate-400 disabled:opacity-50 shadow-md shadow-slate-950/20 w-full"
+                disabled={vaultLoading || !vaultUrl || !vaultToken}
+              >
+                {vaultLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Scanning Vault...</> : <><Scan className="h-4 w-4" />Scan Vault Secrets</>}
+              </button>
+            </form>
+            {vaultResult && (
+              <div className="mt-4 rounded-lg border border-border bg-background p-4 space-y-2">
+                <div className="flex items-center gap-2 text-xs text-gray-300">
+                  <CheckCircle className="h-4 w-4 text-green-400" />
+                  <span className="font-semibold">Vault Scan Complete</span>
+                  <button type="button" className="ml-auto text-[10px] text-gray-500 underline" onClick={() => setVaultResult(null)}>clear</button>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                  <div className="rounded border border-border p-2 bg-surface">
+                    <div className="text-gray-500">Imported</div>
+                    <div className="text-base font-bold text-green-400">{vaultResult.imported}</div>
+                  </div>
+                  <div className="rounded border border-border p-2 bg-surface">
+                    <div className="text-gray-500">Updated</div>
+                    <div className="text-base font-bold text-blue-400">{vaultResult.updated}</div>
+                  </div>
+                  <div className="rounded border border-border p-2 bg-surface">
+                    <div className="text-gray-500">Processed</div>
+                    <div className="text-base font-bold text-cyan-400">{vaultResult.imported + vaultResult.updated}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {vaultError && (
+              <div className="text-xs text-red-400 rounded border border-red-800/50 bg-red-950/20 p-3">
+                <span className="font-semibold">Error:</span> {vaultError}
+                <button type="button" className="ml-2 text-[10px] text-gray-500 underline" onClick={() => setVaultError(null)}>dismiss</button>
+              </div>
+            )}
+          </div>
+        );
+
+      case "git_secrets":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-start justify-between border-b border-border/50 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-pink-950/50 p-2.5 border border-pink-800/30">
+                  <GitBranch className="h-6 w-6 text-pink-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-200">Git Repository Secrets Scanner</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Scan git repositories for exposed private keys, certificates, and credentials.</p>
+                </div>
+              </div>
+              {getStatusBadge(getConnectorStatus("git_secrets"))}
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); handleGitSync(); }} className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <FormInput label="Local Repository Path" value={gitRepoPath} onChange={setGitRepoPath} required className="col-span-2" placeholder="D:/project-files/myrepo" mono />
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Scan History</label>
+                  <select
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-gray-200 outline-none focus:border-pink-500"
+                    value={gitScanHistory ? "true" : "false"}
+                    onChange={(e) => setGitScanHistory(e.target.value === "true")}
+                  >
+                    <option value="true">Yes (includes recent commits)</option>
+                    <option value="false">No (current tree only)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-background/50 p-3 text-[11px] leading-relaxed text-gray-400 space-y-1">
+                <div className="font-semibold text-gray-300">Detected secret types:</div>
+                <div className="grid grid-cols-2 gap-1 text-[10px]">
+                  <div>• RSA / EC / DSA private keys</div>
+                  <div>• OpenSSH private keys</div>
+                  <div>• X.509 / TLS certificates</div>
+                  <div>• PKCS#8 private keys</div>
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-pink-600 to-pink-500 px-5 py-2.5 text-xs font-bold text-white hover:from-pink-500 hover:to-pink-400 disabled:opacity-50 shadow-md shadow-pink-950/20 w-full"
+                disabled={gitLoading || !gitRepoPath}
+              >
+                {gitLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Scanning Repository...</> : <><Scan className="h-4 w-4" />Scan Git Secrets</>}
+              </button>
+            </form>
+            {gitResult && (
+              <div className="mt-4 rounded-lg border border-border bg-background p-4 space-y-2">
+                <div className="flex items-center gap-2 text-xs text-gray-300">
+                  <CheckCircle className="h-4 w-4 text-green-400" />
+                  <span className="font-semibold">Git Secrets Scan Complete</span>
+                  <button type="button" className="ml-auto text-[10px] text-gray-500 underline" onClick={() => setGitResult(null)}>clear</button>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                  <div className="rounded border border-border p-2 bg-surface">
+                    <div className="text-gray-500">Imported</div>
+                    <div className="text-base font-bold text-green-400">{gitResult.imported}</div>
+                  </div>
+                  <div className="rounded border border-border p-2 bg-surface">
+                    <div className="text-gray-500">Updated</div>
+                    <div className="text-base font-bold text-blue-400">{gitResult.updated}</div>
+                  </div>
+                  <div className="rounded border border-border p-2 bg-surface">
+                    <div className="text-gray-500">Processed</div>
+                    <div className="text-base font-bold text-cyan-400">{gitResult.imported + gitResult.updated}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {gitError && (
+              <div className="text-xs text-red-400 rounded border border-red-800/50 bg-red-950/20 p-3">
+                <span className="font-semibold">Error:</span> {gitError}
+                <button type="button" className="ml-2 text-[10px] text-gray-500 underline" onClick={() => setGitError(null)}>dismiss</button>
+              </div>
+            )}
           </div>
         );
 
@@ -1666,7 +1978,7 @@ export default function Connectors() {
               </button>
               <button
                 type="button"
-                className={`px-2 py-1 rounded transition-colors ${jwtMode === "online" ? "bg-amber-600 text-white" : "text-gray-450"}`}
+                className={`px-2 py-1 rounded transition-colors ${jwtMode === "online" ? "bg-amber-600 text-white" : "text-gray-400"}`}
                 onClick={() => setJwtMode("online")}
               >
                 Online JWKS
@@ -1952,6 +2264,56 @@ export default function Connectors() {
           </div>
         );
 
+      case "saml_metadata":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-start justify-between border-b border-border/50 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-fuchsia-950/40 p-2.5 border border-fuchsia-800/30">
+                  <ShieldAlert className="h-6 w-6 text-fuchsia-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-200">SAML Metadata Certificate Scanner</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Inventory SAML signing/encryption certificates from IdP metadata URLs or raw XML.</p>
+                </div>
+              </div>
+              {getStatusBadge(getConnectorStatus("saml_metadata"))}
+            </div>
+            <div className="flex rounded bg-background border border-border p-0.5 w-fit text-[10px] font-bold">
+              <button
+                type="button"
+                className={`px-2 py-1 rounded transition-colors ${samlMode === "url" ? "bg-fuchsia-600 text-white" : "text-gray-400"}`}
+                onClick={() => setSamlMode("url")}
+              >
+                From Metadata URL
+              </button>
+              <button
+                type="button"
+                className={`px-2 py-1 rounded transition-colors ${samlMode === "xml" ? "bg-fuchsia-600 text-white" : "text-gray-400"}`}
+                onClick={() => setSamlMode("xml")}
+              >
+                Paste Raw XML
+              </button>
+            </div>
+            <form onSubmit={handleSamlScan} className="space-y-3">
+              {samlMode === "url" ? (
+                <FormInput label="SAML Metadata URL" value={samlMetadataUrl} onChange={setSamlMetadataUrl} required placeholder="https://idp.example.com/metadata" />
+              ) : (
+                <FormTextarea label="SAML Metadata XML" value={samlXmlBlob} onChange={setSamlXmlBlob} required placeholder="Paste EntityDescriptor XML here..." rows={8} />
+              )}
+              <FormInput label="Bearer Auth Token (optional)" value={samlAuthToken} onChange={setSamlAuthToken} placeholder="Auth token for private metadata URL" />
+              <button
+                type="submit"
+                className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-fuchsia-600 to-fuchsia-500 px-5 py-2.5 text-xs font-bold text-white hover:from-fuchsia-500 hover:to-fuchsia-400 disabled:opacity-50 shadow-md shadow-fuchsia-950/20 w-full"
+                disabled={samlLoading || ((samlMode === "url" && !samlMetadataUrl) || (samlMode === "xml" && !samlXmlBlob))}
+              >
+                {samlLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Scanning...</> : <><Scan className="h-4 w-4" />Scan SAML Certificates</>}
+              </button>
+            </form>
+            <ScanResultDisplay result={samlResult} error={samlError} loading={samlLoading} title="SAML Scan" onClear={() => setSamlResult(null)} onClearError={() => setSamlError(null)} />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -2111,7 +2473,7 @@ function AWSPQCScanResultPanel({
             .map((svc) => (
               <span
                 key={svc}
-                className="inline-flex items-center gap-1.5 rounded-full border border-gray-800/30 bg-gray-900/20 px-2.5 py-1 text-[11px] font-medium text-gray-650"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-800/30 bg-gray-900/20 px-2.5 py-1 text-[11px] font-medium text-gray-500"
               >
                 {SERVICE_ICONS[svc]}
                 {svc}
@@ -2204,7 +2566,7 @@ function MetricCard({
           : "border-border bg-surface"
       }`}
     >
-      <div className="text-[10px] text-gray-505 uppercase tracking-wider">{label}</div>
+      <div className="text-[10px] text-gray-500 uppercase tracking-wider">{label}</div>
       <div className={`text-xl font-bold mt-0.5 ${color}`}>{value}</div>
     </div>
   );
@@ -2274,7 +2636,7 @@ function FormTextarea({
       <textarea
         required={required}
         rows={rows}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-gray-200 outline-none focus:border-cyan-500 transition-colors placeholder:text-gray-650 font-mono resize-none"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-gray-200 outline-none focus:border-cyan-500 transition-colors placeholder:text-gray-500 font-mono resize-none"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
