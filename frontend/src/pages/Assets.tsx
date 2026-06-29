@@ -77,7 +77,7 @@ interface Asset {
   last_verified_at?: string;
   asset_metadata: Record<string, any>;
   risk_score: number;
-  pqc_status: "vulnerable" | "hybrid" | "pqc_ready" | "safe";
+  pqc_status: "vulnerable" | "hybrid" | "pqc_ready" | "safe" | "unknown";
   algorithms?: Algorithm[];
   certificates?: Certificate[];
   findings?: Finding[];
@@ -259,6 +259,13 @@ export default function Assets() {
             Safe
           </span>
         );
+      case "unknown":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-gray-900/40 px-2 py-0.5 text-xs font-semibold text-gray-400 border border-gray-700/50">
+            <Shield className="h-3.5 w-3.5" />
+            Unknown
+          </span>
+        );
       case "vulnerable":
       default:
         return (
@@ -363,6 +370,7 @@ export default function Assets() {
             <option value="hybrid">Hybrid</option>
             <option value="pqc_ready">PQC Ready</option>
             <option value="safe">Safe</option>
+            <option value="unknown">Unknown</option>
           </select>
         </div>
       </div>
@@ -374,15 +382,17 @@ export default function Assets() {
         const hybrid = assets.filter(a => a.pqc_status === "hybrid").length;
         const pqcReady = assets.filter(a => a.pqc_status === "pqc_ready").length;
         const safe = assets.filter(a => a.pqc_status === "safe").length;
+        const unknown = assets.filter(a => a.pqc_status === "unknown").length;
         const avgRisk = Math.round(assets.reduce((s, a) => s + a.risk_score, 0) / total);
         return (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
             {[
               { label: "Total Assets", value: total, icon: Server, color: "text-gray-200", bg: "bg-gray-800/50", border: "border-gray-700/50" },
               { label: "Vulnerable", value: vulnerable, icon: ShieldAlert, color: "text-red-400", bg: "bg-red-950/30", border: "border-red-800/50" },
               { label: "Hybrid", value: hybrid, icon: Shield, color: "text-blue-400", bg: "bg-blue-950/30", border: "border-blue-800/50" },
               { label: "PQC Ready", value: pqcReady, icon: ShieldCheck, color: "text-green-400", bg: "bg-green-950/30", border: "border-green-800/50" },
               { label: "Safe", value: safe, icon: Check, color: "text-emerald-400", bg: "bg-emerald-950/30", border: "border-emerald-800/50" },
+              { label: "Unknown", value: unknown, icon: Shield, color: "text-gray-400", bg: "bg-gray-900/40", border: "border-gray-700/50" },
               { label: "Avg Risk Score", value: avgRisk, icon: AlertTriangle, color: avgRisk >= 50 ? "text-orange-400" : "text-yellow-400", bg: "bg-yellow-950/20", border: "border-yellow-800/40" },
             ].map((card) => (
               <div key={card.label} className={`rounded-lg border ${card.border} ${card.bg} px-4 py-3 flex items-center gap-3`}>
@@ -444,6 +454,8 @@ export default function Assets() {
                       Risk Score <ArrowUpDown className="h-3 w-3" />
                     </button>
                   </th>
+                  <th className="py-3 px-4">Findings</th>
+                  <th className="py-3 px-4">Algorithms</th>
                   <th className="py-3 px-4">
                     <button className="flex items-center gap-1 hover:text-gray-200" onClick={() => handleSort("last_scanned")}>
                       Last Verified <ArrowUpDown className="h-3 w-3" />
@@ -464,8 +476,8 @@ export default function Assets() {
                     <td className="py-3 px-4">
                       <div className="font-semibold text-gray-200">{asset.name}</div>
                       <div className="text-xs text-gray-500">
-                        {asset.ip_address ? `${asset.ip_address}${asset.port ? `:${asset.port}` : ""}` : "No IP"}
-                        {asset.fqdn && <span className="text-gray-400"> ({asset.fqdn})</span>}
+                        {asset.ip_address && `${asset.ip_address}${asset.port ? `:${asset.port}` : ""}`}
+                        {asset.fqdn && <span className={asset.ip_address ? "text-gray-400" : ""}>{asset.ip_address ? ` (${asset.fqdn})` : asset.fqdn}</span>}
                       </div>
                     </td>
                     <td className="py-3 px-4 capitalize">{asset.asset_type.replace("_", " ")}</td>
@@ -475,6 +487,16 @@ export default function Assets() {
                     <td className="py-3 px-4">{getPqcStatusBadge(asset.pqc_status)}</td>
                     <td className="py-3 px-4 font-bold">
                       <span className={getRiskScoreColor(asset.risk_score)}>{asset.risk_score}</span>
+                    </td>
+                    <td className="py-3 px-4 text-xs">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 font-semibold border ${asset.findings?.length ? "bg-red-950/30 text-red-400 border-red-800/40" : "bg-gray-900/30 text-gray-500 border-gray-700/40"}`}>
+                        {asset.findings?.length || 0}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-xs">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 font-semibold border ${asset.algorithms?.length ? "bg-cyan-950/30 text-cyan-400 border-cyan-800/40" : "bg-gray-900/30 text-gray-500 border-gray-700/40"}`}>
+                        {asset.algorithms?.length || 0}
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-xs text-gray-400">
                       {asset.last_verified_at

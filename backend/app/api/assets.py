@@ -130,7 +130,8 @@ async def list_assets(
         setattr(asset, "risk_score", computed_risk)
 
         # Derive PQC status from algorithms; fall back to open findings for
-        # connectors that only persist findings (e.g. SAST).
+        # connectors that only persist findings (e.g. SAST). If neither exists,
+        # mark the asset as unknown rather than falsely vulnerable.
         if asset.algorithms:
             statuses = [a.pqc_status for a in asset.algorithms]
         else:
@@ -148,7 +149,7 @@ async def list_assets(
             else:
                 derived_status = "vulnerable"
         else:
-            derived_status = "vulnerable"
+            derived_status = "unknown"
         setattr(asset, "pqc_status", derived_status)
 
         if pqc_status is None or getattr(asset, "pqc_status") == pqc_status.lower():
@@ -194,7 +195,8 @@ async def get_asset(
     setattr(asset, "risk_score", max([f.risk_score or 0 for f in open_findings]) if open_findings else 0)
 
     # Derive PQC status from algorithms; fall back to open findings for
-    # connectors that only persist findings (e.g. SAST).
+    # connectors that only persist findings (e.g. SAST). If neither exists,
+    # mark the asset as unknown rather than falsely vulnerable.
     if asset.algorithms:
         statuses = [a.pqc_status for a in asset.algorithms]
     else:
@@ -212,7 +214,7 @@ async def get_asset(
         else:
             derived_status = "vulnerable"
     else:
-        derived_status = "vulnerable"
+        derived_status = "unknown"
     setattr(asset, "pqc_status", derived_status)
 
     await _enrich_assets_with_scan_groups(session, [asset])
