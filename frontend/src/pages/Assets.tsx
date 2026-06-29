@@ -464,7 +464,7 @@ export default function Assets() {
                     <td className="py-3 px-4">
                       <div className="font-semibold text-gray-200">{asset.name}</div>
                       <div className="text-xs text-gray-500">
-                        {asset.ip_address || "No IP"}{asset.port ? `:${asset.port}` : ""}
+                        {asset.ip_address ? `${asset.ip_address}${asset.port ? `:${asset.port}` : ""}` : "No IP"}
                         {asset.fqdn && <span className="text-gray-400"> ({asset.fqdn})</span>}
                       </div>
                     </td>
@@ -550,8 +550,7 @@ export default function Assets() {
                             {getPqcStatusBadge(selectedAsset.pqc_status)}
                           </div>
                           <p className="text-sm text-gray-400 capitalize">
-                            {selectedAsset.asset_type.replace("_", " ")} &bull; {selectedAsset.ip_address || "No IP"}
-                            {selectedAsset.port ? `:${selectedAsset.port}` : ""}
+                            {selectedAsset.asset_type.replace("_", " ")} &bull; {selectedAsset.ip_address ? `${selectedAsset.ip_address}${selectedAsset.port ? `:${selectedAsset.port}` : ""}` : "No IP"}
                             {selectedAsset.fqdn && ` (${selectedAsset.fqdn})`}
                           </p>
                         </div>

@@ -129,20 +129,27 @@ async def list_assets(
         computed_risk = max([f.risk_score or 0 for f in open_findings]) if open_findings else 0
         setattr(asset, "risk_score", computed_risk)
 
-        if not asset.algorithms:
-            setattr(asset, "pqc_status", "vulnerable")
-        else:
+        # Derive PQC status from algorithms; fall back to open findings for
+        # connectors that only persist findings (e.g. SAST).
+        if asset.algorithms:
             statuses = [a.pqc_status for a in asset.algorithms]
+        else:
+            statuses = [f.pqc_status for f in open_findings if f.pqc_status]
+
+        if statuses:
             if "vulnerable" in statuses:
-                setattr(asset, "pqc_status", "vulnerable")
+                derived_status = "vulnerable"
             elif "hybrid" in statuses:
-                setattr(asset, "pqc_status", "hybrid")
+                derived_status = "hybrid"
             elif "pqc_ready" in statuses:
-                setattr(asset, "pqc_status", "pqc_ready")
+                derived_status = "pqc_ready"
             elif "safe" in statuses:
-                setattr(asset, "pqc_status", "safe")
+                derived_status = "safe"
             else:
-                setattr(asset, "pqc_status", "vulnerable")
+                derived_status = "vulnerable"
+        else:
+            derived_status = "vulnerable"
+        setattr(asset, "pqc_status", derived_status)
 
         if pqc_status is None or getattr(asset, "pqc_status") == pqc_status.lower():
             filtered_assets.append(asset)
@@ -186,20 +193,27 @@ async def get_asset(
     open_findings = [f for f in asset.findings if f.status == "open" and f.deleted_at is None]
     setattr(asset, "risk_score", max([f.risk_score or 0 for f in open_findings]) if open_findings else 0)
 
-    if not asset.algorithms:
-        setattr(asset, "pqc_status", "vulnerable")
-    else:
+    # Derive PQC status from algorithms; fall back to open findings for
+    # connectors that only persist findings (e.g. SAST).
+    if asset.algorithms:
         statuses = [a.pqc_status for a in asset.algorithms]
+    else:
+        statuses = [f.pqc_status for f in open_findings if f.pqc_status]
+
+    if statuses:
         if "vulnerable" in statuses:
-            setattr(asset, "pqc_status", "vulnerable")
+            derived_status = "vulnerable"
         elif "hybrid" in statuses:
-            setattr(asset, "pqc_status", "hybrid")
+            derived_status = "hybrid"
         elif "pqc_ready" in statuses:
-            setattr(asset, "pqc_status", "pqc_ready")
+            derived_status = "pqc_ready"
         elif "safe" in statuses:
-            setattr(asset, "pqc_status", "safe")
+            derived_status = "safe"
         else:
-            setattr(asset, "pqc_status", "vulnerable")
+            derived_status = "vulnerable"
+    else:
+        derived_status = "vulnerable"
+    setattr(asset, "pqc_status", derived_status)
 
     await _enrich_assets_with_scan_groups(session, [asset])
     return asset

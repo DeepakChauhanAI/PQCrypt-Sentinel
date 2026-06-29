@@ -14,7 +14,7 @@ from sqlalchemy import select
 
 from app.connectors.base import BaseConnector
 from app.connectors.vault_helper import get_vault_secret
-from app.models.models import Asset, ScanLog
+from app.models.models import Asset, ScanLog, Algorithm
 
 logger = logging.getLogger(__name__)
 
@@ -694,11 +694,14 @@ class SASTConnector(BaseConnector):
                 "sample_findings": crypto_findings[:50],
             }
 
+            scan_id = self._scan_id
+
             if existing:
                 asset = existing
                 asset.asset_type = "source_code"
                 asset.asset_metadata = metadata
                 asset.last_verified_at = datetime.now(timezone.utc)
+                asset.last_scan_id = scan_id
             else:
                 asset = Asset(
                     name=asset_name,
@@ -706,6 +709,9 @@ class SASTConnector(BaseConnector):
                     environment="development",
                     discovery_source="sast_native",
                     asset_metadata=metadata,
+                    first_scan_id=scan_id,
+                    last_scan_id=scan_id,
+                    first_discovered_at=datetime.now(timezone.utc),
                     last_verified_at=datetime.now(timezone.utc),
                 )
                 session.add(asset)
@@ -782,6 +788,51 @@ class SASTConnector(BaseConnector):
                     )
                 )
                 findings_created_count += 1
+
+            # Synthesize Algorithm records from unique crypto findings so the
+            # asset gets a meaningful PQC status and appears on dashboards.
+            from app.analysis.algo_classifier import classify_algorithm as _classify_algorithm
+            from sqlalchemy import delete as sa_delete
+            await session.execute(
+                sa_delete(Algorithm).where(Algorithm.asset_id == asset.id, Algorithm.scan_id == scan_id)
+            )
+
+            algo_map: Dict[str, Dict[str, Any]] = {}
+            for f in all_findings:
+                category = f.get("category", "unknown")
+                if category == "vulnerable_dependency":
+                    continue
+                matched = f.get("matched_text") or f.get("pattern", "unknown")
+                algo_key = matched.lower()
+                if algo_key not in algo_map:
+                    cls_res = _classify_algorithm(matched)
+                    pqc_status = cls_res.get("pqc_status", "vulnerable")
+                    if "keygen" in category or "rsa" in category or "ec" in category or "dsa" in category or "dh" in category:
+                        algo_type = "signature"
+                    elif "cipher" in category:
+                        algo_type = "symmetric"
+                    elif "hash" in category:
+                        algo_type = "hash"
+                    else:
+                        algo_type = "other"
+                    algo_map[algo_key] = {
+                        "name": matched,
+                        "type": algo_type,
+                        "pqc_status": pqc_status,
+                        "is_quantum_vulnerable": cls_res.get("is_quantum_vulnerable", pqc_status == "vulnerable"),
+                    }
+
+            for algo_def in algo_map.values():
+                session.add(
+                    Algorithm(
+                        asset_id=asset.id,
+                        scan_id=scan_id,
+                        algorithm_name=algo_def["name"],
+                        algorithm_type=algo_def["type"],
+                        pqc_status=algo_def["pqc_status"],
+                        is_quantum_vulnerable=algo_def["is_quantum_vulnerable"],
+                    )
+                )
 
             await session.flush()
 
