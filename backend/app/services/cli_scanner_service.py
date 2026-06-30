@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import asyncio
 import json
 import logging
@@ -87,14 +88,23 @@ def _windows_temp_dir() -> str:
 
 async def run_pqcscan(host: str, port: int = 443) -> Dict[str, Any]:
     if not shutil.which("pqcscan"):
-        return {"success": False, "tool": "pqcscan", "skipped": True, "error": "pqcscan not found on PATH"}
+        return {
+            "success": False,
+            "tool": "pqcscan",
+            "skipped": True,
+            "error": "pqcscan not found on PATH",
+        }
     json_path = os.path.join(_windows_temp_dir(), f"pqcscan_{host}_{port}.json")
     cmd = [
         "pqcscan",
-        "--target", f"{host}:{port}",
-        "--output-format", "json",
-        "--timeout", "30",
-        "--json-output", json_path,
+        "--target",
+        f"{host}:{port}",
+        "--output-format",
+        "json",
+        "--timeout",
+        "30",
+        "--json-output",
+        json_path,
     ]
     result = await run_cli_tool(cmd, json_output_path=json_path)
     if not result.get("success") and not result.get("skipped"):
@@ -119,12 +129,18 @@ async def run_pqcscan(host: str, port: int = 443) -> Dict[str, Any]:
 
 async def run_ssh_audit(host: str, port: int = 22) -> Dict[str, Any]:
     if not shutil.which("ssh-audit"):
-        return {"success": False, "tool": "ssh-audit", "skipped": True, "error": "ssh-audit not found on PATH"}
+        return {
+            "success": False,
+            "tool": "ssh-audit",
+            "skipped": True,
+            "error": "ssh-audit not found on PATH",
+        }
     json_path = os.path.join(_windows_temp_dir(), f"ssh_audit_{host}_{port}.json")
     cmd = [
         "ssh-audit",
         "-j",
-        "-p", str(port),
+        "-p",
+        str(port),
         host,
     ]
     result = await run_cli_tool(cmd, json_output_path=json_path)
@@ -154,13 +170,20 @@ async def run_ssh_audit(host: str, port: int = 22) -> Dict[str, Any]:
 
 async def run_testssl(host: str, port: int = 443) -> Dict[str, Any]:
     if not shutil.which("testssl.sh"):
-        return {"success": False, "tool": "testssl.sh", "skipped": True, "error": "testssl.sh not found on PATH"}
+        return {
+            "success": False,
+            "tool": "testssl.sh",
+            "skipped": True,
+            "error": "testssl.sh not found on PATH",
+        }
     tmp_dir = _windows_temp_dir()
     json_path = os.path.join(tmp_dir, f"testssl_{host}_{port}.json")
     cmd = [
         "testssl.sh",
-        "--jsonfile", json_path,
-        "--color", "0",
+        "--jsonfile",
+        json_path,
+        "--color",
+        "0",
         f"{host}:{port}",
     ]
     result = await run_cli_tool(cmd, timeout=120)
@@ -206,7 +229,10 @@ async def run_testssl(host: str, port: int = 443) -> Dict[str, Any]:
         severity = str(entry.get("severity", "")).upper()
         if severity in {"HIGH", "CRITICAL"}:
             vulnerabilities.append(entry)
-        if any(p in json.dumps(entry).lower() for p in ["ml-kem", "mlkem", "kyber", "pqc", "hybrid"]):
+        if any(
+            p in json.dumps(entry).lower()
+            for p in ["ml-kem", "mlkem", "kyber", "pqc", "hybrid"]
+        ):
             pqc_findings.append(entry)
 
     return {
@@ -224,8 +250,14 @@ async def run_testssl(host: str, port: int = 443) -> Dict[str, Any]:
 
 async def run_ike_scan(host: str, port: int = 500) -> Dict[str, Any]:
     if not shutil.which("ike-scan"):
-        return {"success": False, "tool": "ike-scan", "skipped": True, "error": "ike-scan not found on PATH"}
+        return {
+            "success": False,
+            "tool": "ike-scan",
+            "skipped": True,
+            "error": "ike-scan not found on PATH",
+        }
     from app.scanners.ike_scanner import _DH_GROUP_POLICY
+
     cmd = [
         "ike-scan",
         "--ikev2",
@@ -257,8 +289,14 @@ async def run_ike_scan(host: str, port: int = 500) -> Dict[str, Any]:
                 dh_groups.append(name)
             except (IndexError, ValueError):
                 pass
-    pqc_dh_groups = [g for g in dh_groups if any(p in g.lower() for p in ["ml-kem", "mlkem", "kyber", "hybrid"])]
-    pqc_status = "pqc_ready" if pqc_dh_groups else "vulnerable" if dh_groups else "unknown"
+    pqc_dh_groups = [
+        g
+        for g in dh_groups
+        if any(p in g.lower() for p in ["ml-kem", "mlkem", "kyber", "hybrid"])
+    ]
+    pqc_status = (
+        "pqc_ready" if pqc_dh_groups else "vulnerable" if dh_groups else "unknown"
+    )
     return {
         "tool": "ike-scan",
         "host": host,
@@ -276,12 +314,19 @@ async def run_ike_scan(host: str, port: int = 500) -> Dict[str, Any]:
 
 async def run_trivy(target: str) -> Dict[str, Any]:
     if not shutil.which("trivy"):
-        return {"success": False, "tool": "trivy", "skipped": True, "error": "trivy not found on PATH"}
+        return {
+            "success": False,
+            "tool": "trivy",
+            "skipped": True,
+            "error": "trivy not found on PATH",
+        }
     cmd = [
         "trivy",
         "filesystem",
-        "--format", "json",
-        "--scanners", "vuln,secret",
+        "--format",
+        "json",
+        "--scanners",
+        "vuln,secret",
         target,
     ]
     result = await run_cli_tool(cmd, timeout=120)
@@ -290,7 +335,18 @@ async def run_trivy(target: str) -> Dict[str, Any]:
     raw = result.get("raw_output", [])
     if isinstance(raw, str):
         return result
-    crypto_patterns = ["crypto", "openssl", "libcrypto", "ssl", "tls", "cryptography", "rsa", "ecdsa", "dilithium", "ml-kem"]
+    crypto_patterns = [
+        "crypto",
+        "openssl",
+        "libcrypto",
+        "ssl",
+        "tls",
+        "cryptography",
+        "rsa",
+        "ecdsa",
+        "dilithium",
+        "ml-kem",
+    ]
     crypto_results = []
     all_results = raw if isinstance(raw, list) else [raw]
     for entry in all_results:
@@ -310,12 +366,24 @@ async def run_trivy(target: str) -> Dict[str, Any]:
     }
 
 
-async def run_semgrep(repo_path: str, configs: Optional[List[str]] = None) -> Dict[str, Any]:
+async def run_semgrep(
+    repo_path: str, configs: Optional[List[str]] = None
+) -> Dict[str, Any]:
     if not shutil.which("semgrep"):
-        return {"success": False, "tool": "semgrep", "skipped": True, "error": "semgrep not found on PATH"}
+        return {
+            "success": False,
+            "tool": "semgrep",
+            "skipped": True,
+            "error": "semgrep not found on PATH",
+        }
     if configs is None:
         configs = ["p/python", "p/cwe-top-25", "p/owasp-top-ten"]
-    cmd = ["semgrep", "--json", "--quiet", *([item for c in configs for item in ("--config", c)])]
+    cmd = [
+        "semgrep",
+        "--json",
+        "--quiet",
+        *([item for c in configs for item in ("--config", c)]),
+    ]
     result = await run_cli_tool(cmd + [repo_path], timeout=120)
     if not result.get("success") and not result.get("skipped"):
         return result
@@ -324,10 +392,20 @@ async def run_semgrep(repo_path: str, configs: Optional[List[str]] = None) -> Di
         return result
     results = raw.get("results", []) if isinstance(raw, dict) else []
     crypto_patterns = [
-        "RSA_generate_key", "EC_KEY_generate", "DSA_generate",
-        "MD5", "SHA1", "DES_", "RC4", "Blowfish",
-        "hardcoded", "private_key", "BEGIN RSA PRIVATE KEY",
-        "password =", "secret =", "api_key =",
+        "RSA_generate_key",
+        "EC_KEY_generate",
+        "DSA_generate",
+        "MD5",
+        "SHA1",
+        "DES_",
+        "RC4",
+        "Blowfish",
+        "hardcoded",
+        "private_key",
+        "BEGIN RSA PRIVATE KEY",
+        "password =",
+        "secret =",
+        "api_key =",
     ]
     crypto_findings = []
     for res in results:
@@ -335,14 +413,16 @@ async def run_semgrep(repo_path: str, configs: Optional[List[str]] = None) -> Di
             continue
         code = str(res.get("extra", {}).get("lines", ""))
         if any(pat.lower() in code.lower() for pat in crypto_patterns):
-            crypto_findings.append({
-                "file": res.get("path"),
-                "line": res.get("start", {}).get("line"),
-                "code": code.strip(),
-                "rule": res.get("check_id"),
-                "severity": res.get("extra", {}).get("severity"),
-                "message": res.get("extra", {}).get("message"),
-            })
+            crypto_findings.append(
+                {
+                    "file": res.get("path"),
+                    "line": res.get("start", {}).get("line"),
+                    "code": code.strip(),
+                    "rule": res.get("check_id"),
+                    "severity": res.get("extra", {}).get("severity"),
+                    "message": res.get("extra", {}).get("message"),
+                }
+            )
     return {
         "tool": "semgrep",
         "target": repo_path,

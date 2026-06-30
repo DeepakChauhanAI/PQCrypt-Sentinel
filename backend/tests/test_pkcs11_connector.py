@@ -41,7 +41,11 @@ mock_ldap3.SIMPLE = "SIMPLE"
 sys.modules["ldap3"] = mock_ldap3
 
 from app.models.models import Asset
-from app.connectors.pkcs11_connector import PKCS11Connector, KMIPConnector, ADCSConnector
+from app.connectors.pkcs11_connector import (
+    PKCS11Connector,
+    KMIPConnector,
+    ADCSConnector,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -60,10 +64,15 @@ def reset_pkcs11_mocks():
 
 # ==================== PKCS11Connector Tests ====================
 
+
 @pytest.mark.asyncio
 async def test_pkcs11_get_credentials():
-    connector = PKCS11Connector("lib.so", credentials_ref={"vault_path": "sec", "version": 1})
-    with patch("app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock) as mock_vault:
+    connector = PKCS11Connector(
+        "lib.so", credentials_ref={"vault_path": "sec", "version": 1}
+    )
+    with patch(
+        "app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock
+    ) as mock_vault:
         mock_vault.return_value = {"pin": "123"}
         creds = await connector._get_credentials()
         assert creds == {"pin": "123"}
@@ -71,8 +80,11 @@ async def test_pkcs11_get_credentials():
     class ObjRef:
         vault_path = "sec2"
         version = None
+
     connector2 = PKCS11Connector("lib.so", credentials_ref=ObjRef())
-    with patch("app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock) as mock_vault:
+    with patch(
+        "app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock
+    ) as mock_vault:
         mock_vault.return_value = {"pin": "456"}
         creds = await connector2._get_credentials()
         assert creds == {"pin": "456"}
@@ -94,7 +106,9 @@ async def test_pkcs11_sync_missing_import():
 @pytest.mark.asyncio
 async def test_pkcs11_sync_missing_pin():
     connector = PKCS11Connector("lib.so", {})
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value={}):
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value={}
+    ):
         with pytest.raises(RuntimeError) as exc:
             await connector.sync(MagicMock())
         assert "requires user_pin" in str(exc.value)
@@ -106,25 +120,25 @@ async def test_pkcs11_sync_success_new_and_existing_assets(mock_db):
         library_path="lib.so",
         credentials_ref={"vault_path": "sec"},
         slot_id=1,
-        token_label="token1"
+        token_label="token1",
     )
 
     creds = {"user_pin": "pin123"}
-    
+
     mock_lib = MagicMock()
     mock_pkcs11.lib.return_value = mock_lib
-    
+
     # Slot 1: Matches slot_id=1
     slot1 = MagicMock()
     slot1.slot_id = 1
     token1 = MagicMock()
     token1.label = "token1"
     slot1.get_token.return_value = token1
-    
+
     # Slot 2: Doesn't match slot_id=1
     slot2 = MagicMock()
     slot2.slot_id = 2
-    
+
     # Slot 3: Matches slot_id=1, but token label doesn't match
     slot3 = MagicMock()
     slot3.slot_id = 1
@@ -140,22 +154,24 @@ async def test_pkcs11_sync_success_new_and_existing_assets(mock_db):
     mock_lib.get_slots.return_value = [slot1, slot2, slot3, slot4]
 
     mock_session = MagicMock()
-    
+
     class DummyContext:
         def __enter__(self):
             return mock_session
+
         def __exit__(self, exc_type, exc_val, exc_tb):
             pass
+
     token1.open.return_value = DummyContext()
 
     # Object 1: Public Key, has Modulus bits
     obj1 = MagicMock()
     obj1.label = "obj1-label"
-    
+
     # Object 2: Secret Key, has Value bits
     obj2 = MagicMock()
     obj2.label = "obj2-label"
-    
+
     # Object 3: Triggers exception on label fetch to test exception path
     obj3 = MagicMock()
     obj3.get_attribute.side_effect = Exception("Attribute read failure")
@@ -196,7 +212,9 @@ async def test_pkcs11_sync_success_new_and_existing_assets(mock_db):
         def effect(attr, default=None):
             mock_get_attribute.curr_obj = obj
             return mock_get_attribute(attr, default)
+
         return effect
+
     obj1.get_attribute.side_effect = wrap_side_effect(obj1)
     obj2.get_attribute.side_effect = wrap_side_effect(obj2)
     obj4.get_attribute.side_effect = wrap_side_effect(obj4)
@@ -206,32 +224,36 @@ async def test_pkcs11_sync_success_new_and_existing_assets(mock_db):
     mock_db_result_new1.scalar_one_or_none.return_value = None
 
     existing_asset = Asset(
-        name="pkcs11:token1:obj2-label",
-        asset_type="hsm_key",
-        asset_metadata={}
+        name="pkcs11:token1:obj2-label", asset_type="hsm_key", asset_metadata={}
     )
     mock_db_result_existing = MagicMock()
     mock_db_result_existing.scalar_one_or_none.return_value = existing_asset
-    
+
     mock_db_result_new2 = MagicMock()
     mock_db_result_new2.scalar_one_or_none.return_value = None
 
-    mock_db.execute.side_effect = [mock_db_result_new1, mock_db_result_existing, mock_db_result_new2]
+    mock_db.execute.side_effect = [
+        mock_db_result_new1,
+        mock_db_result_existing,
+        mock_db_result_new2,
+    ]
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value=creds):
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value=creds
+    ):
         res = await connector.sync(mock_db)
-        
+
         assert res["status"] == "success"
         assert res["imported"] == 2
         assert res["updated"] == 1
         assert len(res["errors"]) == 2  # obj3 failed + slot4 failed
-        
+
         # Verify imported asset details
         assert mock_db.add.call_count == 2
         added_asset = mock_db.add.call_args_list[0][0][0]
         assert added_asset.name == "pkcs11:token1:obj1-label"
         assert added_asset.asset_metadata["key_size"] == 2048
-        
+
         # Verify updated asset details
         assert existing_asset.asset_metadata["key_size"] == 256
 
@@ -240,18 +262,26 @@ async def test_pkcs11_sync_success_new_and_existing_assets(mock_db):
 async def test_pkcs11_sync_hsm_connection_failed(mock_db):
     connector = PKCS11Connector("lib.so", {"vault_path": "sec"})
     mock_pkcs11.lib.side_effect = Exception("HSM Driver initialization failed")
-    
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value={"user_pin": "123"}):
+
+    with patch.object(
+        connector,
+        "_get_credentials",
+        new_callable=AsyncMock,
+        return_value={"user_pin": "123"},
+    ):
         res = await connector.sync(mock_db)
         assert res["status"] == "success"
         assert res["imported"] == 0
-        assert "HSM connection failed: HSM Driver initialization failed" in res["errors"][0]
+        assert (
+            "HSM connection failed: HSM Driver initialization failed"
+            in res["errors"][0]
+        )
 
 
 @pytest.mark.asyncio
 async def test_pkcs11_sync_database_exception(mock_db):
     connector = PKCS11Connector("lib.so", {"vault_path": "sec"})
-    
+
     mock_lib = MagicMock()
     mock_pkcs11.lib.return_value = mock_lib
     slot = MagicMock()
@@ -260,30 +290,41 @@ async def test_pkcs11_sync_database_exception(mock_db):
     token.label = "tok"
     slot.get_token.return_value = token
     mock_lib.get_slots.return_value = [slot]
-    
+
     mock_session = MagicMock()
+
     class DummyContext:
         def __enter__(self):
             return mock_session
+
         def __exit__(self, exc_type, exc_val, exc_tb):
             pass
+
     token.open.return_value = DummyContext()
-    
+
     obj = MagicMock()
     obj.label = "k"
     mock_session.get_objects.return_value = [obj]
-    obj.get_attribute.side_effect = lambda attr, d=None: "CLASS" if attr == "CLASS" else ("k" if attr == "LABEL" else b"\x01")
+    obj.get_attribute.side_effect = lambda attr, d=None: (
+        "CLASS" if attr == "CLASS" else ("k" if attr == "LABEL" else b"\x01")
+    )
 
     # DB execute crashes to trigger database exception block at line 149-150
     mock_db.execute.side_effect = Exception("DB Connection timeout")
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value={"user_pin": "123"}):
+    with patch.object(
+        connector,
+        "_get_credentials",
+        new_callable=AsyncMock,
+        return_value={"user_pin": "123"},
+    ):
         res = await connector.sync(mock_db)
         assert res["imported"] == 0
         assert "Database error for asset k: DB Connection timeout" in res["errors"][0]
 
 
 # ==================== KMIPConnector Tests ====================
+
 
 @pytest.mark.asyncio
 async def test_kmip_sync_missing_import():
@@ -303,15 +344,22 @@ async def test_kmip_get_credentials_variants():
     class ObjRef:
         vault_path = "sec-kmip"
         version = 2
+
     connector = KMIPConnector("127.0.0.1", 5696, ObjRef())
-    with patch("app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock) as mock_vault:
+    with patch(
+        "app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock
+    ) as mock_vault:
         mock_vault.return_value = {"username": "admin"}
         creds = await connector._get_credentials()
         mock_vault.assert_called_once_with("sec-kmip", 2)
         assert creds == {"username": "admin"}
 
-    connector_dict = KMIPConnector("127.0.0.1", 5696, {"vault_path": "sec-dict", "version": 5})
-    with patch("app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock) as mock_vault:
+    connector_dict = KMIPConnector(
+        "127.0.0.1", 5696, {"vault_path": "sec-dict", "version": 5}
+    )
+    with patch(
+        "app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock
+    ) as mock_vault:
         mock_vault.return_value = {"username": "dict-user"}
         creds = await connector_dict._get_credentials()
         mock_vault.assert_called_once_with("sec-dict", 5)
@@ -326,16 +374,16 @@ async def test_kmip_sync_success(mock_db):
         credentials_ref={"vault_path": "sec"},
         client_cert_path="/cert.pem",
         client_key_path="/key.pem",
-        ca_cert_path="/ca.pem"
+        ca_cert_path="/ca.pem",
     )
 
     creds = {"username": "admin", "password": "pwd"}
 
     mock_client_instance = MagicMock()
     mock_kmip_client.KMIPClient.return_value = mock_client_instance
-    
+
     mock_client_instance.locate.return_value = ["uuid-new", "uuid-existing", "uuid-bad"]
-    
+
     obj_new = MagicMock()
     obj_new.name = "key-new"
     obj_new.object_type = "SYMMETRIC_KEY"
@@ -351,7 +399,7 @@ async def test_kmip_sync_success(mock_db):
     obj_existing.object_type = "SYMMETRIC_KEY"
     obj_existing.cryptographic_algorithm = "AES"
     obj_existing.cryptographic_length = 128
-    
+
     # Mock client.get side effects
     def mock_get(uuid):
         if uuid == "uuid-new":
@@ -359,6 +407,7 @@ async def test_kmip_sync_success(mock_db):
         if uuid == "uuid-existing":
             return obj_existing
         raise Exception("KMIP fetch error")
+
     mock_client_instance.get.side_effect = mock_get
 
     # DB mocks
@@ -366,23 +415,23 @@ async def test_kmip_sync_success(mock_db):
     mock_db_result_new.scalar_one_or_none.return_value = None
 
     existing_asset = Asset(
-        name="kmip:hsm.local:uuid-existing",
-        asset_type="kms_key",
-        asset_metadata={}
+        name="kmip:hsm.local:uuid-existing", asset_type="kms_key", asset_metadata={}
     )
     mock_db_result_existing = MagicMock()
     mock_db_result_existing.scalar_one_or_none.return_value = existing_asset
-    
+
     mock_db.execute.side_effect = [mock_db_result_new, mock_db_result_existing]
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value=creds):
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value=creds
+    ):
         res = await connector.sync(mock_db)
-        
+
         assert res["status"] == "partial"
         assert res["imported"] == 1
         assert res["updated"] == 1
         assert "KMIP fetch error" in res["errors"][0]
-        
+
         # Verify parameters passed to KMIPClient
         mock_kmip_client.KMIPClient.assert_called_once()
         kwargs = mock_kmip_client.KMIPClient.call_args[1]
@@ -398,12 +447,14 @@ async def test_kmip_sync_success(mock_db):
 @pytest.mark.asyncio
 async def test_kmip_sync_connection_failed(mock_db):
     connector = KMIPConnector("127.0.0.1", 5696, {})
-    
+
     mock_client_instance = MagicMock()
     mock_kmip_client.KMIPClient.return_value = mock_client_instance
     mock_client_instance.open.side_effect = Exception("SSL Handshake failed")
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value={}):
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value={}
+    ):
         res = await connector.sync(mock_db)
         assert res["status"] == "partial"
         assert "KMIP connection failed: SSL Handshake failed" in res["errors"][0]
@@ -415,7 +466,7 @@ async def test_kmip_sync_database_exception(mock_db):
     mock_client_instance = MagicMock()
     mock_kmip_client.KMIPClient.return_value = mock_client_instance
     mock_client_instance.locate.return_value = ["u1"]
-    
+
     obj = MagicMock()
     obj.name = "k"
     mock_client_instance.get.return_value = obj
@@ -423,12 +474,15 @@ async def test_kmip_sync_database_exception(mock_db):
     # DB execute crashes to cover database error handling inside loop
     mock_db.execute.side_effect = Exception("Database error")
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value={}):
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value={}
+    ):
         res = await connector.sync(mock_db)
         assert "Database error for KMIP object u1: Database error" in res["errors"][0]
 
 
 # ==================== ADCSConnector Tests ====================
+
 
 @pytest.mark.asyncio
 async def test_adcs_sync_missing_import():
@@ -448,15 +502,22 @@ async def test_adcs_get_credentials_variants():
     class ObjRef:
         vault_path = "sec-adcs"
         version = 3
+
     connector = ADCSConnector("dc.local", ObjRef())
-    with patch("app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock) as mock_vault:
+    with patch(
+        "app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock
+    ) as mock_vault:
         mock_vault.return_value = {"username": "admin"}
         creds = await connector._get_credentials()
         mock_vault.assert_called_once_with("sec-adcs", 3)
         assert creds == {"username": "admin"}
 
-    connector_dict = ADCSConnector("dc.local", {"vault_path": "sec-adcs-dict", "version": 7})
-    with patch("app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock) as mock_vault:
+    connector_dict = ADCSConnector(
+        "dc.local", {"vault_path": "sec-adcs-dict", "version": 7}
+    )
+    with patch(
+        "app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock
+    ) as mock_vault:
         mock_vault.return_value = {"username": "adcs-user"}
         creds = await connector_dict._get_credentials()
         mock_vault.assert_called_once_with("sec-adcs-dict", 7)
@@ -466,7 +527,9 @@ async def test_adcs_get_credentials_variants():
 @pytest.mark.asyncio
 async def test_adcs_sync_missing_credentials():
     connector = ADCSConnector("dc.local", {})
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value={}):
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value={}
+    ):
         with pytest.raises(RuntimeError) as exc:
             await connector.sync(MagicMock())
         assert "requires username/password" in str(exc.value)
@@ -478,14 +541,14 @@ async def test_adcs_sync_success(mock_db):
         domain_controller="dc.local",
         credentials_ref={"vault_path": "sec"},
         base_dn="CN=Configuration,DC=pqc,DC=local",
-        use_ldaps=True
+        use_ldaps=True,
     )
 
     creds = {"username": "admin@pqc.local", "password": "pwd"}
 
     mock_connection_instance = MagicMock()
     mock_ldap3.Connection.return_value = mock_connection_instance
-    
+
     # Setup entries returned from search
     entry1 = MagicMock()
     entry1.cn = "RootCA"
@@ -508,59 +571,72 @@ async def test_adcs_sync_success(mock_db):
     mock_db_result_new.scalar_one_or_none.return_value = None
 
     existing_asset = Asset(
-        name="adcs:SubCA",
-        asset_type="certificate_authority",
-        asset_metadata={}
+        name="adcs:SubCA", asset_type="certificate_authority", asset_metadata={}
     )
     mock_db_result_existing = MagicMock()
     mock_db_result_existing.scalar_one_or_none.return_value = existing_asset
-    
+
     mock_db.execute.side_effect = [mock_db_result_new, mock_db_result_existing]
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value=creds):
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value=creds
+    ):
         res = await connector.sync(mock_db)
-        
+
         assert res["status"] == "success"
         assert res["imported"] == 1
         assert res["updated"] == 1
-        
+
         mock_ldap3.Server.assert_called_once_with(
-            "dc.local",
-            port=636,
-            use_ssl=True,
-            get_info="ALL"
+            "dc.local", port=636, use_ssl=True, get_info="ALL"
         )
         mock_ldap3.Connection.assert_called_once_with(
             mock_ldap3.Server.return_value,
             user="admin@pqc.local",
             password="pwd",
             authentication="SIMPLE",
-            auto_bind=True
+            auto_bind=True,
         )
-        
+
         mock_connection_instance.search.assert_called_once_with(
             search_base="CN=Configuration,DC=pqc,DC=local",
             search_filter="(objectClass=pKIEnrollmentService)",
-            attributes=["cn", "dNSHostName", "cACertificateDN", "certificateTemplates", "flags"]
+            attributes=[
+                "cn",
+                "dNSHostName",
+                "cACertificateDN",
+                "certificateTemplates",
+                "flags",
+            ],
         )
 
 
 @pytest.mark.asyncio
 async def test_adcs_sync_success_default_base_dn(mock_db):
-    connector = ADCSConnector(domain_controller="dc.local", credentials_ref={}, use_ldaps=False)
+    connector = ADCSConnector(
+        domain_controller="dc.local", credentials_ref={}, use_ldaps=False
+    )
     creds = {"username": "admin@pqc.local", "password": "pwd"}
 
     mock_connection_instance = MagicMock()
     mock_ldap3.Connection.return_value = mock_connection_instance
     mock_connection_instance.entries = []
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value=creds):
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value=creds
+    ):
         await connector.sync(mock_db)
         # base_dn derived from username domain suffix
         mock_connection_instance.search.assert_called_once_with(
             search_base="CN=Configuration,pqc.local",
             search_filter="(objectClass=pKIEnrollmentService)",
-            attributes=["cn", "dNSHostName", "cACertificateDN", "certificateTemplates", "flags"]
+            attributes=[
+                "cn",
+                "dNSHostName",
+                "cACertificateDN",
+                "certificateTemplates",
+                "flags",
+            ],
         )
 
 
@@ -569,7 +645,12 @@ async def test_adcs_sync_connection_failed(mock_db):
     connector = ADCSConnector("dc.local", {})
     mock_ldap3.Connection.side_effect = Exception("LDAP Bind failed")
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value={"username": "u@pqc.local", "password": "p"}):
+    with patch.object(
+        connector,
+        "_get_credentials",
+        new_callable=AsyncMock,
+        return_value={"username": "u@pqc.local", "password": "p"},
+    ):
         res = await connector.sync(mock_db)
         assert "ADCS connection failed: LDAP Bind failed" in res["errors"][0]
 
@@ -586,6 +667,13 @@ async def test_adcs_sync_database_exception(mock_db):
     # DB execute crashes to trigger database exception block at line 443-444
     mock_db.execute.side_effect = Exception("Database write error")
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value={"username": "admin@pqc.local", "password": "p"}):
+    with patch.object(
+        connector,
+        "_get_credentials",
+        new_callable=AsyncMock,
+        return_value={"username": "admin@pqc.local", "password": "p"},
+    ):
         res = await connector.sync(mock_db)
-        assert "Database error for CA entry CA: Database write error" in res["errors"][0]
+        assert (
+            "Database error for CA entry CA: Database write error" in res["errors"][0]
+        )

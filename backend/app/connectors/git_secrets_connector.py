@@ -15,7 +15,10 @@ SECRET_PATTERNS = [
     ("RSA private key", re.compile(r"-----BEGIN RSA PRIVATE KEY-----", re.IGNORECASE)),
     ("EC private key", re.compile(r"-----BEGIN EC PRIVATE KEY-----", re.IGNORECASE)),
     ("DSA private key", re.compile(r"-----BEGIN DSA PRIVATE KEY-----", re.IGNORECASE)),
-    ("OpenSSH private key", re.compile(r"-----BEGIN OPENSSH PRIVATE KEY-----", re.IGNORECASE)),
+    (
+        "OpenSSH private key",
+        re.compile(r"-----BEGIN OPENSSH PRIVATE KEY-----", re.IGNORECASE),
+    ),
     ("X.509 certificate", re.compile(r"-----BEGIN CERTIFICATE-----", re.IGNORECASE)),
     ("TLS certificate", re.compile(r"-----BEGIN TLS CERTIFICATE-----", re.IGNORECASE)),
     ("PKCS#8 private key", re.compile(r"-----BEGIN PRIVATE KEY-----", re.IGNORECASE)),
@@ -68,7 +71,19 @@ class GitSecretsConnector(BaseConnector):
         secrets_found: Dict[str, int] = {}
         try:
             output = await asyncio.to_thread(
-                self._run_git, "diff", "HEAD~10..HEAD", "--", "--", "*.pem", "*.crt", "*.key", "*.p12", "*.pfx", "*.cer", "*.p7b", "*.p7c"
+                self._run_git,
+                "diff",
+                "HEAD~10..HEAD",
+                "--",
+                "--",
+                "*.pem",
+                "*.crt",
+                "*.key",
+                "*.p12",
+                "*.pfx",
+                "*.cer",
+                "*.p7b",
+                "*.p7c",
             )
             found = self._scan_content_for_secrets(output)
             for k, v in found.items():
@@ -85,7 +100,9 @@ class GitSecretsConnector(BaseConnector):
                 if not fpath:
                     continue
                 try:
-                    content = await asyncio.to_thread(self._run_git, "show", f"HEAD:{fpath}")
+                    content = await asyncio.to_thread(
+                        self._run_git, "show", f"HEAD:{fpath}"
+                    )
                     found = self._scan_content_for_secrets(content)
                     for k, v in found.items():
                         secrets_found[k] = secrets_found.get(k, 0) + v
@@ -104,7 +121,11 @@ class GitSecretsConnector(BaseConnector):
             info["remotes"] = []
         try:
             branches = await asyncio.to_thread(self._run_git, "branch", "-a")
-            info["branches"] = [b.strip().lstrip("*").strip() for b in branches.strip().splitlines() if b.strip()]
+            info["branches"] = [
+                b.strip().lstrip("*").strip()
+                for b in branches.strip().splitlines()
+                if b.strip()
+            ]
         except Exception:
             info["branches"] = []
         return info

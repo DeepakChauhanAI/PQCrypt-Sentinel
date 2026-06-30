@@ -25,13 +25,14 @@ It also patches ``target_kind`` / ``target_label`` on every scan that
 still has them as NULL, so the rest of the UI (sidebar badges, scan
 detail) gets the right metadata for free.
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 from datetime import datetime, timezone
 
-from sqlalchemy import select, or_, update, and_
+from sqlalchemy import select, or_
 
 from app.db import AsyncSessionLocal
 from app.models.models import Scan, ScanGroup
@@ -55,12 +56,16 @@ async def backfill() -> None:
     async with AsyncSessionLocal() as session:
         # 1. Patch target_kind / target_label on all scans
         all_scans = (
-            await session.execute(
-                select(Scan).where(
-                    or_(Scan.target_kind.is_(None), Scan.target_label.is_(None))
+            (
+                await session.execute(
+                    select(Scan).where(
+                        or_(Scan.target_kind.is_(None), Scan.target_label.is_(None))
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         patched_metadata = 0
         for scan in all_scans:
@@ -76,18 +81,24 @@ async def backfill() -> None:
             if changed:
                 patched_metadata += 1
         if patched_metadata:
-            logger.info("Patched target_kind/target_label on %d scan(s).", patched_metadata)
+            logger.info(
+                "Patched target_kind/target_label on %d scan(s).", patched_metadata
+            )
             await session.commit()
 
         # 2. Wrap groupable scans with NULL scan_group_id in a new group
         groupable_scans = (
-            await session.execute(
-                select(Scan).where(
-                    Scan.scan_group_id.is_(None),
-                    Scan.deleted_at.is_(None),
+            (
+                await session.execute(
+                    select(Scan).where(
+                        Scan.scan_group_id.is_(None),
+                        Scan.deleted_at.is_(None),
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         groups_created = 0
         for scan in groupable_scans:
@@ -102,7 +113,12 @@ async def backfill() -> None:
                     f"`{scan.target}` (scan #{str(scan.id)[:8]}, "
                     f"originally created at {scan.created_at.isoformat() if scan.created_at else 'unknown'})."
                 ),
-                status=scan.status if scan.status in {"running", "completed", "failed", "cancelled", "queued"} else "completed",
+                status=(
+                    scan.status
+                    if scan.status
+                    in {"running", "completed", "failed", "cancelled", "queued"}
+                    else "completed"
+                ),
                 started_at=scan.started_at,
                 completed_at=scan.completed_at,
                 created_by=scan.created_by,
@@ -114,12 +130,17 @@ async def backfill() -> None:
             groups_created += 1
             logger.info(
                 "Wrapped scan %s (target=%s) in new group %s (%s).",
-                scan.id, scan.target, group.id, group.name,
+                scan.id,
+                scan.target,
+                group.id,
+                group.name,
             )
 
         if groups_created:
             await session.commit()
-            logger.info("Backfill complete: created %d ScanGroup row(s).", groups_created)
+            logger.info(
+                "Backfill complete: created %d ScanGroup row(s).", groups_created
+            )
         else:
             logger.info("Backfill complete: no scans needed a new group.")
 

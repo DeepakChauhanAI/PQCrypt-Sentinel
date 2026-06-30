@@ -1,0 +1,58 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["E402", "F841"]
+"alembic/versions/*.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = false
+warn_unused_configs = true
+ignore_missing_imports = true
+follow_imports = "normal"
+exclude = [
+    "tests",
+    "alembic",
+    "app/scanners/pyshark_capture.py",
+    "app/scanners/tls_scanner.py",
+    "app/scanners/mail_scanner.py",
+    "app/services/cli_scanner_service.py",
+    "app/services/report_service.py",
+    "app/connectors/winstore_connector.py",
+    "app/connectors/sast_connector.py",
+    "app/connectors/jwt_connector.py",
+    "app/api/auth.py",
+    "app/api/findings.py",
+    "app/api/scans.py",
+    "app/api/connectors.py",
+    "scripts/backfill_scan_groups.py",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "paramiko",
+    "paramiko.message",
+    "pyshark",
+    "celery",
+    "celery.schedules",
+    "jose",
+    "passlib.context",
+    "boto3",
+    "kubernetes",
+    "google.cloud",
+    "ldap3",
+    "kmip.*",
+    "pkcs11",
+    "winrm.protocol",
+    "cx_Oracle",
+    "pyodbc",
+    "azure.identity",
+    "azure.keyvault.keys",
+]
+follow_imports = "skip"

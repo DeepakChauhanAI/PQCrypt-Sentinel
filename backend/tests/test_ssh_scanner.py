@@ -1,9 +1,9 @@
 """Tests for SSH scanner PQC KEX detection and MAC algorithm capture."""
+
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from paramiko.message import Message
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -11,7 +11,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.scanners.ssh_scanner import (
     PQC_KEX_ALGORITHMS,
     SSHScanResult,
-    scan_ssh_endpoint,
     _build_kexinit_payload,
     _wrap_ssh_packet,
 )

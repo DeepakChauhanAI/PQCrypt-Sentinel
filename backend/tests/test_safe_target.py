@@ -1,9 +1,8 @@
 """Tests for the SSRF / DNS-rebinding safe-target module."""
+
 import ipaddress
-import os
 import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -13,7 +12,6 @@ from app.scanners import safe_target as st
 from app.scanners.safe_target import (
     SafeTarget,
     build_safe_target,
-    resolve_safely,
     validate_cidr,
     validate_ip,
     validate_port,
@@ -41,7 +39,6 @@ def test_validate_ip_rejects_unspecified():
     """0.0.0.0 is the unspecified address, must be rejected."""
     # If PQC_ALLOW_PRIVATE_RANGES is on, 0.0.0.0 may not be private; we
     # test the unspecified detection explicitly.
-    import ipaddress
     assert ipaddress.ip_address("0.0.0.0").is_unspecified
 
 
@@ -50,7 +47,6 @@ def test_validate_ip_rejects_broadcast():
     # 255.255.255.255 is not "reserved" in ipaddress terms; is_reserved returns
     # False. The scanner policy treats it as unsafe because it's typically
     # a misconfigured target.
-    import ipaddress
     addr = ipaddress.ip_address("255.255.255.255")
     # We rely on the implementation rejecting broadcast; if not, this test
     # is a placeholder documenting the intent.
@@ -115,6 +111,7 @@ def test_build_safe_target_rejects_unresolvable(monkeypatch):
 
 def test_resolve_safely_filters_unsafe(monkeypatch):
     import asyncio
+
     monkeypatch.setattr(st, "_resolve_sync", lambda host: ["1.2.3.4", "127.0.0.1"])
     monkeypatch.setattr(st, "ALLOW_LOOPBACK", False)
     addrs = asyncio.run(st.resolve_safely("example.com"))
@@ -124,6 +121,7 @@ def test_resolve_safely_filters_unsafe(monkeypatch):
 
 def test_resolve_safely_raises_on_empty(monkeypatch):
     import asyncio
+
     monkeypatch.setattr(st, "_resolve_sync", lambda host: [])
     with pytest.raises(st.UnsafeTargetError):
         asyncio.run(st.resolve_safely("nx.example"))
@@ -148,5 +146,6 @@ def test_network_discovery_rejects_unsafe_cidr():
     """discover_tls_hosts('0.0.0.0/0') must be rejected outright."""
     import asyncio
     from app.scanners import network_discovery
+
     with pytest.raises(st.UnsafeTargetError):
         asyncio.run(network_discovery.discover_tls_hosts("0.0.0.0/0"))

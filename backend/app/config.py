@@ -1,6 +1,8 @@
 import logging
 import os
 import re
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 
@@ -8,9 +10,23 @@ logger = logging.getLogger(__name__)
 
 # Regex patterns for sensitive data that should be redacted in logs
 SENSITIVE_PATTERNS = [
-    (re.compile(r'(aws_secret_access_key|aws_secret_key|secret_access_key)["\s:=]+([^"\s,}]+)', re.I), r'\1="***"'),
-    (re.compile(r'(aws_access_key_id|aws_access_key|access_key_id)["\s:=]+([^"\s,}]+)', re.I), r'\1="***"'),
-    (re.compile(r'(client_secret|client_secret_key)["\s:=]+([^"\s,}]+)', re.I), r'\1="***"'),
+    (
+        re.compile(
+            r'(aws_secret_access_key|aws_secret_key|secret_access_key)["\s:=]+([^"\s,}]+)',
+            re.I,
+        ),
+        r'\1="***"',
+    ),
+    (
+        re.compile(
+            r'(aws_access_key_id|aws_access_key|access_key_id)["\s:=]+([^"\s,}]+)', re.I
+        ),
+        r'\1="***"',
+    ),
+    (
+        re.compile(r'(client_secret|client_secret_key)["\s:=]+([^"\s,}]+)', re.I),
+        r'\1="***"',
+    ),
     (re.compile(r'(client_id)["\s:=]+([^"\s,}]+)', re.I), r'\1="***"'),
     (re.compile(r'(tenant_id)["\s:=]+([^"\s,}]+)', re.I), r'\1="***"'),
     (re.compile(r'(secret_key|secret)["\s:=]+([^"\s,}]+)', re.I), r'\1="***"'),
@@ -33,14 +49,9 @@ def redact_sensitive(text: str) -> str:
 
 
 # Dynamically find the .env file in the project root or backend dir
-from pathlib import Path
 _backend_dir = Path(__file__).resolve().parent.parent
 _project_root = _backend_dir.parent
-_env_files = [
-    str(_project_root / ".env"),
-    str(_backend_dir / ".env"),
-    ".env"
-]
+_env_files = [str(_project_root / ".env"), str(_backend_dir / ".env"), ".env"]
 
 
 class Settings(BaseSettings):
@@ -51,7 +62,6 @@ class Settings(BaseSettings):
     PQC_ALLOW_LOOPBACK: bool = False
     PQC_ALLOW_LINK_LOCAL: bool = False
     PQC_ALLOW_MULTICAST: bool = False
-
 
     DATABASE_URL: str = "postgresql+asyncpg://pqcrypt:pqcrypt@localhost:5432/pqcrypt"
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -64,8 +74,12 @@ class Settings(BaseSettings):
     OFFLINE_MODE: bool = False
     SCAN_THROTTLE_RATE: str = "10/m"
     SCAN_TIMEOUT_SECONDS: int = 30
-    SCAN_DEDUP_WINDOW_HOURS: int = 24  # Hours to wait before allowing re-scan of same target+port
-    SCAN_MAX_DURATION_SECONDS: int = 3600  # 1 hour maximum execution duration for a scan
+    SCAN_DEDUP_WINDOW_HOURS: int = (
+        24  # Hours to wait before allowing re-scan of same target+port
+    )
+    SCAN_MAX_DURATION_SECONDS: int = (
+        3600  # 1 hour maximum execution duration for a scan
+    )
     # Quantum timeline year (Y in Mosca's X+Y>Z). Mosca's published estimate
     # is 2034; override per-deployment via env.
     QUANTUM_TIMELINE_YEAR: int = 2034
@@ -97,9 +111,21 @@ class Settings(BaseSettings):
         insecure = "change-me" in value or len(value) < 32
         if insecure:
             import sys
+
             in_test = "pytest" in sys.modules or "test" in sys.argv
-            env_name = os.environ.get("APP_ENV", os.environ.get("ENVIRONMENT", "development" if in_test else "production")).lower()
-            is_production = env_name not in ("development", "dev", "test", "testing", "local")
+            env_name = os.environ.get(
+                "APP_ENV",
+                os.environ.get(
+                    "ENVIRONMENT", "development" if in_test else "production"
+                ),
+            ).lower()
+            is_production = env_name not in (
+                "development",
+                "dev",
+                "test",
+                "testing",
+                "local",
+            )
             if is_production:
                 raise ValueError(
                     "SECRET_KEY must be set to a secure random string (at least 32 characters) in production environments."
@@ -115,9 +141,18 @@ class Settings(BaseSettings):
         data = self.model_dump()
         # Redact sensitive fields
         sensitive_fields = {
-            "DATABASE_URL", "REDIS_URL", "CELERY_BROKER_URL", "CELERY_RESULT_BACKEND",
-            "SECRET_KEY", "SMTP_PASSWORD", "SMTP_USER", "VAULT_TOKEN", "VAULT_PASSWORD",
-            "SLACK_WEBHOOK_URL", "SMTP_HOST", "SMTP_FROM_ADDRESS"
+            "DATABASE_URL",
+            "REDIS_URL",
+            "CELERY_BROKER_URL",
+            "CELERY_RESULT_BACKEND",
+            "SECRET_KEY",
+            "SMTP_PASSWORD",
+            "SMTP_USER",
+            "VAULT_TOKEN",
+            "VAULT_PASSWORD",
+            "SLACK_WEBHOOK_URL",
+            "SMTP_HOST",
+            "SMTP_FROM_ADDRESS",
         }
         for field in sensitive_fields:
             if field in data and data[field]:
@@ -126,7 +161,9 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        return [
+            origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()
+        ]
 
 
 settings = Settings()

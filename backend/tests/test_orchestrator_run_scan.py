@@ -3,6 +3,7 @@ Tests for `app.services.scan_orchestrator` - end-to-end orchestrator
 exercises the `run_scan` flow with mocked session, scan_host, and
 network discovery. This covers the main orchestration paths.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -28,11 +29,15 @@ def test_gather_with_limit_returns_in_order():
     async def runner():
         async def a():
             return "a"
+
         async def b():
             return "b"
+
         async def c():
             return "c"
+
         return await _gather_with_limit([a(), b(), c()], limit=2)
+
     out = asyncio.run(runner())
     assert out == ["a", "b", "c"]
 
@@ -41,9 +46,12 @@ def test_gather_with_limit_captures_exceptions():
     async def runner():
         async def good():
             return "ok"
+
         async def bad():
             raise RuntimeError("boom")
+
         return await _gather_with_limit([good(), bad(), good()], limit=3)
+
     out = asyncio.run(runner())
     assert out[0] == "ok"
     assert isinstance(out[1], tuple) and out[1][0] == "__error__"
@@ -78,10 +86,16 @@ def test_run_host_tasks_empty_returns_zero():
     async def runner():
         async def log_event(**kwargs):
             return None
+
         return await _run_host_tasks(
-            scan_id="scan-1", hosts=[], strict_tls=False,
-            scan_type="tls_only", advanced_tools=False, log_event=log_event,
+            scan_id="scan-1",
+            hosts=[],
+            strict_tls=False,
+            scan_type="tls_only",
+            advanced_tools=False,
+            log_event=log_event,
         )
+
     out = asyncio.run(runner())
     assert out == {"assets_total": 0, "findings_total": 0, "errors": []}
 
@@ -92,6 +106,7 @@ def test_run_host_tasks_aggregates():
             return None
 
         with patch("app.services.scan_host.scan_host") as mock_scan_host:
+
             async def fake_scan_host(*, session, scan_id, scan_type, host, **kwargs):
                 return {
                     "host": host,
@@ -100,11 +115,17 @@ def test_run_host_tasks_aggregates():
                     "logs": [],
                     "error": None,
                 }
+
             mock_scan_host.side_effect = fake_scan_host
             return await _run_host_tasks(
-                scan_id="scan-1", hosts=["a", "b"], strict_tls=False,
-                scan_type="tls_only", advanced_tools=False, log_event=log_event,
+                scan_id="scan-1",
+                hosts=["a", "b"],
+                strict_tls=False,
+                scan_type="tls_only",
+                advanced_tools=False,
+                log_event=log_event,
             )
+
     out = asyncio.run(runner())
     assert out["assets_total"] == 4
     assert out["findings_total"] == 6
@@ -114,10 +135,12 @@ def test_run_host_tasks_aggregates():
 def test_run_host_tasks_per_host_error_logged():
     async def runner():
         logs = []
+
         async def log_event(**kwargs):
             logs.append(kwargs)
 
         with patch("app.services.scan_host.scan_host") as mock_scan_host:
+
             async def fake_scan_host(*, session, scan_id, scan_type, host, **kwargs):
                 return {
                     "host": host,
@@ -126,11 +149,17 @@ def test_run_host_tasks_per_host_error_logged():
                     "logs": [],
                     "error": "scan failed",
                 }
+
             mock_scan_host.side_effect = fake_scan_host
             return await _run_host_tasks(
-                scan_id="scan-1", hosts=["bad"], strict_tls=False,
-                scan_type="tls_only", advanced_tools=False, log_event=log_event,
+                scan_id="scan-1",
+                hosts=["bad"],
+                strict_tls=False,
+                scan_type="tls_only",
+                advanced_tools=False,
+                log_event=log_event,
             )
+
     out = asyncio.run(runner())
     assert out["assets_total"] == 0
     assert out["errors"] == ["bad: scan failed"]
@@ -280,11 +309,13 @@ def test_run_scan_happy_path(mock_session_cm):
     session.refresh = AsyncMock()
 
     # Patch scan_host to return trivial results
-    with patch("app.services.scan_host.scan_host") as mock_scan_host, \
-         patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, \
-         patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
+    with patch("app.services.scan_host.scan_host") as mock_scan_host, patch(
+        "app.scanners.network_discovery.enumerate_dns_targets"
+    ) as mock_dns, patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
+
         async def fake_scan_host(*, session, scan_id, scan_type, host, **kw):
             return {"host": host, "assets": 1, "findings": 0, "logs": [], "error": None}
+
         mock_scan_host.side_effect = fake_scan_host
         # Make DNS enumeration return a single resolved IP
         mock_dns.return_value = {
@@ -320,9 +351,12 @@ def test_run_scan_hosts_exception_marks_failed(mock_session_cm):
     session.refresh = AsyncMock()
 
     # Patch scan_host to raise
-    with patch("app.services.scan_host.scan_host", new=AsyncMock(side_effect=RuntimeError("boom"))), \
-         patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, \
-         patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
+    with patch(
+        "app.services.scan_host.scan_host",
+        new=AsyncMock(side_effect=RuntimeError("boom")),
+    ), patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, patch(
+        "app.api.dashboard.clear_dashboard_cache", new=AsyncMock()
+    ):
         mock_dns.return_value = {
             "a_records": ["93.184.216.34"],
             "aaaa_records": [],
@@ -339,6 +373,7 @@ def test_run_scan_hosts_exception_marks_failed(mock_session_cm):
 def test_run_scan_timeout(mock_session_cm):
     """If scan execution exceeds SCAN_MAX_DURATION_SECONDS, it is marked failed."""
     from app.config import settings
+
     session, mock_local = mock_session_cm
     scan = _scan_obj(target="example.com")
     call_count = {"n": 0}
@@ -361,11 +396,15 @@ def test_run_scan_timeout(mock_session_cm):
         return {"assets_total": 0, "findings_total": 0, "errors": []}
 
     # Patch settings.SCAN_MAX_DURATION_SECONDS and _run_host_tasks
-    with patch("app.services.scan_orchestrator._run_host_tasks", side_effect=slow_run_host_tasks), \
-         patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, \
-         patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()), \
-         patch.object(settings, "SCAN_MAX_DURATION_SECONDS", 0.05):
-        
+    with patch(
+        "app.services.scan_orchestrator._run_host_tasks",
+        side_effect=slow_run_host_tasks,
+    ), patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, patch(
+        "app.api.dashboard.clear_dashboard_cache", new=AsyncMock()
+    ), patch.object(
+        settings, "SCAN_MAX_DURATION_SECONDS", 0.05
+    ):
+
         mock_dns.return_value = {
             "a_records": ["93.184.216.34"],
             "aaaa_records": [],
@@ -388,9 +427,11 @@ def test_max_concurrent_hosts_default_is_8():
 
 # ------------------- Orchestrator Core & SSRF Coverage --------------------
 
+
 @pytest.mark.asyncio
 async def test_run_advanced_scanners_not_enabled():
     from app.services.scan_orchestrator import _run_advanced_scanners
+
     scan = SimpleNamespace(advanced_tools=False)
     session = AsyncMock()
     log_event = AsyncMock()
@@ -406,6 +447,7 @@ async def test_run_advanced_scanners_not_enabled():
 @pytest.mark.asyncio
 async def test_run_advanced_scanners_ipv6():
     from app.services.scan_orchestrator import _run_advanced_scanners
+
     scan = SimpleNamespace(advanced_tools=True)
     session = AsyncMock()
     log_event = AsyncMock()
@@ -422,15 +464,18 @@ async def test_run_advanced_scanners_ipv6():
 @pytest.mark.asyncio
 async def test_run_advanced_scanners_success_new_asset_new_cert():
     from app.services.scan_orchestrator import _run_advanced_scanners
+
     scan = SimpleNamespace(id="scan-1", advanced_tools=True)
     session = AsyncMock()
-    
+
     call_count = {"n": 0}
+
     async def _execute(*args, **kwargs):
         call_count["n"] += 1
         res = MagicMock()
         res.scalar_one_or_none = MagicMock(return_value=None)
         return res
+
     session.execute.side_effect = _execute
     session.add = MagicMock()
     session.flush = AsyncMock()
@@ -460,7 +505,7 @@ async def test_run_advanced_scanners_success_new_asset_new_cert():
             "san_ip": None,
             "pqc_capable": False,
             "pqc_details": {},
-            "raw_certificate": None
+            "raw_certificate": None,
         }
 
     class FakeScapyResult:
@@ -468,11 +513,20 @@ async def test_run_advanced_scanners_success_new_asset_new_cert():
         probe_sent = True
         pqc_groups_advertised = ["X25519MLKEM768"]
 
-    with patch("app.scanners.sslyze_scanner.scan_endpoint_with_sslyze", new=AsyncMock(return_value=FakeSSLyzeResult())), \
-         patch("app.scanners.scapy_probe.probe_tls_with_pqc_groups", new=AsyncMock(return_value=FakeScapyResult())), \
-         patch("app.services.cli_scanner_service.run_pqcscan", new=AsyncMock(return_value={"skipped": False, "pqc_status": "safe"})), \
-         patch("app.services.cli_scanner_service.run_ssh_audit", new=AsyncMock(return_value={"skipped": False, "pqc_kex_available": True})):
-        
+    with patch(
+        "app.scanners.sslyze_scanner.scan_endpoint_with_sslyze",
+        new=AsyncMock(return_value=FakeSSLyzeResult()),
+    ), patch(
+        "app.scanners.scapy_probe.probe_tls_with_pqc_groups",
+        new=AsyncMock(return_value=FakeScapyResult()),
+    ), patch(
+        "app.services.cli_scanner_service.run_pqcscan",
+        new=AsyncMock(return_value={"skipped": False, "pqc_status": "safe"}),
+    ), patch(
+        "app.services.cli_scanner_service.run_ssh_audit",
+        new=AsyncMock(return_value={"skipped": False, "pqc_kex_available": True}),
+    ):
+
         is_active, assets, findings = await _run_advanced_scanners(
             session, scan, "test.local", False, 0, 0, log_event
         )
@@ -485,13 +539,21 @@ async def test_run_advanced_scanners_success_new_asset_new_cert():
 @pytest.mark.asyncio
 async def test_run_advanced_scanners_success_existing_asset_existing_cert():
     from app.services.scan_orchestrator import _run_advanced_scanners
+
     scan = SimpleNamespace(id="scan-1", advanced_tools=True)
     session = AsyncMock()
-    
-    existing_asset = SimpleNamespace(id="a-1", name="test.local:443 (sslyze)", last_scan_id=None, last_verified_at=None, asset_metadata={})
+
+    existing_asset = SimpleNamespace(
+        id="a-1",
+        name="test.local:443 (sslyze)",
+        last_scan_id=None,
+        last_verified_at=None,
+        asset_metadata={},
+    )
     existing_cert = SimpleNamespace(id="c-1", thumbprint="certthumb")
-    
+
     call_count = {"n": 0}
+
     async def _execute(*args, **kwargs):
         call_count["n"] += 1
         res = MagicMock()
@@ -500,6 +562,7 @@ async def test_run_advanced_scanners_success_existing_asset_existing_cert():
         else:
             res.scalar_one_or_none = MagicMock(return_value=existing_cert)
         return res
+
     session.execute.side_effect = _execute
     session.add = MagicMock()
     session.flush = AsyncMock()
@@ -518,11 +581,20 @@ async def test_run_advanced_scanners_success_existing_asset_existing_cert():
         probe_sent = True
         pqc_groups_advertised = ["X25519MLKEM768"]
 
-    with patch("app.scanners.sslyze_scanner.scan_endpoint_with_sslyze", new=AsyncMock(return_value=FakeSSLyzeResult())), \
-         patch("app.scanners.scapy_probe.probe_tls_with_pqc_groups", new=AsyncMock(return_value=FakeScapyResult())), \
-         patch("app.services.cli_scanner_service.run_pqcscan", new=AsyncMock(return_value={"skipped": True})), \
-         patch("app.services.cli_scanner_service.run_ssh_audit", new=AsyncMock(return_value={"skipped": True})):
-        
+    with patch(
+        "app.scanners.sslyze_scanner.scan_endpoint_with_sslyze",
+        new=AsyncMock(return_value=FakeSSLyzeResult()),
+    ), patch(
+        "app.scanners.scapy_probe.probe_tls_with_pqc_groups",
+        new=AsyncMock(return_value=FakeScapyResult()),
+    ), patch(
+        "app.services.cli_scanner_service.run_pqcscan",
+        new=AsyncMock(return_value={"skipped": True}),
+    ), patch(
+        "app.services.cli_scanner_service.run_ssh_audit",
+        new=AsyncMock(return_value={"skipped": True}),
+    ):
+
         is_active, assets, findings = await _run_advanced_scanners(
             session, scan, "test.local", False, 0, 0, log_event
         )
@@ -536,17 +608,29 @@ async def test_run_advanced_scanners_success_existing_asset_existing_cert():
 @pytest.mark.asyncio
 async def test_run_advanced_scanners_exceptions_and_db_error():
     from app.services.scan_orchestrator import _run_advanced_scanners
+
     scan = SimpleNamespace(id="scan-1", advanced_tools=True)
     session = AsyncMock()
     session.execute.side_effect = RuntimeError("database connection crashed")
     log_event = AsyncMock()
 
-    mock_sslyze_res = SimpleNamespace(success=True, tls_versions={}, supported_versions=[], cert_data=None)
-    with patch("app.scanners.sslyze_scanner.scan_endpoint_with_sslyze", new=AsyncMock(return_value=mock_sslyze_res)), \
-         patch("app.scanners.scapy_probe.probe_tls_with_pqc_groups", new=AsyncMock(side_effect=Exception("scapy error"))), \
-         patch("app.services.cli_scanner_service.run_pqcscan", new=AsyncMock(side_effect=Exception("pqcscan error"))), \
-         patch("app.services.cli_scanner_service.run_ssh_audit", new=AsyncMock(side_effect=Exception("ssh-audit error"))):
-        
+    mock_sslyze_res = SimpleNamespace(
+        success=True, tls_versions={}, supported_versions=[], cert_data=None
+    )
+    with patch(
+        "app.scanners.sslyze_scanner.scan_endpoint_with_sslyze",
+        new=AsyncMock(return_value=mock_sslyze_res),
+    ), patch(
+        "app.scanners.scapy_probe.probe_tls_with_pqc_groups",
+        new=AsyncMock(side_effect=Exception("scapy error")),
+    ), patch(
+        "app.services.cli_scanner_service.run_pqcscan",
+        new=AsyncMock(side_effect=Exception("pqcscan error")),
+    ), patch(
+        "app.services.cli_scanner_service.run_ssh_audit",
+        new=AsyncMock(side_effect=Exception("ssh-audit error")),
+    ):
+
         is_active, assets, findings = await _run_advanced_scanners(
             session, scan, "test.local", False, 0, 0, log_event
         )
@@ -558,38 +642,49 @@ async def test_run_advanced_scanners_exceptions_and_db_error():
 
 def test_run_scan_config_and_target_cleaning(mock_session_cm):
     from app.services.scan_orchestrator import ScanOrchestrator
+
     session, mock_local = mock_session_cm
-    
-    scan = _scan_obj(target="https://example.com/api, http://10.0.0.2/path, 8.8.8.8", config={"strict_tls": True})
+
+    scan = _scan_obj(
+        target="https://example.com/api, http://10.0.0.2/path, 8.8.8.8",
+        config={"strict_tls": True},
+    )
     session.execute.return_value = _scalar_one_or_none(scan)
     session.add = MagicMock()
     session.commit = AsyncMock()
     session.flush = AsyncMock()
     session.refresh = AsyncMock()
 
-    with patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 0, "findings_total": 0, "errors": []})), \
-         patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, \
-         patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
-        
+    with patch(
+        "app.services.scan_orchestrator._run_host_tasks",
+        new=AsyncMock(
+            return_value={"assets_total": 0, "findings_total": 0, "errors": []}
+        ),
+    ), patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, patch(
+        "app.api.dashboard.clear_dashboard_cache", new=AsyncMock()
+    ):
+
         mock_dns.return_value = {
             "a_records": ["93.184.216.34"],
             "aaaa_records": [],
             "cname_records": [],
             "mx_records": [],
         }
-        
+
         orch = ScanOrchestrator()
         asyncio.run(orch.run_scan(scan.id))
-        
+
     assert scan.status == "completed"
 
 
 def test_ssrf_cidr_and_discovery_paths(mock_session_cm):
     from app.services.scan_orchestrator import ScanOrchestrator
+
     session, mock_local = mock_session_cm
-    
-    with patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False), \
-         patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
+
+    with patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False), patch(
+        "app.scanners.safe_target.ALLOW_LOOPBACK", False
+    ):
         scan = _scan_obj(target="192.168.1.0/24")
         session.execute.return_value = _scalar_one_or_none(scan)
         session.add = MagicMock()
@@ -604,30 +699,45 @@ def test_ssrf_cidr_and_discovery_paths(mock_session_cm):
 
         scan2 = _scan_obj(target="8.8.8.0/24")
         call_count = {"n": 0}
+
         async def _execute2(*args, **kwargs):
             call_count["n"] += 1
             if call_count["n"] == 1:
                 return _scalar_one_or_none(scan2)
             return _scalar_one_or_none(None)
+
         session.execute.side_effect = _execute2
 
-        with patch("app.scanners.network_discovery.discover_tls_hosts", new=AsyncMock(return_value=[{"ip": "1.1.1.1"}, {"ip": "10.0.0.1"}])), \
-             patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 1, "findings_total": 0, "errors": []})), \
-             patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
-            
+        with patch(
+            "app.scanners.network_discovery.discover_tls_hosts",
+            new=AsyncMock(return_value=[{"ip": "1.1.1.1"}, {"ip": "10.0.0.1"}]),
+        ), patch(
+            "app.services.scan_orchestrator._run_host_tasks",
+            new=AsyncMock(
+                return_value={"assets_total": 1, "findings_total": 0, "errors": []}
+            ),
+        ), patch(
+            "app.api.dashboard.clear_dashboard_cache", new=AsyncMock()
+        ):
+
             asyncio.run(orch.run_scan(scan2.id))
         assert scan2.status == "completed"
 
         scan3 = _scan_obj(target="8.8.8.0/24")
         call_count["n"] = 0
+
         async def _execute3(*args, **kwargs):
             call_count["n"] += 1
             if call_count["n"] == 1:
                 return _scalar_one_or_none(scan3)
             return _scalar_one_or_none(None)
+
         session.execute.side_effect = _execute3
 
-        with patch("app.scanners.network_discovery.discover_tls_hosts", new=AsyncMock(side_effect=RuntimeError("Discovery timeout"))):
+        with patch(
+            "app.scanners.network_discovery.discover_tls_hosts",
+            new=AsyncMock(side_effect=RuntimeError("Discovery timeout")),
+        ):
             asyncio.run(orch.run_scan(scan3.id))
         assert scan3.status == "failed"
         assert "Discovery timeout" in scan3.error_message
@@ -635,8 +745,9 @@ def test_ssrf_cidr_and_discovery_paths(mock_session_cm):
 
 def test_dns_resolutions_fallback_and_failures(mock_session_cm):
     from app.services.scan_orchestrator import ScanOrchestrator
+
     session, mock_local = mock_session_cm
-    
+
     scan = _scan_obj(target="example.com")
     session.execute.return_value = _scalar_one_or_none(scan)
     session.add = MagicMock()
@@ -653,32 +764,52 @@ def test_dns_resolutions_fallback_and_failures(mock_session_cm):
 
     for dns_mock_val in [dns_aaaa, dns_cname, dns_mx1, dns_mx2]:
         call_count = {"n": 0}
+
         async def _execute(*args, **kwargs):
             call_count["n"] += 1
             if call_count["n"] == 1:
                 return _scalar_one_or_none(scan)
             return _scalar_one_or_none(None)
+
         session.execute.side_effect = _execute
 
-        with patch("app.scanners.network_discovery.enumerate_dns_targets", return_value=dns_mock_val), \
-             patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 0, "findings_total": 0, "errors": []})), \
-             patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
-            
+        with patch(
+            "app.scanners.network_discovery.enumerate_dns_targets",
+            return_value=dns_mock_val,
+        ), patch(
+            "app.services.scan_orchestrator._run_host_tasks",
+            new=AsyncMock(
+                return_value={"assets_total": 0, "findings_total": 0, "errors": []}
+            ),
+        ), patch(
+            "app.api.dashboard.clear_dashboard_cache", new=AsyncMock()
+        ):
+
             asyncio.run(orch.run_scan(scan.id))
         assert scan.status == "completed"
 
     call_count = {"n": 0}
+
     async def _execute_err(*args, **kwargs):
         call_count["n"] += 1
         if call_count["n"] == 1:
             return _scalar_one_or_none(scan)
         return _scalar_one_or_none(None)
+
     session.execute.side_effect = _execute_err
 
-    with patch("app.scanners.network_discovery.enumerate_dns_targets", side_effect=OSError("DNS server down")), \
-         patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 0, "findings_total": 0, "errors": []})), \
-         patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
-        
+    with patch(
+        "app.scanners.network_discovery.enumerate_dns_targets",
+        side_effect=OSError("DNS server down"),
+    ), patch(
+        "app.services.scan_orchestrator._run_host_tasks",
+        new=AsyncMock(
+            return_value={"assets_total": 0, "findings_total": 0, "errors": []}
+        ),
+    ), patch(
+        "app.api.dashboard.clear_dashboard_cache", new=AsyncMock()
+    ):
+
         asyncio.run(orch.run_scan(scan.id))
     assert scan.status == "completed"
 
@@ -686,8 +817,9 @@ def test_dns_resolutions_fallback_and_failures(mock_session_cm):
 def test_is_hostname_ssrf_safe_branches(mock_session_cm):
     from app.services.scan_orchestrator import ScanOrchestrator
     from app.config import settings
+
     session, mock_local = mock_session_cm
-    
+
     scan = _scan_obj(target="localhost")
     session.execute.return_value = _scalar_one_or_none(scan)
     session.add = MagicMock()
@@ -695,67 +827,87 @@ def test_is_hostname_ssrf_safe_branches(mock_session_cm):
     session.flush = AsyncMock()
 
     orch = ScanOrchestrator()
-    
-    with patch.object(settings, "OFFLINE_MODE", False), \
-         patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
+
+    with patch.object(settings, "OFFLINE_MODE", False), patch(
+        "app.scanners.safe_target.ALLOW_LOOPBACK", False
+    ):
         asyncio.run(orch.run_scan(scan.id))
     assert scan.status == "failed"
     assert "No active hosts" in scan.error_message
 
     scan2 = _scan_obj(target="localhost")
     call_count = {"n": 0}
+
     async def _execute(*args, **kwargs):
         call_count["n"] += 1
         if call_count["n"] == 1:
             return _scalar_one_or_none(scan2)
         return _scalar_one_or_none(None)
+
     session.execute.side_effect = _execute
 
-    with patch.object(settings, "OFFLINE_MODE", True), \
-         patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 1, "findings_total": 0, "errors": []})), \
-         patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
+    with patch.object(settings, "OFFLINE_MODE", True), patch(
+        "app.services.scan_orchestrator._run_host_tasks",
+        new=AsyncMock(
+            return_value={"assets_total": 1, "findings_total": 0, "errors": []}
+        ),
+    ), patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
         asyncio.run(orch.run_scan(scan2.id))
     assert scan2.status == "completed"
 
 
 def test_scan_execution_database_errors(mock_session_cm):
     from app.services.scan_orchestrator import ScanOrchestrator
+
     session, mock_local = mock_session_cm
-    
+
     scan = _scan_obj(target="example.com")
     call_count = {"n": 0}
+
     async def _execute(*args, **kwargs):
         call_count["n"] += 1
         if call_count["n"] == 1:
             return _scalar_one_or_none(scan)
         return _scalar_one_or_none(None)
+
     session.execute.side_effect = _execute
     session.add = MagicMock()
     session.flush = AsyncMock()
-    session.commit = AsyncMock(side_effect=[None, RuntimeError("DB write error"), None, None])
+    session.commit = AsyncMock(
+        side_effect=[None, RuntimeError("DB write error"), None, None]
+    )
 
-    with patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, \
-         patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 1, "findings_total": 0, "errors": []})), \
-         patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock(side_effect=Exception("Redis down"))):
-        
+    with patch(
+        "app.scanners.network_discovery.enumerate_dns_targets"
+    ) as mock_dns, patch(
+        "app.services.scan_orchestrator._run_host_tasks",
+        new=AsyncMock(
+            return_value={"assets_total": 1, "findings_total": 0, "errors": []}
+        ),
+    ), patch(
+        "app.api.dashboard.clear_dashboard_cache",
+        new=AsyncMock(side_effect=Exception("Redis down")),
+    ):
+
         mock_dns.return_value = {
             "a_records": ["93.184.216.34"],
             "aaaa_records": [],
             "cname_records": [],
             "mx_records": [],
         }
-        
+
         orch = ScanOrchestrator()
         asyncio.run(orch.run_scan(scan.id))
-        
+
     assert scan.status == "failed"
     assert "DB write error" in scan.error_message
 
 
 def test_scan_config_json_parse_error(mock_session_cm):
     from app.services.scan_orchestrator import ScanOrchestrator
+
     session, mock_local = mock_session_cm
-    
+
     scan = _scan_obj(target="example.com", config="invalid-json-{")
     session.execute.return_value = _scalar_one_or_none(scan)
     session.add = MagicMock()
@@ -763,17 +915,25 @@ def test_scan_config_json_parse_error(mock_session_cm):
     session.commit = AsyncMock()
     session.refresh = AsyncMock()
 
-    with patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, \
-         patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 0, "findings_total": 0, "errors": []})), \
-         patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock(side_effect=Exception("Redis connection timed out"))):
-        
+    with patch(
+        "app.scanners.network_discovery.enumerate_dns_targets"
+    ) as mock_dns, patch(
+        "app.services.scan_orchestrator._run_host_tasks",
+        new=AsyncMock(
+            return_value={"assets_total": 0, "findings_total": 0, "errors": []}
+        ),
+    ), patch(
+        "app.api.dashboard.clear_dashboard_cache",
+        new=AsyncMock(side_effect=Exception("Redis connection timed out")),
+    ):
+
         mock_dns.return_value = {
             "a_records": ["93.184.216.34"],
             "aaaa_records": [],
             "cname_records": [],
             "mx_records": [],
         }
-        
+
         orch = ScanOrchestrator()
         asyncio.run(orch.run_scan(scan.id))
     assert scan.status == "completed"
@@ -781,10 +941,12 @@ def test_scan_config_json_parse_error(mock_session_cm):
 
 def test_ssrf_blocked_targets_variations(mock_session_cm):
     from app.services.scan_orchestrator import ScanOrchestrator
+
     session, mock_local = mock_session_cm
-    
-    with patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False), \
-         patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
+
+    with patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False), patch(
+        "app.scanners.safe_target.ALLOW_LOOPBACK", False
+    ):
         # 1. Cloud metadata IP
         scan1 = _scan_obj(target="169.254.169.254")
         session.execute.return_value = _scalar_one_or_none(scan1)
@@ -800,11 +962,13 @@ def test_ssrf_blocked_targets_variations(mock_session_cm):
         # 2. Metadata CIDR
         scan2 = _scan_obj(target="169.254.169.0/24")
         call_count = {"n": 0}
+
         async def _exec2(*args, **kwargs):
             call_count["n"] += 1
             if call_count["n"] == 1:
                 return _scalar_one_or_none(scan2)
             return _scalar_one_or_none(None)
+
         session.execute.side_effect = _exec2
 
         mock_net = MagicMock()
@@ -819,16 +983,22 @@ def test_ssrf_blocked_targets_variations(mock_session_cm):
         with patch("ipaddress.ip_network", return_value=mock_net):
             asyncio.run(orch.run_scan(scan2.id))
         assert scan2.status == "failed"
-        assert "SSRF" in scan2.error_message or "blocked" in scan2.error_message.lower() or "metadata" in scan2.error_message.lower()
+        assert (
+            "SSRF" in scan2.error_message
+            or "blocked" in scan2.error_message.lower()
+            or "metadata" in scan2.error_message.lower()
+        )
 
         # 3. Invalid CIDR notation
         scan3 = _scan_obj(target="invalid_ip/24")
         call_count3 = {"n": 0}
+
         async def _exec3(*args, **kwargs):
             call_count3["n"] += 1
             if call_count3["n"] == 1:
                 return _scalar_one_or_none(scan3)
             return _scalar_one_or_none(None)
+
         session.execute.side_effect = _exec3
         asyncio.run(orch.run_scan(scan3.id))
         assert scan3.status == "failed"
@@ -836,11 +1006,13 @@ def test_ssrf_blocked_targets_variations(mock_session_cm):
         # 4. Cloud metadata IP parse-time block
         scan4 = _scan_obj(target="169.254.169.254")
         call_count4 = {"n": 0}
+
         async def _exec4(*args, **kwargs):
             call_count4["n"] += 1
             if call_count4["n"] == 1:
                 return _scalar_one_or_none(scan4)
             return _scalar_one_or_none(None)
+
         session.execute.side_effect = _exec4
 
         mock_ip4 = MagicMock()
@@ -859,10 +1031,12 @@ def test_ssrf_blocked_targets_variations(mock_session_cm):
 
 def test_dns_resolution_fallbacks_and_ssrf(mock_session_cm):
     from app.services.scan_orchestrator import ScanOrchestrator
+
     session, mock_local = mock_session_cm
-    
-    with patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False), \
-         patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
+
+    with patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False), patch(
+        "app.scanners.safe_target.ALLOW_LOOPBACK", False
+    ):
         # CNAME fallback
         scan = _scan_obj(target="cname-fallback.test")
         session.execute.return_value = _scalar_one_or_none(scan)
@@ -870,18 +1044,25 @@ def test_dns_resolution_fallbacks_and_ssrf(mock_session_cm):
         session.flush = AsyncMock()
         session.commit = AsyncMock()
         session.refresh = AsyncMock()
-        
-        with patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, \
-             patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 0, "findings_total": 0, "errors": []})), \
-             patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
-            
+
+        with patch(
+            "app.scanners.network_discovery.enumerate_dns_targets"
+        ) as mock_dns, patch(
+            "app.services.scan_orchestrator._run_host_tasks",
+            new=AsyncMock(
+                return_value={"assets_total": 0, "findings_total": 0, "errors": []}
+            ),
+        ), patch(
+            "app.api.dashboard.clear_dashboard_cache", new=AsyncMock()
+        ):
+
             mock_dns.return_value = {
                 "a_records": [],
                 "aaaa_records": [],
                 "cname_records": ["target-cname.com."],
                 "mx_records": [],
             }
-            
+
             orch = ScanOrchestrator()
             asyncio.run(orch.run_scan(scan.id))
         assert scan.status == "completed"
@@ -889,17 +1070,26 @@ def test_dns_resolution_fallbacks_and_ssrf(mock_session_cm):
         # MX fallback with parts >= 2 and < 2
         scan_mx = _scan_obj(target="mx-fallback.test")
         call_count_mx = {"n": 0}
+
         async def _execute_mx(*args, **kwargs):
             call_count_mx["n"] += 1
             if call_count_mx["n"] == 1:
                 return _scalar_one_or_none(scan_mx)
             return _scalar_one_or_none(None)
+
         session.execute.side_effect = _execute_mx
 
-        with patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, \
-             patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 0, "findings_total": 0, "errors": []})), \
-             patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
-            
+        with patch(
+            "app.scanners.network_discovery.enumerate_dns_targets"
+        ) as mock_dns, patch(
+            "app.services.scan_orchestrator._run_host_tasks",
+            new=AsyncMock(
+                return_value={"assets_total": 0, "findings_total": 0, "errors": []}
+            ),
+        ), patch(
+            "app.api.dashboard.clear_dashboard_cache", new=AsyncMock()
+        ):
+
             mock_dns.side_effect = [
                 {
                     "a_records": [],
@@ -912,41 +1102,53 @@ def test_dns_resolution_fallbacks_and_ssrf(mock_session_cm):
                     "aaaa_records": [],
                     "cname_records": [],
                     "mx_records": ["mail-no-pref.com."],
-                }
+                },
             ]
-            
+
             orch = ScanOrchestrator()
             # Run first with preference mx
             asyncio.run(orch.run_scan(scan_mx.id))
-            
+
             # Run again with no preference mx using scan_mx2
             scan_mx2 = _scan_obj(target="mx-fallback.test")
             call_count_mx2 = {"n": 0}
+
             async def _execute_mx2(*args, **kwargs):
                 call_count_mx2["n"] += 1
                 if call_count_mx2["n"] == 1:
                     return _scalar_one_or_none(scan_mx2)
                 return _scalar_one_or_none(None)
+
             session.execute.side_effect = _execute_mx2
             asyncio.run(orch.run_scan(scan_mx2.id))
-            
+
         assert scan_mx.status == "completed"
         assert scan_mx2.status == "completed"
 
         # DNS Exception path
         scan_dns_err = _scan_obj(target="dns-error.test")
         call_count_dns_err = {"n": 0}
+
         async def _execute_dns_err(*args, **kwargs):
             call_count_dns_err["n"] += 1
             if call_count_dns_err["n"] == 1:
                 return _scalar_one_or_none(scan_dns_err)
             return _scalar_one_or_none(None)
+
         session.execute.side_effect = _execute_dns_err
 
-        with patch("app.scanners.network_discovery.enumerate_dns_targets", side_effect=OSError("DNS fail")), \
-             patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 0, "findings_total": 0, "errors": []})), \
-             patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
-            
+        with patch(
+            "app.scanners.network_discovery.enumerate_dns_targets",
+            side_effect=OSError("DNS fail"),
+        ), patch(
+            "app.services.scan_orchestrator._run_host_tasks",
+            new=AsyncMock(
+                return_value={"assets_total": 0, "findings_total": 0, "errors": []}
+            ),
+        ), patch(
+            "app.api.dashboard.clear_dashboard_cache", new=AsyncMock()
+        ):
+
             orch = ScanOrchestrator()
             asyncio.run(orch.run_scan(scan_dns_err.id))
         assert scan_dns_err.status == "completed"
@@ -954,24 +1156,33 @@ def test_dns_resolution_fallbacks_and_ssrf(mock_session_cm):
         # DNS resolves to private IP (SSRF blocked resolved host)
         scan_ssrf = _scan_obj(target="localhost")
         call_count_ssrf = {"n": 0}
+
         async def _execute_ssrf(*args, **kwargs):
             call_count_ssrf["n"] += 1
             if call_count_ssrf["n"] == 1:
                 return _scalar_one_or_none(scan_ssrf)
             return _scalar_one_or_none(None)
+
         session.execute.side_effect = _execute_ssrf
 
-        with patch("app.scanners.network_discovery.enumerate_dns_targets") as mock_dns, \
-             patch("app.services.scan_orchestrator._run_host_tasks", new=AsyncMock(return_value={"assets_total": 0, "findings_total": 0, "errors": []})), \
-             patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
-            
+        with patch(
+            "app.scanners.network_discovery.enumerate_dns_targets"
+        ) as mock_dns, patch(
+            "app.services.scan_orchestrator._run_host_tasks",
+            new=AsyncMock(
+                return_value={"assets_total": 0, "findings_total": 0, "errors": []}
+            ),
+        ), patch(
+            "app.api.dashboard.clear_dashboard_cache", new=AsyncMock()
+        ):
+
             mock_dns.return_value = {
                 "a_records": ["127.0.0.1"],
                 "aaaa_records": [],
                 "cname_records": [],
                 "mx_records": [],
             }
-            
+
             orch = ScanOrchestrator()
             asyncio.run(orch.run_scan(scan_ssrf.id))
         assert scan_ssrf.status == "failed"
@@ -981,11 +1192,12 @@ def test_is_hostname_ssrf_safe_helper_branches(mock_session_cm):
     from app.services.scan_orchestrator import ScanOrchestrator
     from app.config import settings
     from unittest.mock import PropertyMock
-    import ipaddress
+
     session, mock_local = mock_session_cm
-    
-    with patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False), \
-         patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
+
+    with patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False), patch(
+        "app.scanners.safe_target.ALLOW_LOOPBACK", False
+    ):
         # 1. Private IP path
         scan = _scan_obj(target="10.0.0.1")
         session.execute.return_value = _scalar_one_or_none(scan)
@@ -1002,8 +1214,9 @@ def test_is_hostname_ssrf_safe_helper_branches(mock_session_cm):
         type(mock_ip).is_unspecified = False
         mock_ip.__str__.return_value = "10.0.0.1"
 
-        with patch("ipaddress.ip_address", return_value=mock_ip), \
-             patch.object(settings, "OFFLINE_MODE", False):
+        with patch("ipaddress.ip_address", return_value=mock_ip), patch.object(
+            settings, "OFFLINE_MODE", False
+        ):
             orch = ScanOrchestrator()
             asyncio.run(orch.run_scan(scan.id))
         assert scan.status == "failed"
@@ -1012,11 +1225,13 @@ def test_is_hostname_ssrf_safe_helper_branches(mock_session_cm):
         # 2. Metadata IP path and clear_dashboard_cache failure
         scan2 = _scan_obj(target="169.254.169.254")
         call_count = {"n": 0}
+
         async def _execute2(*args, **kwargs):
             call_count["n"] += 1
             if call_count["n"] == 1:
                 return _scalar_one_or_none(scan2)
             return _scalar_one_or_none(None)
+
         session.execute.side_effect = _execute2
 
         mock_ip2 = MagicMock()
@@ -1027,9 +1242,12 @@ def test_is_hostname_ssrf_safe_helper_branches(mock_session_cm):
         type(mock_ip2).is_unspecified = False
         mock_ip2.__str__.side_effect = ["1.1.1.1", "169.254.169.254"]
 
-        with patch("ipaddress.ip_address", return_value=mock_ip2), \
-             patch.object(settings, "OFFLINE_MODE", False), \
-             patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock(side_effect=Exception("Redis dead"))):
+        with patch("ipaddress.ip_address", return_value=mock_ip2), patch.object(
+            settings, "OFFLINE_MODE", False
+        ), patch(
+            "app.api.dashboard.clear_dashboard_cache",
+            new=AsyncMock(side_effect=Exception("Redis dead")),
+        ):
             orch = ScanOrchestrator()
             asyncio.run(orch.run_scan(scan2.id))
         assert scan2.status == "failed"
@@ -1038,15 +1256,25 @@ def test_is_hostname_ssrf_safe_helper_branches(mock_session_cm):
 @pytest.mark.asyncio
 async def test_run_advanced_scanners_sslyze_failed():
     from app.services.scan_orchestrator import _run_advanced_scanners
+
     scan = SimpleNamespace(id="scan-1", advanced_tools=True)
     session = AsyncMock()
     log_event = AsyncMock()
 
-    with patch("app.scanners.sslyze_scanner.scan_endpoint_with_sslyze", new=AsyncMock(side_effect=RuntimeError("SSLyze failed"))), \
-         patch("app.scanners.scapy_probe.probe_tls_with_pqc_groups", new=AsyncMock(return_value=SimpleNamespace(success=False))), \
-         patch("app.services.cli_scanner_service.run_pqcscan", new=AsyncMock(return_value={"skipped": True})), \
-         patch("app.services.cli_scanner_service.run_ssh_audit", new=AsyncMock(return_value={"skipped": True})):
-        
+    with patch(
+        "app.scanners.sslyze_scanner.scan_endpoint_with_sslyze",
+        new=AsyncMock(side_effect=RuntimeError("SSLyze failed")),
+    ), patch(
+        "app.scanners.scapy_probe.probe_tls_with_pqc_groups",
+        new=AsyncMock(return_value=SimpleNamespace(success=False)),
+    ), patch(
+        "app.services.cli_scanner_service.run_pqcscan",
+        new=AsyncMock(return_value={"skipped": True}),
+    ), patch(
+        "app.services.cli_scanner_service.run_ssh_audit",
+        new=AsyncMock(return_value={"skipped": True}),
+    ):
+
         is_active, assets, findings = await _run_advanced_scanners(
             session, scan, "test.local", False, 0, 0, log_event
         )
@@ -1057,13 +1285,13 @@ async def test_run_advanced_scanners_sslyze_failed():
 
 def test_passive_scan_lifecycle(mock_session_cm):
     from app.services.scan_orchestrator import ScanOrchestrator
-    from app.models.models import Scan, Asset, Algorithm, Finding
 
     scan = _scan_obj(target="eth0", scan_type="passive")
     session, mock_local = mock_session_cm
-    
+
     # Mock return values for DB queries using the _execute closure pattern
     call_count = {"n": 0}
+
     async def _execute(*args, **kwargs):
         call_count["n"] += 1
         if call_count["n"] == 1:
@@ -1090,7 +1318,7 @@ def test_passive_scan_lifecycle(mock_session_cm):
             "dst_ip": "1.2.3.4",
             "dst_port": 443,
             "cipher_suites": ["TLS_AES_256_GCM_SHA384"],
-            "supported_groups": ["0x01FD"], # ML-KEM-768
+            "supported_groups": ["0x01FD"],  # ML-KEM-768
             "pqc_groups_advertised": ["ML-KEM-768"],
             "has_pqc": True,
         },
@@ -1098,20 +1326,25 @@ def test_passive_scan_lifecycle(mock_session_cm):
             "type": "ServerHello",
             "dst_ip": "5.6.7.8",
             "selected_cipher": "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-            "selected_group": "29", # secp384r1 (classical)
+            "selected_group": "29",  # secp384r1 (classical)
             "tls_version": "0x0303",
         },
         {
             "type": "SSH_KEXINIT",
             "dst_ip": "9.10.11.12",
             "dst_port": 22,
-            "kex_algorithms": ["curve25519-sha256", "sntrup761x25519-sha256@openssh.com"],
-        }
+            "kex_algorithms": [
+                "curve25519-sha256",
+                "sntrup761x25519-sha256@openssh.com",
+            ],
+        },
     ]
 
-    with patch("app.scanners.pyshark_capture.capture_all_handshakes", new=AsyncMock(return_value=mock_handshakes)), \
-         patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
-             
+    with patch(
+        "app.scanners.pyshark_capture.capture_all_handshakes",
+        new=AsyncMock(return_value=mock_handshakes),
+    ), patch("app.api.dashboard.clear_dashboard_cache", new=AsyncMock()):
+
         orch = ScanOrchestrator()
         asyncio.run(orch.run_scan(scan.id))
 
@@ -1120,6 +1353,3 @@ def test_passive_scan_lifecycle(mock_session_cm):
     assert scan.assets_found == 3
     # Check that session.add was called
     assert session.add.call_count > 0
-
-
-

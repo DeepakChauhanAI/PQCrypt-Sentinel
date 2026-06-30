@@ -1,12 +1,9 @@
 import asyncio
-import json
-import logging
 from typing import Any, Dict, List, Optional
 from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 
-from app.scanners.cert_parser import parse_certificate
 
 _CT_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="ct_log_scanner")
 
@@ -32,7 +29,9 @@ class CTLogResult:
 
 def _fetch_ct_json(url: str, timeout: int) -> List[Dict[str, Any]]:
     headers = {"User-Agent": "PQCryptSentinel/1.0"}
-    with httpx.Client(timeout=timeout, follow_redirects=True, headers=headers) as client:
+    with httpx.Client(
+        timeout=timeout, follow_redirects=True, headers=headers
+    ) as client:
         resp = client.get(url)
         resp.raise_for_status()
         return resp.json()
@@ -48,7 +47,11 @@ async def scan_ct_logs_for_domain(domain: str, timeout: int = 15) -> CTLogResult
             timeout=timeout + 2,
         )
         if not isinstance(data, list):
-            return CTLogResult(domain=domain, success=False, error_message="Unexpected CT log response format")
+            return CTLogResult(
+                domain=domain,
+                success=False,
+                error_message="Unexpected CT log response format",
+            )
         return CTLogResult(domain=domain, success=True, certificates=data)
     except Exception as exc:
         return CTLogResult(domain=domain, success=False, error_message=str(exc))

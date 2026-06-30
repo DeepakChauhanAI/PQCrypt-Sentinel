@@ -1,10 +1,10 @@
 """Tests for the RedisCache wrapper and lifecycle helpers."""
+
 import asyncio
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -73,6 +73,7 @@ def test_redis_cache_ping_true():
 
 def test_redis_cache_ping_false_on_redis_error():
     from redis.exceptions import RedisError
+
     client = _make_mock_redis_client()
     client.ping.side_effect = RedisError("down")
     c = RedisCache("redis://x:1", namespace="test")
@@ -154,6 +155,7 @@ def test_close_redis_cache_noop_when_no_singleton():
 
 def test_redis_cache_set_logs_redis_error():
     from redis.exceptions import RedisError
+
     client = _make_mock_redis_client()
     client.set = AsyncMock(side_effect=RedisError("set failed"))
     c = RedisCache("redis://x:1", namespace="test")
@@ -163,6 +165,7 @@ def test_redis_cache_set_logs_redis_error():
 
 def test_redis_cache_clear_namespace_logs_redis_error():
     from redis.exceptions import RedisError
+
     client = _make_mock_redis_client()
     client.scan = AsyncMock(side_effect=RedisError("scan failed"))
     c = RedisCache("redis://x:1", namespace="pqc")
@@ -176,6 +179,7 @@ def test_get_redis_cache_returns_singleton():
         a = await get_redis_cache()
         b = await get_redis_cache()
         return a, b
+
     a, b = asyncio.run(_runner())
     assert a is b
 
@@ -186,6 +190,7 @@ def test_close_redis_cache_clears_singleton():
         cache = await get_redis_cache()
         await close_redis_cache()
         return cache_mod._singleton
+
     singleton = asyncio.run(_runner())
     assert singleton is None
 
@@ -198,6 +203,7 @@ def test_dashboard_cache_helpers_use_namespaced_keys(monkeypatch):
         async def get(self, key):
             captured["get_key"] = key
             return None
+
         async def set(self, key, value, ttl=None):
             captured["set_key"] = key
             captured["set_ttl"] = ttl
@@ -207,6 +213,7 @@ def test_dashboard_cache_helpers_use_namespaced_keys(monkeypatch):
 
     monkeypatch.setattr(cache_mod, "get_redis_cache", _fake_get_redis_cache)
     from app.api import dashboard
+
     monkeypatch.setattr(dashboard, "get_redis_cache", _fake_get_redis_cache)
     asyncio.run(dashboard.set_cache("summary", {"a": 1}, ttl=60))
     assert captured["set_key"] == "dashboard:summary"
@@ -226,8 +233,10 @@ def test_health_endpoint_returns_redis_status(monkeypatch):
     class _FakeCacheShim:
         def __init__(self, c):
             self._c = c
+
         async def ping(self):
             return bool(await self._c.ping())
+
         async def aclose(self):
             return await self._c.aclose()
 
@@ -235,8 +244,10 @@ def test_health_endpoint_returns_redis_status(monkeypatch):
         return _FakeCacheShim(fake_client)
 
     from app.api import dashboard as dashboard_mod
+
     monkeypatch.setattr(dashboard_mod, "get_redis_cache", _fake_get_redis_cache)
     from app.utils import cache as cache_mod2
+
     monkeypatch.setattr(cache_mod2, "get_redis_cache", _fake_get_redis_cache)
 
     with TestClient(fastapi_app) as tc:

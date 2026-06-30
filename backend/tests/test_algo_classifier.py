@@ -6,6 +6,7 @@ The module has 44% line coverage; this file pushes it well above 80%
 by exercising every branch of `classify_algorithm` and
 `get_deprecation_deadline_year`.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -13,7 +14,6 @@ import pytest
 from app.analysis.algo_classifier import (
     CLASSICAL_EDDSA_OIDS,
     CLASSICAL_KEX_OIDS,
-    CLASSICAL_SIGNATURE_OIDS,
     CLASSICAL_X_OIDS,
     HYBRID_KEX_GROUPS,
     HYBRID_SIGNATURE_OIDS,

@@ -3,14 +3,13 @@ Tests for the `finding_service` module: covers the TLS, SSH and
 expiry paths so coverage on `app/services/finding_service.py` rises
 above 80%.
 """
+
 from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
-
-import pytest
 
 
 def _make_asset(asset_type: str = "web_app", env: str = "production", metadata=None):
@@ -146,7 +145,11 @@ def test_generate_findings_expired_certificate():
     asyncio.run(generate_findings(session, "scan-1", asset.id, cert_data=cert))
     types = [c.args[0].finding_type for c in session.add.call_args_list]
     assert "cert_expired" in types
-    expired = next(c.args[0] for c in session.add.call_args_list if c.args[0].finding_type == "cert_expired")
+    expired = next(
+        c.args[0]
+        for c in session.add.call_args_list
+        if c.args[0].finding_type == "cert_expired"
+    )
     assert expired.severity == "critical"
 
 
@@ -171,7 +174,7 @@ def test_generate_findings_naive_datetime_is_treated_as_utc():
     asset = _make_asset()
     session = _make_session(asset)
     cert = _make_cert_data()
-    cert["not_after"] = (datetime.now() + timedelta(days=10))  # no tzinfo
+    cert["not_after"] = datetime.now() + timedelta(days=10)  # no tzinfo
 
     count = asyncio.run(generate_findings(session, "scan-1", asset.id, cert_data=cert))
     assert count >= 1
@@ -185,7 +188,12 @@ def test_generate_findings_ssh_no_pqc_kex():
     session = _make_session(asset)
 
     count = asyncio.run(
-        generate_findings(session, "scan-1", asset.id, kex_algos=["ecdh-sha2-nistp256", "diffie-hellman-group14-sha256"])
+        generate_findings(
+            session,
+            "scan-1",
+            asset.id,
+            kex_algos=["ecdh-sha2-nistp256", "diffie-hellman-group14-sha256"],
+        )
     )
     assert count == 1
     finding = session.add.call_args.args[0]
@@ -202,7 +210,12 @@ def test_generate_findings_ssh_with_pqc_kex_is_safe():
     session = _make_session(asset)
 
     count = asyncio.run(
-        generate_findings(session, "scan-1", asset.id, kex_algos=["sntrup761x25519-sha512@openssh.com"])
+        generate_findings(
+            session,
+            "scan-1",
+            asset.id,
+            kex_algos=["sntrup761x25519-sha512@openssh.com"],
+        )
     )
     assert count == 0
 

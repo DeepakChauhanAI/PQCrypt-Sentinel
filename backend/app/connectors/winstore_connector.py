@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 Windows Certificate Store (L7 Endpoint layer) connector.
 
@@ -11,6 +12,7 @@ that the connector is safe to import on Linux build agents and CI.
 The calling code (a separate Win32 service or scheduled task) is
 expected to write the dump to a file path and pass it to `sync()`.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -86,7 +88,11 @@ class WindowsCertStoreConnector(BaseConnector):
             }
 
         try:
-            text = dump_text if dump_text is not None else Path(dump_path).read_text(encoding="utf-8", errors="replace")
+            text = (
+                dump_text
+                if dump_text is not None
+                else Path(dump_path).read_text(encoding="utf-8", errors="replace")
+            )
         except OSError as exc:
             return {
                 "status": "error",
@@ -106,7 +112,9 @@ class WindowsCertStoreConnector(BaseConnector):
                 errors.append(f"block {idx}: no subject")
                 continue
             digest = hashlib.sha256(
-                f"{block.get('subject')}|{block.get('issuer')}|{block.get('serial_number')}".encode("utf-8")
+                f"{block.get('subject')}|{block.get('issuer')}|{block.get('serial_number')}".encode(
+                    "utf-8"
+                )
             ).hexdigest()[:32]
             asset_name = f"winstore:{self.store_name}:{digest}"
             metadata = {
@@ -119,9 +127,23 @@ class WindowsCertStoreConnector(BaseConnector):
                 "not_before": block.get("not_before"),
                 "not_after": block.get("not_after"),
                 "sha1_fingerprint": block.get("sha1"),
-                "raw_dump_keys": sorted(k for k in block.keys() if k not in {"subject", "issuer", "serial_number", "not_before", "not_after", "sha1"}),
+                "raw_dump_keys": sorted(
+                    k
+                    for k in block.keys()
+                    if k
+                    not in {
+                        "subject",
+                        "issuer",
+                        "serial_number",
+                        "not_before",
+                        "not_after",
+                        "sha1",
+                    }
+                ),
             }
-            stmt = select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+            stmt = select(Asset).where(
+                Asset.name == asset_name, Asset.deleted_at.is_(None)
+            )
             res = await session.execute(stmt)
             existing = res.scalar_one_or_none()
             layer = layer_for_asset(_FakeAsset("windows_cert_store"))

@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from types import SimpleNamespace
 
 import pytest
-from fastapi.testclient import TestClient
 from starlette.responses import JSONResponse
 
 from app.middleware.rate_limit import RateLimitMiddleware, RATE_LIMIT_SKIP_PATHS
@@ -57,7 +56,10 @@ async def test_check_bucket_redis_unavailable():
     mw = RateLimitMiddleware.__new__(RateLimitMiddleware)
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(side_effect=Exception("no redis"))
-    with patch("app.middleware.rate_limit.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.middleware.rate_limit.get_redis_cache",
+        new=AsyncMock(return_value=fake_cache),
+    ):
         allowed, retry = await mw._check_bucket("1.2.3.4")
     assert allowed is True
     assert retry == 0
@@ -68,7 +70,10 @@ async def test_check_bucket_client_none():
     mw = RateLimitMiddleware.__new__(RateLimitMiddleware)
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=None)
-    with patch("app.middleware.rate_limit.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.middleware.rate_limit.get_redis_cache",
+        new=AsyncMock(return_value=fake_cache),
+    ):
         allowed, retry = await mw._check_bucket("1.2.3.4")
     assert allowed is True
     assert retry == 0
@@ -81,7 +86,10 @@ async def test_check_bucket_get_exception():
     fake_client.get = AsyncMock(side_effect=Exception("redis get error"))
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=fake_client)
-    with patch("app.middleware.rate_limit.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.middleware.rate_limit.get_redis_cache",
+        new=AsyncMock(return_value=fake_cache),
+    ):
         allowed, retry = await mw._check_bucket("1.2.3.4")
     assert allowed is True
     assert retry == 0
@@ -91,12 +99,18 @@ async def test_check_bucket_get_exception():
 async def test_check_bucket_tokens_available():
     mw = RateLimitMiddleware.__new__(RateLimitMiddleware)
     import time
+
     fake_client = MagicMock()
-    fake_client.get = AsyncMock(return_value=json.dumps({"tokens": 5.0, "ts": time.time()}))
+    fake_client.get = AsyncMock(
+        return_value=json.dumps({"tokens": 5.0, "ts": time.time()})
+    )
     fake_client.set = AsyncMock()
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=fake_client)
-    with patch("app.middleware.rate_limit.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.middleware.rate_limit.get_redis_cache",
+        new=AsyncMock(return_value=fake_cache),
+    ):
         with patch("app.middleware.rate_limit.settings") as mock_settings:
             mock_settings.RATE_LIMIT_RPS = 10
             mock_settings.RATE_LIMIT_BURST = 20
@@ -110,11 +124,17 @@ async def test_check_bucket_tokens_available():
 async def test_check_bucket_tokens_exhausted():
     mw = RateLimitMiddleware.__new__(RateLimitMiddleware)
     import time
+
     fake_client = MagicMock()
-    fake_client.get = AsyncMock(return_value=json.dumps({"tokens": 0.0, "ts": time.time()}))
+    fake_client.get = AsyncMock(
+        return_value=json.dumps({"tokens": 0.0, "ts": time.time()})
+    )
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=fake_client)
-    with patch("app.middleware.rate_limit.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.middleware.rate_limit.get_redis_cache",
+        new=AsyncMock(return_value=fake_cache),
+    ):
         with patch("app.middleware.rate_limit.settings") as mock_settings:
             mock_settings.RATE_LIMIT_RPS = 10
             mock_settings.RATE_LIMIT_BURST = 20
@@ -131,7 +151,10 @@ async def test_check_bucket_malformed_json():
     fake_client.set = AsyncMock()
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=fake_client)
-    with patch("app.middleware.rate_limit.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.middleware.rate_limit.get_redis_cache",
+        new=AsyncMock(return_value=fake_cache),
+    ):
         with patch("app.middleware.rate_limit.settings") as mock_settings:
             mock_settings.RATE_LIMIT_RPS = 10
             mock_settings.RATE_LIMIT_BURST = 20
@@ -148,7 +171,10 @@ async def test_check_bucket_no_existing_state():
     fake_client.set = AsyncMock()
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=fake_client)
-    with patch("app.middleware.rate_limit.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.middleware.rate_limit.get_redis_cache",
+        new=AsyncMock(return_value=fake_cache),
+    ):
         with patch("app.middleware.rate_limit.settings") as mock_settings:
             mock_settings.RATE_LIMIT_RPS = 10
             mock_settings.RATE_LIMIT_BURST = 20
@@ -213,12 +239,18 @@ async def test_dispatch_passes_when_allowed():
 async def test_check_bucket_set_exception():
     mw = RateLimitMiddleware.__new__(RateLimitMiddleware)
     import time
+
     fake_client = MagicMock()
-    fake_client.get = AsyncMock(return_value=json.dumps({"tokens": 5.0, "ts": time.time()}))
+    fake_client.get = AsyncMock(
+        return_value=json.dumps({"tokens": 5.0, "ts": time.time()})
+    )
     fake_client.set = AsyncMock(side_effect=Exception("redis set error"))
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=fake_client)
-    with patch("app.middleware.rate_limit.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.middleware.rate_limit.get_redis_cache",
+        new=AsyncMock(return_value=fake_cache),
+    ):
         with patch("app.middleware.rate_limit.settings") as mock_settings:
             mock_settings.RATE_LIMIT_RPS = 10
             mock_settings.RATE_LIMIT_BURST = 20

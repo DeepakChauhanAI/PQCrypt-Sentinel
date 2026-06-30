@@ -1,5 +1,4 @@
 import logging
-import shutil
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
@@ -10,10 +9,18 @@ VENDOR_PQC_DB: Dict[str, Dict[str, Dict[str, Any]]] = {
         "3.1": {"ml_kem": False, "ml_dsa": False, "notes": "No PQC support"},
         "3.2": {"ml_kem": False, "ml_dsa": False, "notes": "No PQC support"},
         "3.4": {"ml_kem": True, "ml_dsa": False, "notes": "ML-KEM via oqs-provider"},
-        "3.5": {"ml_kem": True, "ml_dsa": True, "notes": "Native ML-KEM/ML-DSA support"},
+        "3.5": {
+            "ml_kem": True,
+            "ml_dsa": True,
+            "notes": "Native ML-KEM/ML-DSA support",
+        },
     },
     "boringssl": {
-        "2024-09": {"ml_kem": True, "ml_dsa": False, "notes": "X25519MLKEM768 enabled by default"},
+        "2024-09": {
+            "ml_kem": True,
+            "ml_dsa": False,
+            "notes": "X25519MLKEM768 enabled by default",
+        },
     },
     "nss": {
         "3.101": {"ml_kem": True, "ml_dsa": False, "notes": "ML-KEM support added"},
@@ -25,10 +32,18 @@ VENDOR_PQC_DB: Dict[str, Dict[str, Dict[str, Any]]] = {
         "3.6": {"ml_kem": False, "ml_dsa": False, "notes": "No PQC support yet"},
     },
     "thales_luna": {
-        "7.9": {"ml_kem": True, "ml_dsa": True, "notes": "PQC firmware update available"},
+        "7.9": {
+            "ml_kem": True,
+            "ml_dsa": True,
+            "notes": "PQC firmware update available",
+        },
     },
     "aws_kms": {
-        "2024-11": {"ml_kem": True, "ml_dsa": False, "notes": "ML-KEM key types available"},
+        "2024-11": {
+            "ml_kem": True,
+            "ml_dsa": False,
+            "notes": "ML-KEM key types available",
+        },
     },
     "aws_cloudhsm": {
         "5.8": {"ml_kem": True, "ml_dsa": True, "notes": "Full PQC support"},
@@ -41,8 +56,16 @@ VENDOR_PQC_DB: Dict[str, Dict[str, Dict[str, Any]]] = {
         "server_2025": {"ml_kem": True, "ml_dsa": True, "notes": "Full PQC via CNG"},
     },
     "openssh": {
-        "8.9": {"ml_kem": False, "ml_dsa": False, "notes": "sntrup761x25519 experimental"},
-        "9.0": {"ml_kem": False, "ml_dsa": False, "notes": "sntrup761x25519 experimental"},
+        "8.9": {
+            "ml_kem": False,
+            "ml_dsa": False,
+            "notes": "sntrup761x25519 experimental",
+        },
+        "9.0": {
+            "ml_kem": False,
+            "ml_dsa": False,
+            "notes": "sntrup761x25519 experimental",
+        },
         "9.5": {"ml_kem": False, "ml_dsa": False, "notes": "sntrup761x25519 available"},
         "9.9": {"ml_kem": True, "ml_dsa": False, "notes": "mlkem768x25519 support"},
     },
@@ -55,7 +78,9 @@ VENDOR_PQC_DB: Dict[str, Dict[str, Dict[str, Any]]] = {
 }
 
 
-def _build_result(software: str, version: str, matched_version: str, info: Dict[str, Any]) -> Dict[str, Any]:
+def _build_result(
+    software: str, version: str, matched_version: str, info: Dict[str, Any]
+) -> Dict[str, Any]:
     return {
         "software": software,
         "version": version,
@@ -112,4 +137,3 @@ def get_pqc_readiness(software: str, version: str) -> Dict[str, Any]:
     if best_match:
         return _build_result(software, version, best_match[0], best_match[1])
     return _unknown_result(software, version)
-

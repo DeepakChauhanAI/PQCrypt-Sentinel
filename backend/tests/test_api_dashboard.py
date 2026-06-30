@@ -2,6 +2,7 @@
 Tests for `app.api.dashboard` - the /summary, /risk-distribution,
 /progress, and /layer-coverage endpoints.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -32,6 +33,7 @@ def mock_db():
     app.dependency_overrides["get_session"] = lambda: session
     # Use the real dependency name
     from app.db import get_session
+
     app.dependency_overrides[get_session] = lambda: session
     yield session
     app.dependency_overrides.pop(get_session, None)
@@ -70,11 +72,13 @@ def test_dashboard_summary_basic(mock_db):
             return _scalar_result(3)
         if call_count["n"] == 2:
             # Per-asset (asset_id, pqc_status) pairs
-            return _make_result([
-                ("asset-0", "vulnerable"),
-                ("asset-1", "hybrid"),
-                ("asset-2", "pqc_ready"),
-            ])
+            return _make_result(
+                [
+                    ("asset-0", "vulnerable"),
+                    ("asset-1", "hybrid"),
+                    ("asset-2", "pqc_ready"),
+                ]
+            )
         if call_count["n"] == 3:
             # Critical findings
             return _scalar_result(2)
@@ -140,12 +144,14 @@ def test_dashboard_risk_distribution(mock_db):
     async def _execute(stmt):
         call_count["n"] += 1
         if call_count["n"] == 1:
-            return _make_result([
-                ("critical", 3),
-                ("high", 7),
-                ("medium", 12),
-                ("low", 4),
-            ])
+            return _make_result(
+                [
+                    ("critical", 3),
+                    ("high", 7),
+                    ("medium", 12),
+                    ("low", 4),
+                ]
+            )
         return _make_result([])
 
     mock_db.execute.side_effect = _execute
@@ -181,11 +187,13 @@ def test_dashboard_progress_with_scans(mock_db):
             return _scalars_result(scans)
         if call_count["n"] == 2:
             # GROUP BY scan_id, asset_id
-            return _make_result([
-                ("scan-0", "asset-0", "vulnerable"),
-                ("scan-0", "asset-1", "hybrid"),
-                ("scan-1", "asset-0", "pqc_ready"),
-            ])
+            return _make_result(
+                [
+                    ("scan-0", "asset-0", "vulnerable"),
+                    ("scan-0", "asset-1", "hybrid"),
+                    ("scan-1", "asset-0", "pqc_ready"),
+                ]
+            )
         return _make_result([])
 
     mock_db.execute.side_effect = _execute
@@ -226,17 +234,21 @@ def test_dashboard_layer_coverage_returns_seven_layers(mock_db):
     async def _execute(stmt):
         call_count["n"] += 1
         if call_count["n"] == 1:
-            return _make_result([
-                ("L1", "server"),
-                ("L1", "server"),
-                ("L2", "certificate_authority"),
-            ])
+            return _make_result(
+                [
+                    ("L1", "server"),
+                    ("L1", "server"),
+                    ("L2", "certificate_authority"),
+                ]
+            )
         if call_count["n"] == 2:
             # Finding distribution by layer
-            return _make_result([
-                ("L1", "high", 5),
-                ("L2", "critical", 1),
-            ])
+            return _make_result(
+                [
+                    ("L1", "high", 5),
+                    ("L2", "critical", 1),
+                ]
+            )
         return _make_result([])
 
     mock_db.execute.side_effect = _execute
@@ -260,4 +272,3 @@ def test_health_endpoint_returns_redis_status(mock_db):
     assert resp.status_code in (200, 503)
     body = resp.json()
     assert "redis" in body or "status" in body
-

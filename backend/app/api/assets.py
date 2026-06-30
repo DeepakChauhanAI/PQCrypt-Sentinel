@@ -1,13 +1,13 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, or_, and_
+from sqlalchemy import select, or_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import get_current_user
 from app.db import get_session
-from app.models.models import Asset, Finding, Algorithm, Scan, ScanGroup
+from app.models.models import Asset, Scan, ScanGroup
 from app.models.schemas import AssetOut
 from app.models.models import User
 
@@ -38,15 +38,11 @@ async def _enrich_assets_with_scan_groups(
         if not scan_ids:
             return
 
-        scan_res = await session.execute(
-            select(Scan).where(Scan.id.in_(scan_ids))
-        )
+        scan_res = await session.execute(select(Scan).where(Scan.id.in_(scan_ids)))
         scans = scan_res.scalars().all()
         scan_by_id = {s.id: s for s in scans}
 
-        group_ids: set = {
-            getattr(s, "scan_group_id", None) for s in scans
-        }
+        group_ids: set = {getattr(s, "scan_group_id", None) for s in scans}
         group_ids.discard(None)
         group_by_id: dict = {}
         if group_ids:
@@ -106,7 +102,7 @@ async def list_assets(
             or_(
                 Asset.name.ilike(f"%{search}%"),
                 Asset.ip_address.ilike(f"%{search}%"),
-                Asset.fqdn.ilike(f"%{search}%")
+                Asset.fqdn.ilike(f"%{search}%"),
             )
         )
 
@@ -123,10 +119,14 @@ async def list_assets(
     # Calculate virtual properties and apply pqc_status filter in Python *before* pagination
     filtered_assets = []
     for asset in assets:
-        open_findings = [f for f in asset.findings if f.status == "open" and f.deleted_at is None]
+        open_findings = [
+            f for f in asset.findings if f.status == "open" and f.deleted_at is None
+        ]
         # SQLAlchemy allows attribute assignment on a non-mapped column;
         # mypy doesn't see that, so we use setattr/getattr to keep types honest.
-        computed_risk = max([f.risk_score or 0 for f in open_findings]) if open_findings else 0
+        computed_risk = (
+            max([f.risk_score or 0 for f in open_findings]) if open_findings else 0
+        )
         setattr(asset, "risk_score", computed_risk)
 
         # Derive PQC status from algorithms; fall back to open findings for
@@ -156,14 +156,15 @@ async def list_assets(
             filtered_assets.append(asset)
 
     # Sort (now operates on the filtered set)
-    reverse = (sort_order.lower() == "desc")
+    reverse = sort_order.lower() == "desc"
     if sort_by == "risk_score":
         filtered_assets.sort(key=lambda a: getattr(a, "risk_score", 0), reverse=reverse)
     elif sort_by == "name":
         filtered_assets.sort(key=lambda a: a.name, reverse=reverse)
     elif sort_by == "last_scanned":
         filtered_assets.sort(
-            key=lambda a: a.last_verified_at or datetime.min.replace(tzinfo=timezone.utc),
+            key=lambda a: a.last_verified_at
+            or datetime.min.replace(tzinfo=timezone.utc),
             reverse=reverse,
         )
     else:
@@ -173,26 +174,39 @@ async def list_assets(
     await _enrich_assets_with_scan_groups(session, paginated_assets)
     return paginated_assets
 
+
 @router.get("/{asset_id}", response_model=AssetOut)
 async def get_asset(
     asset_id: str,
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    stmt = select(Asset).options(
-        selectinload(Asset.certificates),
-        selectinload(Asset.algorithms),
-        selectinload(Asset.findings)
-    ).where(Asset.id == asset_id, Asset.deleted_at.is_(None))
+    stmt = (
+        select(Asset)
+        .options(
+            selectinload(Asset.certificates),
+            selectinload(Asset.algorithms),
+            selectinload(Asset.findings),
+        )
+        .where(Asset.id == asset_id, Asset.deleted_at.is_(None))
+    )
 
     result = await session.execute(stmt)
     asset = result.scalar_one_or_none()
     if not asset:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found"
+        )
 
     # Calculate virtual properties
-    open_findings = [f for f in asset.findings if f.status == "open" and f.deleted_at is None]
-    setattr(asset, "risk_score", max([f.risk_score or 0 for f in open_findings]) if open_findings else 0)
+    open_findings = [
+        f for f in asset.findings if f.status == "open" and f.deleted_at is None
+    ]
+    setattr(
+        asset,
+        "risk_score",
+        max([f.risk_score or 0 for f in open_findings]) if open_findings else 0,
+    )
 
     # Derive PQC status from algorithms; fall back to open findings for
     # connectors that only persist findings (e.g. SAST). If neither exists,

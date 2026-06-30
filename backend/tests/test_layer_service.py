@@ -1,14 +1,12 @@
 """Tests for the layer_service helpers and the new finding layer column."""
+
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock
 
-import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.services import layer_service
 from app.services.layer_service import (
     FINDING_TYPE_TO_LAYER,
     LAYER_DEFINITIONS,
@@ -35,12 +33,16 @@ def test_layer_for_asset_kms_maps_to_l3():
 
 
 def test_layer_for_asset_ca_maps_to_l2():
-    a = SimpleNamespace(asset_type="certificate_authority", discovery_source=None, asset_metadata={})
+    a = SimpleNamespace(
+        asset_type="certificate_authority", discovery_source=None, asset_metadata={}
+    )
     assert layer_for_asset(a) == "L2"
 
 
 def test_layer_for_asset_vpn_maps_to_l1():
-    a = SimpleNamespace(asset_type="vpn_gateway", discovery_source=None, asset_metadata={})
+    a = SimpleNamespace(
+        asset_type="vpn_gateway", discovery_source=None, asset_metadata={}
+    )
     assert layer_for_asset(a) == "L1"
 
 
@@ -50,12 +52,16 @@ def test_layer_for_asset_uses_discovery_source():
 
 
 def test_layer_for_asset_kubernetes_cluster_maps_to_l4():
-    a = SimpleNamespace(asset_type="kubernetes_cluster", discovery_source=None, asset_metadata={})
+    a = SimpleNamespace(
+        asset_type="kubernetes_cluster", discovery_source=None, asset_metadata={}
+    )
     assert layer_for_asset(a) == "L4"
 
 
 def test_layer_for_asset_kubernetes_maps_to_l4():
-    a = SimpleNamespace(asset_type="kubernetes", discovery_source=None, asset_metadata={})
+    a = SimpleNamespace(
+        asset_type="kubernetes", discovery_source=None, asset_metadata={}
+    )
     assert layer_for_asset(a) == "L4"
 
 
@@ -65,17 +71,25 @@ def test_layer_for_asset_saml_maps_to_l4():
 
 
 def test_layer_for_asset_saml_metadata_maps_to_l4():
-    a = SimpleNamespace(asset_type="saml_metadata", discovery_source=None, asset_metadata={})
+    a = SimpleNamespace(
+        asset_type="saml_metadata", discovery_source=None, asset_metadata={}
+    )
     assert layer_for_asset(a) == "L4"
 
 
 def test_layer_for_asset_backup_encryption_maps_to_l5():
-    a = SimpleNamespace(asset_type="backup_encryption", discovery_source=None, asset_metadata={})
+    a = SimpleNamespace(
+        asset_type="backup_encryption", discovery_source=None, asset_metadata={}
+    )
     assert layer_for_asset(a) == "L5"
 
 
 def test_layer_for_asset_uses_metadata_key_type():
-    a = SimpleNamespace(asset_type="other", discovery_source=None, asset_metadata={"key_type": "AWS_HSM"})
+    a = SimpleNamespace(
+        asset_type="other",
+        discovery_source=None,
+        asset_metadata={"key_type": "AWS_HSM"},
+    )
     assert layer_for_asset(a) == "L3"
 
 
@@ -101,7 +115,9 @@ def test_layer_for_finding_falls_back_to_finding_type():
 
 
 def test_layer_for_finding_code_weak_crypto():
-    a = SimpleNamespace(asset_type="container", discovery_source=None, asset_metadata={})
+    a = SimpleNamespace(
+        asset_type="container", discovery_source=None, asset_metadata={}
+    )
     # container -> L4
     assert layer_for_finding(finding_type="code_weak_crypto", asset=a) == "L4"
 
@@ -128,6 +144,7 @@ def test_finding_model_has_layer_column():
     """The Finding model must have a `layer` column for queryable layer tags."""
     from app.models.models import Finding
     from sqlalchemy import inspect
+
     mapper = inspect(Finding)
     columns = {c.key for c in mapper.columns}
     assert "layer" in columns

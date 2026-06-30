@@ -47,32 +47,42 @@ class TestCreateReport:
             obj.status = "pending"
             obj.created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
             obj.updated_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+
         mock_db.refresh = AsyncMock(side_effect=_refresh)
 
         with patch("app.tasks.execute_report") as mock_task:
             client = TestClient(app)
-            resp = client.post("/api/v1/reports", json={
-                "report_type": "cbom",
-                "format": "json",
-            })
+            resp = client.post(
+                "/api/v1/reports",
+                json={
+                    "report_type": "cbom",
+                    "format": "json",
+                },
+            )
         assert resp.status_code == 202
         mock_task.delay.assert_called_once()
 
     def test_create_report_unsupported_format(self, mock_db):
         client = TestClient(app)
-        resp = client.post("/api/v1/reports", json={
-            "report_type": "cbom",
-            "format": "xml",
-        })
+        resp = client.post(
+            "/api/v1/reports",
+            json={
+                "report_type": "cbom",
+                "format": "xml",
+            },
+        )
         assert resp.status_code == 400
         assert "Unsupported" in resp.json()["detail"]
 
     def test_create_report_unsupported_type_format_combo(self, mock_db):
         client = TestClient(app)
-        resp = client.post("/api/v1/reports", json={
-            "report_type": "executive",
-            "format": "csv",
-        })
+        resp = client.post(
+            "/api/v1/reports",
+            json={
+                "report_type": "executive",
+                "format": "csv",
+            },
+        )
         assert resp.status_code == 400
 
 
@@ -312,7 +322,8 @@ class TestDeleteReport:
         )
         mock_db.execute.return_value = _scalar_result(report)
         client = TestClient(app)
-        with patch("os.path.exists", return_value=True), \
-             patch("os.remove", side_effect=PermissionError("file locked")):
+        with patch("os.path.exists", return_value=True), patch(
+            "os.remove", side_effect=PermissionError("file locked")
+        ):
             resp = client.delete("/api/v1/reports/r-1")
         assert resp.status_code == 200

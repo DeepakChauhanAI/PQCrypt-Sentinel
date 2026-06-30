@@ -1,6 +1,7 @@
 """
 Tests for the L1 OCSP + DNSSEC live probe scanner.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -18,7 +19,9 @@ from cryptography.x509.oid import NameOID
 def _make_self_signed_cert() -> bytes:
     """Create a self-signed cert with an AIA OCSP URL extension."""
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    subject = issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "test.example.com")])
+    subject = issuer = x509.Name(
+        [x509.NameAttribute(NameOID.COMMON_NAME, "test.example.com")]
+    )
     now = datetime.now(timezone.utc)
     builder = (
         x509.CertificateBuilder()
@@ -29,12 +32,14 @@ def _make_self_signed_cert() -> bytes:
         .not_valid_before(now - timedelta(days=1))
         .not_valid_after(now + timedelta(days=30))
         .add_extension(
-            x509.AuthorityInformationAccess([
-                x509.AccessDescription(
-                    x509.AuthorityInformationAccessOID.OCSP,
-                    x509.UniformResourceIdentifier("http://ocsp.example.com"),
-                )
-            ]),
+            x509.AuthorityInformationAccess(
+                [
+                    x509.AccessDescription(
+                        x509.AuthorityInformationAccessOID.OCSP,
+                        x509.UniformResourceIdentifier("http://ocsp.example.com"),
+                    )
+                ]
+            ),
             critical=False,
         )
     )
@@ -44,7 +49,9 @@ def _make_self_signed_cert() -> bytes:
 
 def _make_cert_without_aia() -> bytes:
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    subject = issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "noaia.example.com")])
+    subject = issuer = x509.Name(
+        [x509.NameAttribute(NameOID.COMMON_NAME, "noaia.example.com")]
+    )
     now = datetime.now(timezone.utc)
     cert = (
         x509.CertificateBuilder()
@@ -89,7 +96,10 @@ def test_ocsp_probe_invalid_der_returns_error():
     # Either "could not parse" (DER parse failure) or "no AIA OCSP" (parse
     # succeeded but no AIA extension) is acceptable — both are clean
     # error paths, neither raises.
-    assert "could not parse" in result.error_message or "no AIA OCSP" in result.error_message
+    assert (
+        "could not parse" in result.error_message
+        or "no AIA OCSP" in result.error_message
+    )
 
 
 def test_ocsp_probe_responder_returns_404():
@@ -113,8 +123,6 @@ def test_ocsp_probe_responder_returns_404():
 
 def test_ocsp_probe_classifies_pqc_status_from_sig_alg():
     """A SHA-1 OCSP response signature must be flagged disallowed_now."""
-    from app.scanners.ocsp_dnssec_scanner import probe_ocsp
-    from cryptography.x509.oid import ObjectIdentifier
 
     # The probe's status mapping does the work; we just verify the field is set.
     # We do this by inspecting the mapping logic with a fake sig alg OID.
@@ -142,10 +150,14 @@ def test_ocsp_probe_batch_runs_concurrently():
     # Without a network: each call returns the no-cert error fast.
     # We patch probe_ocsp itself to verify the batch wiring.
     from app.scanners import ocsp_dnssec_scanner as mod
+
     calls = []
+
     async def _fake_probe(host, cert_der, timeout=5.0):
         calls.append(host)
-        return mod.OCSPProbeResult(host=host, cert_thumbprint=None, success=True, status="good")
+        return mod.OCSPProbeResult(
+            host=host, cert_thumbprint=None, success=True, status="good"
+        )
 
     with patch.object(mod, "probe_ocsp", side_effect=_fake_probe):
         results = asyncio.run(probe_ocsp_batch(targets, timeout=1.0))
@@ -166,6 +178,7 @@ def test_dnssec_probe_success_classifies_safe():
         "algorithms": ["RSASHA256"],
     }
     from app.scanners import ocsp_dnssec_scanner as mod
+
     with patch.object(mod, "_resolve_dnssec_sync", return_value=fake_answers):
         result = asyncio.run(probe_dnssec("example.com"))
     assert result.success
@@ -180,9 +193,16 @@ def test_dnssec_probe_flags_weak_alg_as_vulnerable():
     from app.scanners.ocsp_dnssec_scanner import probe_dnssec
     from app.scanners import ocsp_dnssec_scanner as mod
 
-    with patch.object(mod, "_resolve_dnssec_sync", return_value={
-        "DNSKEY": ["k"], "RRSIG": ["s"], "DS": ["d"], "algorithms": ["RSASHA1"],
-    }):
+    with patch.object(
+        mod,
+        "_resolve_dnssec_sync",
+        return_value={
+            "DNSKEY": ["k"],
+            "RRSIG": ["s"],
+            "DS": ["d"],
+            "algorithms": ["RSASHA1"],
+        },
+    ):
         result = asyncio.run(probe_dnssec("weak.example.com"))
     assert result.success
     assert result.pqc_status == "vulnerable"
@@ -193,9 +213,16 @@ def test_dnssec_probe_partial_chain_is_not_trust():
     from app.scanners.ocsp_dnssec_scanner import probe_dnssec
     from app.scanners import ocsp_dnssec_scanner as mod
 
-    with patch.object(mod, "_resolve_dnssec_sync", return_value={
-        "DNSKEY": ["k"], "RRSIG": [], "DS": [], "algorithms": ["RSASHA256"],
-    }):
+    with patch.object(
+        mod,
+        "_resolve_dnssec_sync",
+        return_value={
+            "DNSKEY": ["k"],
+            "RRSIG": [],
+            "DS": [],
+            "algorithms": ["RSASHA256"],
+        },
+    ):
         result = asyncio.run(probe_dnssec("partial.example.com"))
     assert result.success
     assert result.has_dnskey
@@ -222,9 +249,16 @@ def test_dnssec_probe_no_records_is_unknown():
     from app.scanners.ocsp_dnssec_scanner import probe_dnssec
     from app.scanners import ocsp_dnssec_scanner as mod
 
-    with patch.object(mod, "_resolve_dnssec_sync", return_value={
-        "DNSKEY": [], "RRSIG": [], "DS": [], "algorithms": [],
-    }):
+    with patch.object(
+        mod,
+        "_resolve_dnssec_sync",
+        return_value={
+            "DNSKEY": [],
+            "RRSIG": [],
+            "DS": [],
+            "algorithms": [],
+        },
+    ):
         result = asyncio.run(probe_dnssec("unsigned.example.com"))
     assert not result.success
     assert result.pqc_status == "unknown"
@@ -239,6 +273,7 @@ def test_dnssec_probe_batch_collects_results():
 
     from app.scanners.ocsp_dnssec_scanner import DNSSECProbeResult
     from app.scanners import ocsp_dnssec_scanner as mod
+
     with patch.object(mod, "probe_dnssec", side_effect=_fake):
         results = asyncio.run(probe_dnssec_batch(["a.com", "b.com", "c.com"]))
     assert len(results) == 3
@@ -247,11 +282,12 @@ def test_dnssec_probe_batch_collects_results():
 
 # ------------------- Additional Coverage Tests --------------------
 
+
 def test_extract_aia_ocsp_url_pem():
     """Verify _extract_aia_ocsp_url parses PEM certificate successfully (covers line 86)."""
     from app.scanners.ocsp_dnssec_scanner import _extract_aia_ocsp_url
     import base64
-    
+
     cert_der = _make_self_signed_cert()
     cert_pem = (
         b"-----BEGIN CERTIFICATE-----\n"
@@ -265,9 +301,11 @@ def test_extract_aia_ocsp_url_pem():
 def test_extract_aia_ocsp_url_no_ocsp_method():
     """Verify _extract_aia_ocsp_url returns None when AIA extension exists but has no OCSP method (covers line 104)."""
     from app.scanners.ocsp_dnssec_scanner import _extract_aia_ocsp_url
-    
+
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    subject = issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "test.example.com")])
+    subject = issuer = x509.Name(
+        [x509.NameAttribute(NameOID.COMMON_NAME, "test.example.com")]
+    )
     now = datetime.now(timezone.utc)
     builder = (
         x509.CertificateBuilder()
@@ -278,18 +316,20 @@ def test_extract_aia_ocsp_url_no_ocsp_method():
         .not_valid_before(now - timedelta(days=1))
         .not_valid_after(now + timedelta(days=30))
         .add_extension(
-            x509.AuthorityInformationAccess([
-                x509.AccessDescription(
-                    x509.AuthorityInformationAccessOID.CA_ISSUERS,
-                    x509.UniformResourceIdentifier("http://ca.example.com"),
-                )
-            ]),
+            x509.AuthorityInformationAccess(
+                [
+                    x509.AccessDescription(
+                        x509.AuthorityInformationAccessOID.CA_ISSUERS,
+                        x509.UniformResourceIdentifier("http://ca.example.com"),
+                    )
+                ]
+            ),
             critical=False,
         )
     )
     cert = builder.sign(key, hashes.SHA256())
     cert_der = cert.public_bytes(serialization.Encoding.DER)
-    
+
     url = _extract_aia_ocsp_url(cert_der)
     assert url is None
 
@@ -298,14 +338,14 @@ def test_probe_ocsp_pem_fails_der_parse():
     """Verify passing PEM cert causes DER load exception in probe_ocsp (covers lines 140-141)."""
     from app.scanners.ocsp_dnssec_scanner import probe_ocsp
     import base64
-    
+
     cert_der = _make_self_signed_cert()
     cert_pem = (
         b"-----BEGIN CERTIFICATE-----\n"
         + base64.encodebytes(cert_der)
         + b"-----END CERTIFICATE-----\n"
     )
-    
+
     res = asyncio.run(probe_ocsp("h", cert_der=cert_pem))
     assert res.success is False
     assert "could not parse cert" in res.error_message
@@ -314,10 +354,13 @@ def test_probe_ocsp_pem_fails_der_parse():
 def test_probe_ocsp_request_build_error():
     """Verify request build error is handled (covers lines 162-163)."""
     from app.scanners.ocsp_dnssec_scanner import probe_ocsp
-    
+
     cert_der = _make_self_signed_cert()
-    
-    with patch("cryptography.x509.ocsp.OCSPRequestBuilder.build", side_effect=ValueError("bad build")):
+
+    with patch(
+        "cryptography.x509.ocsp.OCSPRequestBuilder.build",
+        side_effect=ValueError("bad build"),
+    ):
         res = asyncio.run(probe_ocsp("h", cert_der=cert_der))
     assert res.success is False
     assert "could not build OCSP request" in res.error_message
@@ -326,15 +369,15 @@ def test_probe_ocsp_request_build_error():
 def test_probe_ocsp_response_parse_error():
     """Verify HTTP 200 with invalid response bytes is handled (covers lines 188-197)."""
     from app.scanners.ocsp_dnssec_scanner import probe_ocsp
-    
+
     cert_der = _make_self_signed_cert()
     fake_resp = MagicMock(status_code=200, content=b"invalid-response-content")
-    
+
     fake_client = AsyncMock()
     fake_client.__aenter__ = AsyncMock(return_value=fake_client)
     fake_client.__aexit__ = AsyncMock(return_value=None)
     fake_client.post = AsyncMock(return_value=fake_resp)
-    
+
     with patch("httpx.AsyncClient", return_value=fake_client):
         res = asyncio.run(probe_ocsp("h", cert_der=cert_der))
     assert res.success is False
@@ -344,38 +387,63 @@ def test_probe_ocsp_response_parse_error():
 @pytest.mark.parametrize(
     "cert_status,sig_oid_name,expected_status,expected_pqc",
     [
-        (crypto_ocsp.OCSPCertStatus.GOOD, "sha256WithRSAEncryption", "good", "vulnerable"),
-        (crypto_ocsp.OCSPCertStatus.REVOKED, "sha1WithRSAEncryption", "revoked", "disallowed_now"),
-        (crypto_ocsp.OCSPCertStatus.UNKNOWN, "ecdsa-with-SHA256", "unknown", "safe_until_2030"),
+        (
+            crypto_ocsp.OCSPCertStatus.GOOD,
+            "sha256WithRSAEncryption",
+            "good",
+            "vulnerable",
+        ),
+        (
+            crypto_ocsp.OCSPCertStatus.REVOKED,
+            "sha1WithRSAEncryption",
+            "revoked",
+            "disallowed_now",
+        ),
+        (
+            crypto_ocsp.OCSPCertStatus.UNKNOWN,
+            "ecdsa-with-SHA256",
+            "unknown",
+            "safe_until_2030",
+        ),
         (crypto_ocsp.OCSPCertStatus.GOOD, "sha256WithRSA-other", "good", "vulnerable"),
-        (crypto_ocsp.OCSPCertStatus.GOOD, "md5WithRSAEncryption", "good", "disallowed_now"),
+        (
+            crypto_ocsp.OCSPCertStatus.GOOD,
+            "md5WithRSAEncryption",
+            "good",
+            "disallowed_now",
+        ),
         (crypto_ocsp.OCSPCertStatus.GOOD, "ed25519", "good", "vulnerable"),
         (crypto_ocsp.OCSPCertStatus.GOOD, "ed448", "good", "vulnerable"),
-        (crypto_ocsp.OCSPCertStatus.GOOD, "unknown-sig-alg", "good", "safe")
-    ]
+        (crypto_ocsp.OCSPCertStatus.GOOD, "unknown-sig-alg", "good", "safe"),
+    ],
 )
-def test_probe_ocsp_classification_paths(cert_status, sig_oid_name, expected_status, expected_pqc):
+def test_probe_ocsp_classification_paths(
+    cert_status, sig_oid_name, expected_status, expected_pqc
+):
     """Verify various status and signature alg combinations map to correct statuses (covers lines 199-216)."""
     from app.scanners.ocsp_dnssec_scanner import probe_ocsp
-    
+
     cert_der = _make_self_signed_cert()
-    
+
     mock_resp_obj = MagicMock()
     mock_resp_obj.certificate_status = cert_status
-    mock_resp_obj.signature_algorithm_oid = MagicMock(_name=sig_oid_name) if sig_oid_name else None
+    mock_resp_obj.signature_algorithm_oid = (
+        MagicMock(_name=sig_oid_name) if sig_oid_name else None
+    )
     mock_resp_obj.responder_name = "CN=ocsp"
     mock_resp_obj.response_status = "SUCCESSFUL"
-    
+
     fake_resp = MagicMock(status_code=200, content=b"fake-der")
     fake_client = AsyncMock()
     fake_client.__aenter__ = AsyncMock(return_value=fake_client)
     fake_client.__aexit__ = AsyncMock(return_value=None)
     fake_client.post = AsyncMock(return_value=fake_resp)
-    
-    with patch("httpx.AsyncClient", return_value=fake_client), \
-         patch("cryptography.x509.ocsp.load_der_ocsp_response", return_value=mock_resp_obj):
+
+    with patch("httpx.AsyncClient", return_value=fake_client), patch(
+        "cryptography.x509.ocsp.load_der_ocsp_response", return_value=mock_resp_obj
+    ):
         res = asyncio.run(probe_ocsp("h", cert_der=cert_der))
-        
+
     assert res.success is True
     assert res.status == expected_status
     assert res.pqc_status == expected_pqc
@@ -385,10 +453,17 @@ def test_dnssec_probe_unknown_alg():
     """Verify DNSSEC maps unknown non-vulnerable/non-safe algs to unknown (covers line 261)."""
     from app.scanners.ocsp_dnssec_scanner import probe_dnssec
     from app.scanners import ocsp_dnssec_scanner as mod
-    
-    with patch.object(mod, "_resolve_dnssec_sync", return_value={
-        "DNSKEY": ["k"], "RRSIG": ["s"], "DS": ["d"], "algorithms": ["RSASHA384"]
-    }):
+
+    with patch.object(
+        mod,
+        "_resolve_dnssec_sync",
+        return_value={
+            "DNSKEY": ["k"],
+            "RRSIG": ["s"],
+            "DS": ["d"],
+            "algorithms": ["RSASHA384"],
+        },
+    ):
         res = asyncio.run(probe_dnssec("unknown-alg.example.com"))
     assert res.success is True
     assert res.pqc_status == "unknown"
@@ -399,30 +474,26 @@ def test_resolve_dnssec_sync_success():
     from app.scanners.ocsp_dnssec_scanner import _resolve_dnssec_sync
     import dns.rdatatype
     import dns.resolver
-    
+
     mock_resolver = MagicMock()
-    
+
     rr_dnskey = MagicMock(rdtype=dns.rdatatype.DNSKEY)
     rr_dnskey.algorithm = 8
     rr_dnskey.to_text.return_value = "dnskey-record"
-    
+
     rr_rrsig = MagicMock()
     rr_rrsig.algorithm = 8
     rr_rrsig.to_text.return_value = "rrsig-record"
-    
+
     rr_ds = MagicMock()
     rr_ds.digest_type = 2
     rr_ds.to_text.return_value = "ds-record"
-    
-    mock_resolver.resolve.side_effect = [
-        [rr_dnskey],
-        [rr_rrsig],
-        [rr_ds]
-    ]
-    
+
+    mock_resolver.resolve.side_effect = [[rr_dnskey], [rr_rrsig], [rr_ds]]
+
     with patch("dns.resolver.Resolver", return_value=mock_resolver):
         res = _resolve_dnssec_sync("example.com")
-        
+
     assert len(res["DNSKEY"]) == 1
     assert len(res["RRSIG"]) == 1
     assert len(res["DS"]) == 1
@@ -434,15 +505,14 @@ def test_resolve_dnssec_sync_timeouts():
     from app.scanners.ocsp_dnssec_scanner import _resolve_dnssec_sync
     import dns.exception
     import dns.resolver
-    
+
     mock_resolver = MagicMock()
     mock_resolver.resolve.side_effect = dns.exception.Timeout("Timeout")
-    
+
     with patch("dns.resolver.Resolver", return_value=mock_resolver):
         res = _resolve_dnssec_sync("example.com")
-        
+
     assert res["DNSKEY"] == []
     assert res["RRSIG"] == []
     assert res["DS"] == []
     assert res["algorithms"] == []
-

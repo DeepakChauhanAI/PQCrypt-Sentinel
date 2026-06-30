@@ -50,8 +50,16 @@ class TestJWTDecodeUnverified:
             JWTConnector._decode_unverified(f"{h}.{p}.sig")
 
     def test_non_dict_payload_raises(self):
-        h = base64.urlsafe_b64encode(json.dumps({"alg": "RS256"}).encode()).rstrip(b"=").decode()
-        p = base64.urlsafe_b64encode(json.dumps(["array"]).encode()).rstrip(b"=").decode()
+        h = (
+            base64.urlsafe_b64encode(json.dumps({"alg": "RS256"}).encode())
+            .rstrip(b"=")
+            .decode()
+        )
+        p = (
+            base64.urlsafe_b64encode(json.dumps(["array"]).encode())
+            .rstrip(b"=")
+            .decode()
+        )
         with pytest.raises(JWTDecodeError, match="JSON objects"):
             JWTConnector._decode_unverified(f"{h}.{p}.sig")
 
@@ -137,7 +145,9 @@ class TestBuildMetadata:
         connector = JWTConnector()
         header = {"alg": "RS256", "kid": "key-1", "typ": "JWT"}
         payload = {"iss": "idp", "aud": "api", "sub": "user1", "exp": 9999999999}
-        metadata = connector._build_metadata(header, payload, _make_jwt(header, payload))
+        metadata = connector._build_metadata(
+            header, payload, _make_jwt(header, payload)
+        )
         assert metadata["alg"] == "RS256"
         assert metadata["kid"] == "key-1"
         assert metadata["iss"] == "idp"
@@ -150,7 +160,9 @@ class TestBuildMetadata:
         connector = JWTConnector()
         header = {"alg": "ES256", "jwk": {"kty": "EC", "crv": "P-256", "x": "abc"}}
         payload = {"iss": "idp"}
-        metadata = connector._build_metadata(header, payload, _make_jwt(header, payload))
+        metadata = connector._build_metadata(
+            header, payload, _make_jwt(header, payload)
+        )
         assert metadata["kty"] == "EC"
         assert metadata["key_size_bits"] == 256
 
@@ -247,7 +259,10 @@ class TestCredentialsAndFetch:
     @pytest.mark.asyncio
     async def test_get_credentials_vault_dict(self):
         connector = JWTConnector(credentials_ref={"vault_path": "path/to/secret"})
-        with patch("app.connectors.jwt_connector.get_vault_secret", new=AsyncMock(return_value={"token": "vault"})) as m:
+        with patch(
+            "app.connectors.jwt_connector.get_vault_secret",
+            new=AsyncMock(return_value={"token": "vault"}),
+        ) as m:
             result = await connector._get_credentials()
         assert result == {"token": "vault"}
         m.assert_awaited_once_with("path/to/secret", None)
@@ -257,21 +272,37 @@ class TestCredentialsAndFetch:
         class Ref:
             vault_path = "path/obj"
             version = 2
+
         connector = JWTConnector(credentials_ref=Ref())
-        with patch("app.connectors.jwt_connector.get_vault_secret", new=AsyncMock(return_value={"token": "obj"})) as m:
+        with patch(
+            "app.connectors.jwt_connector.get_vault_secret",
+            new=AsyncMock(return_value={"token": "obj"}),
+        ) as m:
             result = await connector._get_credentials()
         assert result == {"token": "obj"}
         m.assert_awaited_once_with("path/obj", 2)
 
     def test_decode_unverified_bad_base64(self):
-        h = base64.urlsafe_b64encode(json.dumps({"alg": "RS256"}).encode()).rstrip(b"=").decode()
+        h = (
+            base64.urlsafe_b64encode(json.dumps({"alg": "RS256"}).encode())
+            .rstrip(b"=")
+            .decode()
+        )
         bad = "not-b64!"
         with pytest.raises(Exception, match="base64"):
             JWTConnector._decode_unverified(f"{h}.{bad}.sig")
 
     def test_decode_unverified_bad_header_type(self):
-        h = base64.urlsafe_b64encode(json.dumps(["not", "dict"]).encode()).rstrip(b"=").decode()
-        p = base64.urlsafe_b64encode(json.dumps({"sub": "x"}).encode()).rstrip(b"=").decode()
+        h = (
+            base64.urlsafe_b64encode(json.dumps(["not", "dict"]).encode())
+            .rstrip(b"=")
+            .decode()
+        )
+        p = (
+            base64.urlsafe_b64encode(json.dumps({"sub": "x"}).encode())
+            .rstrip(b"=")
+            .decode()
+        )
         with pytest.raises(Exception, match="JSON objects"):
             JWTConnector._decode_unverified(f"{h}.{p}.sig")
 

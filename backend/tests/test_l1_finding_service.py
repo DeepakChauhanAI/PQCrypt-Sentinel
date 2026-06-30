@@ -2,15 +2,13 @@
 Tests for `app.services.l1_finding_service` — the bridge between the
 L1 (OCSP + DNSSEC) probe scanner and the `Finding` table.
 """
+
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import List
 from unittest.mock import AsyncMock, MagicMock
-
-import pytest
 
 
 # --------------------------------------------------------------------- helpers
@@ -113,7 +111,9 @@ def test_persist_ocsp_disallowed_now_creates_high_severity():
 
     asset = _make_asset()
     session = _session_with_asset(asset)
-    probe = _make_ocsp_result(signature_algorithm="sha1WithRSAEncryption", pqc_status="disallowed_now")
+    probe = _make_ocsp_result(
+        signature_algorithm="sha1WithRSAEncryption", pqc_status="disallowed_now"
+    )
 
     count = asyncio.run(
         L1FindingService(session).persist_ocsp_results(
@@ -170,7 +170,9 @@ def test_persist_ocsp_safe_until_2030_creates_medium():
 
     asset = _make_asset()
     session = _session_with_asset(asset)
-    probe = _make_ocsp_result(signature_algorithm="ecdsa-with-SHA256", pqc_status="safe_until_2030")
+    probe = _make_ocsp_result(
+        signature_algorithm="ecdsa-with-SHA256", pqc_status="safe_until_2030"
+    )
 
     count = asyncio.run(
         L1FindingService(session).persist_ocsp_results(
@@ -217,7 +219,9 @@ def test_persist_dnssec_safe_no_finding():
 
     asset = _make_asset()
     session = _session_with_asset(asset)
-    probe = _make_dnssec_result(algorithms=["ECDSAP256SHA256"], pqc_status="safe", chain_of_trust=True)
+    probe = _make_dnssec_result(
+        algorithms=["ECDSAP256SHA256"], pqc_status="safe", chain_of_trust=True
+    )
 
     count = asyncio.run(
         L1FindingService(session).persist_dnssec_results(
@@ -354,7 +358,12 @@ def test_generate_l1_findings_returns_counts():
     session = _session_with_asset(asset)
 
     ocsp = [("asset-1", _make_ocsp_result(pqc_status="vulnerable"))]
-    dnssec = [("asset-1", _make_dnssec_result(algorithms=["RSASHA1"], pqc_status="vulnerable"))]
+    dnssec = [
+        (
+            "asset-1",
+            _make_dnssec_result(algorithms=["RSASHA1"], pqc_status="vulnerable"),
+        )
+    ]
 
     counts = asyncio.run(
         generate_l1_findings(

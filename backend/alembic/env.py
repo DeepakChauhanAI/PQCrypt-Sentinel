@@ -1,9 +1,7 @@
 from logging.config import fileConfig
 import sys
-import os
 from pathlib import Path
 
-from sqlalchemy.engine import Connection
 from sqlalchemy import create_engine
 from alembic import context
 

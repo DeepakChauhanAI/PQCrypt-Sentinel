@@ -4,6 +4,7 @@ Token-bucket rate-limiting middleware backed by Redis.
 Mounts as a Starlette BaseHTTPMiddleware. Skips /health and /api/v1/auth/docs.
 Uses Redis JSON strings to keep the bucket state: ``{"tokens": float, "ts": float}``.
 """
+
 from __future__ import annotations
 
 import json

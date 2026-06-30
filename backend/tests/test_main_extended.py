@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 from types import SimpleNamespace
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import _sync_url, _sync_missing_columns, create_app
@@ -88,7 +87,13 @@ def test_sync_missing_columns_all_present():
         tables=["findings", "scans", "algorithms"],
         columns_per_table={
             "findings": ["id", "layer", "hndl_exposure"],
-            "scans": ["id", "created_by", "scan_group_id", "target_label", "target_kind"],
+            "scans": [
+                "id",
+                "created_by",
+                "scan_group_id",
+                "target_label",
+                "target_kind",
+            ],
             "algorithms": ["id", "scan_id"],
         },
     )
@@ -118,6 +123,7 @@ def test_create_app_returns_fastapi():
 def test_docs_endpoint():
     application = create_app()
     from app.api.auth import get_current_user
+
     mock_user = SimpleNamespace(id="u", email="e", role="admin", is_active=True)
     application.dependency_overrides[get_current_user] = lambda: mock_user
     client = TestClient(application)
@@ -129,6 +135,7 @@ def test_docs_endpoint():
 def test_health_endpoint_shape():
     application = create_app()
     from app.api.auth import get_current_user
+
     mock_user = SimpleNamespace(id="u", email="e", role="admin", is_active=True)
     application.dependency_overrides[get_current_user] = lambda: mock_user
     client = TestClient(application)

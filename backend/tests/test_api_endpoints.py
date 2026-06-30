@@ -6,7 +6,7 @@ from app.main import create_app
 from app.config import settings
 from app.api.auth import get_current_user
 from app.db import get_session
-from app.models.models import User, Finding, Asset, Scan, Algorithm, Report
+from app.models.models import User, Finding, Asset, Report
 
 # Create test app
 app = create_app()
@@ -17,10 +17,11 @@ mock_user = User(
     email="analyst@pqc.local",
     full_name="Test Analyst",
     role="analyst",
-    is_active=True
+    is_active=True,
 )
 
 app.dependency_overrides[get_current_user] = lambda: mock_user
+
 
 @pytest.fixture
 def mock_db():
@@ -29,7 +30,9 @@ def mock_db():
     yield session
     app.dependency_overrides.pop(get_session, None)
 
+
 client = TestClient(app)
+
 
 def test_list_findings(mock_db):
     mock_finding = Finding(
@@ -51,20 +54,21 @@ def test_list_findings(mock_db):
             first_discovered_at="2026-06-03T12:00:00Z",
             asset_metadata={},
             created_at="2026-06-03T12:00:00Z",
-            updated_at="2026-06-03T12:00:00Z"
-        )
+            updated_at="2026-06-03T12:00:00Z",
+        ),
     )
-    
+
     mock_result = MagicMock()
     mock_result.scalars.return_value.all.return_value = [mock_finding]
     mock_db.execute.return_value = mock_result
-    
+
     response = client.get("/api/v1/findings?severity=high")
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
     assert data[0]["title"] == "Test Finding"
     assert data[0]["asset"]["name"] == "test-asset:443"
+
 
 def test_get_finding_detail(mock_db):
     mock_finding = Finding(
@@ -86,16 +90,17 @@ def test_get_finding_detail(mock_db):
             first_discovered_at="2026-06-03T12:00:00Z",
             asset_metadata={},
             created_at="2026-06-03T12:00:00Z",
-            updated_at="2026-06-03T12:00:00Z"
-        )
+            updated_at="2026-06-03T12:00:00Z",
+        ),
     )
     mock_result = MagicMock()
     mock_result.scalar_one_or_none.return_value = mock_finding
     mock_db.execute.return_value = mock_result
-    
+
     response = client.get("/api/v1/findings/11111111-1111-1111-1111-111111111111")
     assert response.status_code == 200
     assert response.json()["id"] == "11111111-1111-1111-1111-111111111111"
+
 
 def test_list_assets(mock_db):
     mock_asset = Asset(
@@ -108,13 +113,13 @@ def test_list_assets(mock_db):
         created_at="2026-06-03T12:00:00Z",
         updated_at="2026-06-03T12:00:00Z",
         findings=[],
-        algorithms=[]
+        algorithms=[],
     )
-    
+
     mock_result = MagicMock()
     mock_result.scalars.return_value.all.return_value = [mock_asset]
     mock_db.execute.return_value = mock_result
-    
+
     response = client.get("/api/v1/assets?environment=production")
     assert response.status_code == 200
     data = response.json()
@@ -122,6 +127,7 @@ def test_list_assets(mock_db):
     assert data[0]["name"] == "test-asset:443"
     assert data[0]["pqc_status"] == "unknown"
     assert data[0]["risk_score"] == 0
+
 
 @patch("app.api.dashboard.get_cache", return_value=None)
 @patch("app.api.dashboard.set_cache")
@@ -136,32 +142,32 @@ def test_dashboard_summary(mock_set_cache, mock_get_cache, mock_db):
         created_at="2026-06-03T12:00:00Z",
         updated_at="2026-06-03T12:00:00Z",
         findings=[],
-        algorithms=[]
+        algorithms=[],
     )
-    
+
     mock_total_assets = MagicMock()
     mock_total_assets.scalar_one.return_value = 1
 
     mock_pqc_summary = MagicMock()
     mock_pqc_summary.all.return_value = [("vulnerable", 1)]
-    
+
     mock_crit_result = MagicMock()
     mock_crit_result.scalar_one.return_value = 1
-    
+
     mock_high_result = MagicMock()
     mock_high_result.scalar_one.return_value = 2
-    
+
     mock_drift_result = MagicMock()
     mock_drift_result.scalar_one.return_value = 0
-    
+
     mock_db.execute.side_effect = [
         mock_total_assets,
         mock_pqc_summary,
         mock_crit_result,
         mock_high_result,
-        mock_drift_result
+        mock_drift_result,
     ]
-    
+
     response = client.get("/api/v1/dashboard/summary")
     assert response.status_code == 200
     data = response.json()
@@ -170,6 +176,7 @@ def test_dashboard_summary(mock_set_cache, mock_get_cache, mock_db):
     assert data["high_findings"] == 2
     assert data["drift_alerts_count"] == 0
     assert data["pqc_readiness_score"] == 0.0
+
 
 @patch("app.tasks.execute_report")
 def test_create_report(mock_execute_report, mock_db):
@@ -181,24 +188,27 @@ def test_create_report(mock_execute_report, mock_db):
         status="pending",
         created_by=mock_user.id,
         created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc)
+        updated_at=datetime.now(timezone.utc),
     )
-    
+
     mock_db.execute.return_value.scalar_one_or_none.return_value = mock_report
-    
+
     def mock_refresh(obj):
         obj.id = "99999999-9999-9999-9999-999999999999"
         obj.created_at = datetime.now(timezone.utc)
         obj.updated_at = datetime.now(timezone.utc)
+
     mock_db.refresh.side_effect = mock_refresh
-    
+
     response = client.post(
-        "/api/v1/reports",
-        json={"report_type": "cbom", "format": "json"}
+        "/api/v1/reports", json={"report_type": "cbom", "format": "json"}
     )
     assert response.status_code == 202
     assert response.json()["report_type"] == "cbom"
-    mock_execute_report.delay.assert_called_once_with("99999999-9999-9999-9999-999999999999", [])
+    mock_execute_report.delay.assert_called_once_with(
+        "99999999-9999-9999-9999-999999999999", []
+    )
+
 
 def test_list_reports(mock_db):
     mock_report = Report(
@@ -209,7 +219,7 @@ def test_list_reports(mock_db):
         status="ready",
         created_by=mock_user.id,
         created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc)
+        updated_at=datetime.now(timezone.utc),
     )
 
     mock_result = MagicMock()
@@ -224,6 +234,7 @@ def test_list_reports(mock_db):
 
 
 # --- Phase 1.1: scan creation requires auth and records created_by ---
+
 
 @patch("app.tasks.execute_scan")
 def test_create_scan_requires_auth(mock_execute_scan, mock_db):
@@ -252,6 +263,7 @@ def test_create_scan_records_created_by(mock_execute_scan, mock_db):
     dedup_result.scalars.return_value.all.return_value = []
     mock_db.execute.return_value = dedup_result
     saved_scan = {}
+
     def _refresh(obj):
         obj.id = new_scan_id
         obj.created_at = datetime.now(timezone.utc)
@@ -262,6 +274,7 @@ def test_create_scan_records_created_by(mock_execute_scan, mock_db):
         obj.findings_created = 0
         obj.error_message = None
         saved_scan["obj"] = obj
+
     mock_db.refresh.side_effect = _refresh
 
     response = client.post(
@@ -277,11 +290,11 @@ def test_create_scan_records_created_by(mock_execute_scan, mock_db):
 @patch("app.tasks.execute_scan")
 def test_create_scan_dedup_uses_advisory_lock(mock_execute_scan, mock_db):
     """The dedup path must take a transaction-scoped advisory lock keyed on scan_type+target."""
-    from app.config import settings
     dedup_result = MagicMock()
     dedup_result.scalars.return_value.all.return_value = []
     mock_db.execute.return_value = dedup_result
     saved_scan = {}
+
     def _refresh(obj):
         obj.id = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
         obj.created_at = datetime.now(timezone.utc)
@@ -291,6 +304,7 @@ def test_create_scan_dedup_uses_advisory_lock(mock_execute_scan, mock_db):
         obj.assets_found = 0
         obj.findings_created = 0
         saved_scan["obj"] = obj
+
     mock_db.refresh.side_effect = _refresh
 
     response = client.post(
@@ -305,7 +319,6 @@ def test_create_scan_dedup_uses_advisory_lock(mock_execute_scan, mock_db):
                 executed.append(str(arg))
             for v in (c.kwargs or {}).values():
                 executed.append(str(v))
-        assert any("pg_advisory_xact_lock" in s for s in executed), (
-            f"expected pg_advisory_xact_lock; got {executed}"
-        )
-
+        assert any(
+            "pg_advisory_xact_lock" in s for s in executed
+        ), f"expected pg_advisory_xact_lock; got {executed}"

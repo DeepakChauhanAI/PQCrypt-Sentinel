@@ -1,15 +1,13 @@
 import pytest
 import socket
 import struct
-from unittest.mock import patch, MagicMock, AsyncMock
-import asyncio
+from unittest.mock import patch, MagicMock
 
 from app.scanners.ssh_scanner import (
     _recv_exact,
     _read_ssh_banner,
     _build_kexinit_payload,
     _wrap_ssh_packet,
-    _read_ssh_packet_payload,
     _parse_server_kexinit,
     _do_ssh_connect,
     SSHScanResult,
@@ -41,8 +39,22 @@ class TestReadSSHBanner:
         mock_sock = MagicMock()
         # First line: "Welcome\n", second line: "SSH-2.0-OpenSSH\n"
         mock_sock.recv.side_effect = [
-            b"W", b"e", b"l", b"c", b"o", b"m", b"e", b"\n",
-            b"S", b"S", b"H", b"-", b"2", b".", b"0", b"\n",
+            b"W",
+            b"e",
+            b"l",
+            b"c",
+            b"o",
+            b"m",
+            b"e",
+            b"\n",
+            b"S",
+            b"S",
+            b"H",
+            b"-",
+            b"2",
+            b".",
+            b"0",
+            b"\n",
         ]
         banner = _read_ssh_banner(mock_sock)
         assert banner == b"SSH-2.0"
@@ -133,7 +145,9 @@ class TestSSHScanResult:
 
     def test_pqc_ready(self):
         r = SSHScanResult(
-            host="h", port=22, success=True,
+            host="h",
+            port=22,
+            success=True,
             pqc_kex_available=True,
             pqc_status="pqc_ready",
             pqc_kex_algorithms=["mlkem768x25519-sha512@openssh.com"],
@@ -144,6 +158,7 @@ class TestSSHScanResult:
 
 def _build_server_kexinit_for_test(kex=None, host_keys=None, enc=None, mac=None):
     from paramiko.message import Message
+
     m = Message()
     m.add_byte(b"\x14")
     m.add_bytes(b"\x00" * 16)

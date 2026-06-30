@@ -6,6 +6,7 @@ skeleton: it surfaces the certificate chain and signature algorithms but
 does not yet perform full Authenticode signature verification against a
 trusted root or file hash.
 """
+
 from __future__ import annotations
 
 import logging

@@ -36,10 +36,12 @@ def _mock_session(existing=None):
 def _mock_boto(service_mocks):
     def _factory(service_name, **kwargs):
         return service_mocks.get(service_name, MagicMock())
+
     return _factory
 
 
 # ── Pure function tests ──────────────────────────────────────────────────
+
 
 class TestParseKeySize:
     def test_rsa_2048(self):
@@ -108,6 +110,7 @@ class TestEmptyStats:
 
 # ── Scanner._boto_kwargs ─────────────────────────────────────────────────
 
+
 class TestBotoKwargs:
     def test_without_session_token(self):
         scanner = _make_scanner()
@@ -124,6 +127,7 @@ class TestBotoKwargs:
 
 
 # ── Error paths ──────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_kms_describe_key_exception():
@@ -160,9 +164,16 @@ async def test_acm_describe_certificate_exception():
 async def test_elbv2_describe_listeners_exception():
     mock_elb = MagicMock()
     mock_elb.get_paginator.return_value.paginate.return_value = [
-        {"LoadBalancers": [
-            {"LoadBalancerArn": "arn:lb:1", "LoadBalancerName": "lb-1", "DNSName": "lb.dns", "Type": "application"}
-        ]}
+        {
+            "LoadBalancers": [
+                {
+                    "LoadBalancerArn": "arn:lb:1",
+                    "LoadBalancerName": "lb-1",
+                    "DNSName": "lb.dns",
+                    "Type": "application",
+                }
+            ]
+        }
     ]
     mock_elb.describe_listeners.side_effect = Exception("listener fail")
 
@@ -238,6 +249,7 @@ async def test_iam_list_server_certificates_exception():
 
 # ── S3 SSE-S3 (AES256) path ─────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_s3_sse_s3_aes256():
     mock_s3 = MagicMock()
@@ -260,6 +272,7 @@ async def test_s3_sse_s3_aes256():
 
 # ── S3 no-encryption path (ClientError → NONE) ──────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_s3_no_encryption_skipped():
     mock_s3 = MagicMock()
@@ -270,7 +283,9 @@ async def test_s3_no_encryption_skipped():
 
     mock_s3.exceptions = MagicMock()
     mock_s3.exceptions.ClientError = S3ClientError
-    mock_s3.get_bucket_encryption.side_effect = S3ClientError("ServerSideEncryptionConfigurationNotFoundError")
+    mock_s3.get_bucket_encryption.side_effect = S3ClientError(
+        "ServerSideEncryptionConfigurationNotFoundError"
+    )
 
     scanner = _make_scanner()
     with patch("boto3.client", side_effect=_mock_boto({"s3": mock_s3})):
@@ -281,6 +296,7 @@ async def test_s3_no_encryption_skipped():
 
 
 # ── Disabled KMS key ────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_kms_disabled_key():
@@ -309,6 +325,7 @@ async def test_kms_disabled_key():
 
 # ── HMAC KMS key ────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_kms_hmac_key():
     mock_kms = MagicMock()
@@ -336,19 +353,22 @@ async def test_kms_hmac_key():
 
 # ── PQC TLS policy for ELBv2 (no finding) ───────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_elbv2_pqc_tls_policy_no_finding():
     pqc_policy = next(iter(PQC_TLS_POLICIES))
     mock_elb = MagicMock()
     mock_elb.get_paginator.return_value.paginate.return_value = [
-        {"LoadBalancers": [
-            {
-                "LoadBalancerArn": "arn:lb:pqc",
-                "LoadBalancerName": "pqc-lb",
-                "DNSName": "pqc.dns",
-                "Type": "application",
-            }
-        ]}
+        {
+            "LoadBalancers": [
+                {
+                    "LoadBalancerArn": "arn:lb:pqc",
+                    "LoadBalancerName": "pqc-lb",
+                    "DNSName": "pqc.dns",
+                    "Type": "application",
+                }
+            ]
+        }
     ]
     mock_elb.describe_listeners.return_value = {
         "Listeners": [
@@ -371,6 +391,7 @@ async def test_elbv2_pqc_tls_policy_no_finding():
 
 
 # ── Existing asset update path in _upsert_asset ─────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_upsert_asset_updates_existing():
@@ -408,6 +429,7 @@ async def test_upsert_asset_updates_existing():
 
 
 # ── Existing certificate in _record_certificate ─────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_record_certificate_skips_existing():
@@ -456,6 +478,7 @@ async def test_record_certificate_skips_existing():
 
 # ── Finding dedup in _create_finding ─────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_create_finding_dedup():
     existing_finding = MagicMock()
@@ -476,12 +499,14 @@ async def test_create_finding_dedup():
 
     mock_iam = MagicMock()
     mock_iam.get_paginator.return_value.paginate.return_value = [
-        {"ServerCertificateMetadataList": [
-            {
-                "ServerCertificateName": "dup-cert",
-                "Arn": "arn:iam::123:server-certificate/dup-cert",
-            }
-        ]}
+        {
+            "ServerCertificateMetadataList": [
+                {
+                    "ServerCertificateName": "dup-cert",
+                    "Arn": "arn:iam::123:server-certificate/dup-cert",
+                }
+            ]
+        }
     ]
 
     scanner = _make_scanner()
@@ -492,6 +517,7 @@ async def test_create_finding_dedup():
 
 
 # ── KMS unknown key spec fallback ───────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_kms_unknown_key_spec():
@@ -519,6 +545,7 @@ async def test_kms_unknown_key_spec():
 
 
 # ── CloudFront happy path ────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_cloudfront_distribution():
@@ -552,18 +579,21 @@ async def test_cloudfront_distribution():
 
 # ── ELBv2 non-HTTPS listener ignored ────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_elbv2_non_https_listener_skipped():
     mock_elb = MagicMock()
     mock_elb.get_paginator.return_value.paginate.return_value = [
-        {"LoadBalancers": [
-            {
-                "LoadBalancerArn": "arn:lb:tcp",
-                "LoadBalancerName": "tcp-lb",
-                "DNSName": "tcp.dns",
-                "Type": "network",
-            }
-        ]}
+        {
+            "LoadBalancers": [
+                {
+                    "LoadBalancerArn": "arn:lb:tcp",
+                    "LoadBalancerName": "tcp-lb",
+                    "DNSName": "tcp.dns",
+                    "Type": "network",
+                }
+            ]
+        }
     ]
     mock_elb.describe_listeners.return_value = {
         "Listeners": [
@@ -585,6 +615,7 @@ async def test_elbv2_non_https_listener_skipped():
 
 
 # ── S3 aws:kms:dsse path ────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_s3_kms_dsse():
@@ -613,6 +644,7 @@ async def test_s3_kms_dsse():
 
 
 # ── ACM non-ISSUED status ───────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_acm_pending_certificate():
@@ -660,14 +692,16 @@ async def test_scan_boto3_import_error():
 async def test_elbv2_non_pqc_https_listener_finding():
     mock_elb = MagicMock()
     mock_elb.get_paginator.return_value.paginate.return_value = [
-        {"LoadBalancers": [
-            {
-                "LoadBalancerArn": "arn:lb:web",
-                "LoadBalancerName": "web-lb",
-                "DNSName": "web.dns",
-                "Type": "application",
-            }
-        ]}
+        {
+            "LoadBalancers": [
+                {
+                    "LoadBalancerArn": "arn:lb:web",
+                    "LoadBalancerName": "web-lb",
+                    "DNSName": "web.dns",
+                    "Type": "application",
+                }
+            ]
+        }
     ]
     mock_elb.describe_listeners.return_value = {
         "Listeners": [
@@ -741,12 +775,14 @@ async def test_s3_bucket_encryption_general_error_records_error():
 async def test_iam_server_certificate_creates_finding():
     mock_iam = MagicMock()
     mock_iam.get_paginator.return_value.paginate.return_value = [
-        {"ServerCertificateMetadataList": [
-            {
-                "ServerCertificateName": "iam-cert",
-                "Arn": "arn:iam::123:server-certificate/iam-cert",
-            }
-        ]}
+        {
+            "ServerCertificateMetadataList": [
+                {
+                    "ServerCertificateName": "iam-cert",
+                    "Arn": "arn:iam::123:server-certificate/iam-cert",
+                }
+            ]
+        }
     ]
 
     scanner = _make_scanner()

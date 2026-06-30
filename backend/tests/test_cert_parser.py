@@ -7,13 +7,14 @@ to ~90% by exercising every branch of `parse_certificate`,
 `classify_signature_algorithm`, `analyze_public_key`, and
 `_extract_key_usage`.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
 import pytest
 from cryptography import x509
-from cryptography.x509.oid import NameOID, ExtensionOID
+from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ec, ed25519, ed448
 
@@ -44,8 +45,10 @@ def _build_cert(
     if subject_key is None:
         subject_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     if issuer_key is None:
-        issuer_key = subject_key if self_signed else rsa.generate_private_key(
-            public_exponent=65537, key_size=2048
+        issuer_key = (
+            subject_key
+            if self_signed
+            else rsa.generate_private_key(public_exponent=65537, key_size=2048)
         )
     # Ed25519/Ed448 require no explicit hash; otherwise use sig_hash.
     is_ed = isinstance(subject_key, (ed25519.Ed25519PrivateKey, ed448.Ed448PrivateKey))
@@ -98,7 +101,11 @@ def _build_cert(
         )
         builder = builder.add_extension(ku, critical=True)
 
-    return builder.sign(issuer_key, sig_hash) if sig_hash else builder.sign(issuer_key, None)
+    return (
+        builder.sign(issuer_key, sig_hash)
+        if sig_hash
+        else builder.sign(issuer_key, None)
+    )
 
 
 def _pem(cert: x509.Certificate) -> str:
@@ -183,6 +190,7 @@ def test_extract_key_usage_all_seven_basic_flags():
 def test_classify_signature_algorithm_pqc():
     """An OID in PQC_SIGNATURE_OIDS gets is_pqc=True and pqc_status=pqc_ready."""
     from app.analysis.algo_classifier import PQC_SIGNATURE_OIDS
+
     pqc_oid = next(iter(PQC_SIGNATURE_OIDS))
     result = classify_signature_algorithm(pqc_oid)
     assert result["is_pqc"] is True
@@ -192,6 +200,7 @@ def test_classify_signature_algorithm_pqc():
 
 def test_classify_signature_algorithm_hybrid():
     from app.analysis.algo_classifier import HYBRID_SIGNATURE_OIDS
+
     if not HYBRID_SIGNATURE_OIDS:
         pytest.skip("no hybrid OIDs defined")
     oid = next(iter(HYBRID_SIGNATURE_OIDS))
@@ -203,6 +212,7 @@ def test_classify_signature_algorithm_hybrid():
 
 def test_classify_signature_algorithm_eddsa():
     from app.analysis.algo_classifier import CLASSICAL_EDDSA_OIDS
+
     oid = next(iter(CLASSICAL_EDDSA_OIDS))
     result = classify_signature_algorithm(oid)
     assert result["is_pqc"] is False
@@ -212,6 +222,7 @@ def test_classify_signature_algorithm_eddsa():
 
 def test_classify_signature_algorithm_x_curve():
     from app.analysis.algo_classifier import CLASSICAL_X_OIDS
+
     oid = next(iter(CLASSICAL_X_OIDS))
     result = classify_signature_algorithm(oid)
     assert result["is_pqc"] is False
@@ -220,6 +231,7 @@ def test_classify_signature_algorithm_x_curve():
 
 def test_classify_signature_algorithm_vulnerable_classical():
     from app.analysis.algo_classifier import CLASSICAL_SIGNATURE_OIDS
+
     oid = next(iter(CLASSICAL_SIGNATURE_OIDS))
     result = classify_signature_algorithm(oid)
     assert result["is_pqc"] is False
@@ -297,7 +309,10 @@ def test_parse_certificate_rsa_self_signed():
     assert "keyEncipherment" in parsed["key_usage"]
     # SHA-256 with RSA is a SAFE classical signature
     assert parsed["pqc_details"]["pqc_status"] in (
-        "safe", "vulnerable", "safe_until_2030", "disallowed_now",
+        "safe",
+        "vulnerable",
+        "safe_until_2030",
+        "disallowed_now",
     )
     assert parsed["pqc_capable"] is False
     assert isinstance(parsed["not_before"], datetime)
@@ -323,6 +338,7 @@ def test_parse_certificate_ca_flag_true():
 
 def test_parse_certificate_with_san_ips():
     import ipaddress
+
     cert = _build_cert(add_san_ip=[ipaddress.IPv4Address("192.0.2.1")])
     parsed = parse_certificate(_pem(cert))
     assert parsed["san_ip"] == ["192.0.2.1"]
@@ -346,6 +362,7 @@ def test_parse_certificate_no_basic_constraints():
 def test_parse_certificate_disallowed_now_md5():
     """MD5 signature is disallowed_now and pqc_capable is False (when supported)."""
     from cryptography.exceptions import UnsupportedAlgorithm
+
     try:
         cert = _build_cert(sig_hash=hashes.MD5())
     except UnsupportedAlgorithm:
@@ -358,6 +375,7 @@ def test_parse_certificate_disallowed_now_md5():
 def test_parse_certificate_disallowed_now_sha1():
     """SHA-1 signature is disallowed_now (when the runtime allows it)."""
     from cryptography.exceptions import UnsupportedAlgorithm
+
     try:
         cert = _build_cert(sig_hash=hashes.SHA1())
     except UnsupportedAlgorithm:
@@ -370,7 +388,9 @@ def test_parse_certificate_disallowed_now_sha1():
 def test_parse_certificate_ed25519_pqc_status_vulnerable():
     """Ed25519 leaf -> pub_key pqc_status=vulnerable (not disallowed_now)."""
     ed_key = ed25519.Ed25519PrivateKey.generate()
-    cert = _build_cert(subject_cn="ed25519.example.com", subject_key=ed_key, issuer_key=ed_key)
+    cert = _build_cert(
+        subject_cn="ed25519.example.com", subject_key=ed_key, issuer_key=ed_key
+    )
     parsed = parse_certificate(_pem(cert))
     assert parsed["pub_key_algorithm"] == "Ed25519"
     # Ed25519 sigs are PQC-safe classical; pqc_status should NOT be vulnerable

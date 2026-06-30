@@ -8,6 +8,7 @@ from app.db import AsyncSessionLocal
 from app.models.models import Scan, ScanLog, Finding, Asset
 from sqlalchemy import delete, select, update
 
+
 async def keep_only_latest_scan():
     async with AsyncSessionLocal() as session:
         # 1. Find the most recent scan
@@ -38,24 +39,19 @@ async def keep_only_latest_scan():
         await session.flush()
 
         # 3. Delete scan logs for all scans except the latest
-        await session.execute(
-            delete(ScanLog).where(ScanLog.scan_id != latest_scan_id)
-        )
+        await session.execute(delete(ScanLog).where(ScanLog.scan_id != latest_scan_id))
         print("Deleted scan logs for old scans.")
 
         # 4. Delete findings tied to old scans
-        await session.execute(
-            delete(Finding).where(Finding.scan_id != latest_scan_id)
-        )
+        await session.execute(delete(Finding).where(Finding.scan_id != latest_scan_id))
         print("Deleted findings for old scans.")
 
         # 5. Delete old scans
-        await session.execute(
-            delete(Scan).where(Scan.id != latest_scan_id)
-        )
+        await session.execute(delete(Scan).where(Scan.id != latest_scan_id))
         print("Deleted old scans.")
 
         await session.commit()
         print(f"Cleanup complete. Only scan {latest_scan_id} remains.")
+
 
 asyncio.run(keep_only_latest_scan())

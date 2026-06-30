@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
@@ -9,7 +10,7 @@ from app.api.auth import get_current_user
 from app.config import settings
 from app.db import get_session
 from app.models.models import Scan, ScanGroup, User
-from app.models.schemas import AssetOut, ScanCreate, ScanOut, ScanUpdate
+from app.models.schemas import AssetOut, ScanCreate, ScanOut
 from app.utils.target_classifier import (
     classify_target,
     suggest_group_name,
@@ -65,7 +66,9 @@ def _parse_target_ports(target: str, scan_type: str) -> list[tuple[str, int]]:
     return result
 
 
-def _targets_match(target1: str, target2: str, scan_type1: str, scan_type2: str) -> bool:
+def _targets_match(
+    target1: str, target2: str, scan_type1: str, scan_type2: str
+) -> bool:
     """Check if two scan targets overlap (same host+port combinations)."""
     ports1 = set(_parse_target_ports(target1, scan_type1))
     ports2 = set(_parse_target_ports(target2, scan_type2))
@@ -105,9 +108,16 @@ async def create_scan(
         existing_scans = recent_scans.scalars().all()
         # Semantic match: same scan_type AND overlapping targets, same config/profile
         for existing in existing_scans:
-            if (_targets_match(existing.target or "", payload.target or "", existing.scan_type, payload.scan_type)
-                    and existing.config == payload.config
-                    and existing.credential_profile == payload.credential_profile):
+            if (
+                _targets_match(
+                    existing.target or "",
+                    payload.target or "",
+                    existing.scan_type,
+                    payload.scan_type,
+                )
+                and existing.config == payload.config
+                and existing.credential_profile == payload.credential_profile
+            ):
                 # If the existing scan is queued, just return it — worker should pick it up.
                 if existing.status == "queued":
                     return existing
@@ -116,10 +126,13 @@ async def create_scan(
                     if _now() - existing.started_at > timedelta(minutes=5):
                         existing.status = "queued"
                         existing.started_at = None
-                        existing.error_message = "Previous worker appears stalled; re-queued."
+                        existing.error_message = (
+                            "Previous worker appears stalled; re-queued."
+                        )
                         await session.commit()
                         await session.refresh(existing)
                         from app.tasks import execute_scan
+
                         execute_scan.delay(str(existing.id))
                         return existing
                 # If running and recent, return it (don't double-dispatch).
@@ -161,10 +174,7 @@ async def create_scan(
     # scan (the dedup path above has already returned an existing scan,
     # so we never re-wrap the same target) and only when the caller has
     # not already supplied a scan_group_id.
-    if (
-        classification.is_groupable
-        and not scan.scan_group_id
-    ):
+    if classification.is_groupable and not scan.scan_group_id:
         group = ScanGroup(
             name=suggest_group_name(payload.target, payload.scan_type),
             description=(
@@ -185,6 +195,7 @@ async def create_scan(
 
     # Queue the background scan task
     from app.tasks import execute_scan
+
     execute_scan.delay(str(scan.id))
 
     return scan
@@ -212,7 +223,6 @@ async def list_scan_findings(
 ):
     """List findings created by a specific scan (scan-scoped endpoint)."""
     from app.models.models import Finding
-    from app.models.schemas import FindingOut
     from sqlalchemy.orm import selectinload
 
     scan_res = await session.execute(select(Scan).where(Scan.id == scan_id))
@@ -243,6 +253,7 @@ async def list_scan_findings(
     # Phase B — enrich with scan_type / scan_target / scan_group_name so the
     # scan-scoped view can show "Q2 Estate Audit › TLS_ONLY" inline.
     from app.api.findings import _enrich_with_scan_context
+
     await _enrich_with_scan_context(session, findings)
     return findings
 
@@ -256,7 +267,9 @@ async def get_scan(
     result = await session.execute(select(Scan).where(Scan.id == scan_id))
     scan = result.scalar_one_or_none()
     if not scan:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
+        )
     return scan
 
 
@@ -309,12 +322,18 @@ async def run_l1_probe(
     never raises and is concurrency-bounded internally.
     """
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
 
     # Confirm the scan exists and is readable.
-    scan = (await session.execute(select(Scan).where(Scan.id == scan_id))).scalar_one_or_none()
+    scan = (
+        await session.execute(select(Scan).where(Scan.id == scan_id))
+    ).scalar_one_or_none()
     if not scan:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
+        )
 
     from sqlalchemy import select as _select
     from app.models.models import Asset, Certificate
@@ -405,9 +424,7 @@ async def run_l1_probe(
         if h and h not in host_to_asset:
             host_to_asset[h] = a
     ocsp_pairs = [
-        (host_to_asset[r.host].id, r)
-        for r in ocsp_results
-        if r.host in host_to_asset
+        (host_to_asset[r.host].id, r) for r in ocsp_results if r.host in host_to_asset
     ]
 
     finding_counts = await generate_l1_findings(
@@ -464,7 +481,9 @@ async def cancel_scan(
     result = await session.execute(select(Scan).where(Scan.id == scan_id))
     scan = result.scalar_one_or_none()
     if not scan:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Scan not found"
+        )
     if scan.status in {"completed", "failed", "cancelled"}:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

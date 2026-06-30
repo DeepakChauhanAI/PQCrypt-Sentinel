@@ -89,16 +89,16 @@ def _build_kexinit_payload() -> bytes:
     m.add_bytes(os.urandom(16))
     m.add_list(_DEFAULT_KEX)
     m.add_list(_DEFAULT_HOST_KEY)
-    m.add_list(_DEFAULT_ENC)        # enc c->s
-    m.add_list(_DEFAULT_ENC)        # enc s->c
-    m.add_list(_DEFAULT_MAC)        # mac c->s
-    m.add_list(_DEFAULT_MAC)        # mac s->c
-    m.add_list(_DEFAULT_COMP)       # comp c->s
-    m.add_list(_DEFAULT_COMP)       # comp s->c
-    m.add_string(bytes())           # lang c->s
-    m.add_string(bytes())           # lang s->c
-    m.add_boolean(False)            # first_kex_packet_follows
-    m.add_int(0)                    # reserved
+    m.add_list(_DEFAULT_ENC)  # enc c->s
+    m.add_list(_DEFAULT_ENC)  # enc s->c
+    m.add_list(_DEFAULT_MAC)  # mac c->s
+    m.add_list(_DEFAULT_MAC)  # mac s->c
+    m.add_list(_DEFAULT_COMP)  # comp c->s
+    m.add_list(_DEFAULT_COMP)  # comp s->c
+    m.add_string(bytes())  # lang c->s
+    m.add_string(bytes())  # lang s->c
+    m.add_boolean(False)  # first_kex_packet_follows
+    m.add_int(0)  # reserved
     return m.asbytes()
 
 
@@ -135,18 +135,19 @@ def _read_ssh_packet_payload(sock: socket.socket) -> bytes:
 
 def _parse_server_kexinit(payload: bytes) -> dict:
     """Parse a server SSH_MSG_KEXINIT payload and extract algorithm lists."""
+
     def _clean(values):
         return [v for v in (values or []) if v]
 
     try:
         m = Message(payload)
-        m.get_byte()                      # message type (20)
-        m.get_bytes(16)                   # cookie
+        m.get_byte()  # message type (20)
+        m.get_bytes(16)  # cookie
         kex_algorithms = _clean(m.get_list())
         host_key_algorithms = _clean(m.get_list())
-        encryption_algorithms_client_to_server = _clean(m.get_list())
+        _ = _clean(m.get_list())  # encryption_algorithms_client_to_server
         encryption_algorithms_server_to_client = _clean(m.get_list())
-        mac_algorithms_client_to_server = _clean(m.get_list())
+        _ = _clean(m.get_list())  # mac_algorithms_client_to_server
         mac_algorithms_server_to_client = _clean(m.get_list())
         # compression, languages, first_kex_packet_follows, reserved follow — ignore
         return {
@@ -162,6 +163,7 @@ def _parse_server_kexinit(payload: bytes) -> dict:
             "encryption_algorithms": [],
             "mac_algorithms": [],
         }
+
 
 PQC_KEX_ALGORITHMS = [
     "sntrup761x25519-sha512@openssh.com",
@@ -266,8 +268,14 @@ def _do_ssh_connect(host: str, port: int, timeout: int) -> dict:
             pass
 
 
-@async_retry(attempts=2, initial_delay=0.5, retry_on=(asyncio.TimeoutError, ConnectionError, OSError))
-async def scan_ssh_endpoint(host: str, port: int = 22, timeout: int = 10) -> SSHScanResult:
+@async_retry(
+    attempts=2,
+    initial_delay=0.5,
+    retry_on=(asyncio.TimeoutError, ConnectionError, OSError),
+)
+async def scan_ssh_endpoint(
+    host: str, port: int = 22, timeout: int = 10
+) -> SSHScanResult:
     """Audit SSH server for key exchange and cipher suite options."""
     try:
         loop = asyncio.get_event_loop()

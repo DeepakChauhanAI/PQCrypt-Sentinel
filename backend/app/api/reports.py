@@ -2,7 +2,7 @@ import os
 import logging
 from datetime import datetime, timezone
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -67,6 +67,7 @@ async def create_report(
 
     # Queue background task — pass scan_ids via JSON in scope_filters for SARIF.
     from app.tasks import execute_report
+
     scan_ids = payload.scan_ids or []
     execute_report.delay(str(report.id), scan_ids)
 
@@ -78,7 +79,11 @@ async def list_reports(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    stmt = select(Report).where(Report.deleted_at.is_(None)).order_by(Report.created_at.desc())
+    stmt = (
+        select(Report)
+        .where(Report.deleted_at.is_(None))
+        .order_by(Report.created_at.desc())
+    )
     result = await session.execute(stmt)
     return result.scalars().all()
 
@@ -93,7 +98,9 @@ async def get_report(
     result = await session.execute(stmt)
     report = result.scalar_one_or_none()
     if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Report not found"
+        )
     return report
 
 
@@ -107,7 +114,9 @@ async def download_report(
     result = await session.execute(stmt)
     report = result.scalar_one_or_none()
     if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Report not found"
+        )
 
     if report.status != "ready" or not report.file_path:
         raise HTTPException(
@@ -151,7 +160,9 @@ async def delete_report(
     result = await session.execute(stmt)
     report = result.scalar_one_or_none()
     if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Report not found"
+        )
 
     report.deleted_at = datetime.now(timezone.utc)
     await session.commit()

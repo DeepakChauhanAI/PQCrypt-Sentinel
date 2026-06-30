@@ -28,7 +28,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.analysis.algo_classifier import classify_algorithm
-from app.models.models import Algorithm, Asset, Certificate, Finding, Scan
+from app.models.models import Algorithm, Asset, Certificate, Finding
 from app.services.layer_service import layer_for_finding
 from app.services.risk_service import calculate_risk_score
 
@@ -121,7 +121,7 @@ class AWSPQCScanner:
     ) -> Dict[str, Any]:
         """Run the full AWS PQC scan and persist results."""
         try:
-            import boto3  # noqa: F811
+            import boto3  # noqa: F401
         except ImportError as exc:
             raise RuntimeError("boto3 is required for the AWS PQC scanner") from exc
 
@@ -150,9 +150,13 @@ class AWSPQCScanner:
                 svc_result = await scanner_fn(session, scan_id)
                 results["assets_created"] += svc_result.get("assets_created", 0)
                 results["assets_updated"] += svc_result.get("assets_updated", 0)
-                results["algorithms_recorded"] += svc_result.get("algorithms_recorded", 0)
+                results["algorithms_recorded"] += svc_result.get(
+                    "algorithms_recorded", 0
+                )
                 results["findings_created"] += svc_result.get("findings_created", 0)
-                results["certificates_recorded"] += svc_result.get("certificates_recorded", 0)
+                results["certificates_recorded"] += svc_result.get(
+                    "certificates_recorded", 0
+                )
                 results["services_scanned"].append(service_name)
                 if svc_result.get("errors"):
                     results["errors"].extend(svc_result["errors"])
@@ -232,15 +236,24 @@ class AWSPQCScanner:
 
             # Record algorithm
             await self._record_algorithm(
-                session, asset.id, scan_id, algo_name, algo_type,
-                key_size, pqc_status, is_qv, protocol="KMS",
+                session,
+                asset.id,
+                scan_id,
+                algo_name,
+                algo_type,
+                key_size,
+                pqc_status,
+                is_qv,
+                protocol="KMS",
             )
             stats["algorithms_recorded"] += 1
 
             # Generate finding if vulnerable
             if is_qv:
                 created_f = await self._create_finding(
-                    session, asset, scan_id,
+                    session,
+                    asset,
+                    scan_id,
                     finding_type="kms_vulnerable",
                     severity="high" if key_state == "Enabled" else "medium",
                     title=f"Quantum-Vulnerable KMS Key ({key_spec})",
@@ -286,17 +299,21 @@ class AWSPQCScanner:
                         ).get("Certificate", {})
                         certs.append(detail)
                     except Exception as e:
-                        certs.append({
-                            "CertificateArn": summary["CertificateArn"],
-                            "_error": str(e),
-                        })
+                        certs.append(
+                            {
+                                "CertificateArn": summary["CertificateArn"],
+                                "_error": str(e),
+                            }
+                        )
             return certs
 
         certs = await asyncio.to_thread(_list_certs)
 
         for cert in certs:
             if "_error" in cert:
-                stats["errors"].append(f"ACM cert {cert.get('CertificateArn')}: {cert['_error']}")
+                stats["errors"].append(
+                    f"ACM cert {cert.get('CertificateArn')}: {cert['_error']}"
+                )
                 continue
 
             arn = cert.get("CertificateArn", "")
@@ -320,7 +337,9 @@ class AWSPQCScanner:
             asset, created = await self._upsert_asset(
                 session,
                 name=asset_name,
-                asset_type="certificate_authority" if "CA" in cert_type.upper() else "kms",
+                asset_type=(
+                    "certificate_authority" if "CA" in cert_type.upper() else "kms"
+                ),
                 environment="cloud",
                 discovery_source="aws_pqc_scan",
                 scan_id=scan_id,
@@ -342,16 +361,29 @@ class AWSPQCScanner:
 
             # Record algorithm
             await self._record_algorithm(
-                session, asset.id, scan_id, sig_algo, "signature",
-                key_size, pqc_status, is_qv, protocol="ACM",
+                session,
+                asset.id,
+                scan_id,
+                sig_algo,
+                "signature",
+                key_size,
+                pqc_status,
+                is_qv,
+                protocol="ACM",
             )
             stats["algorithms_recorded"] += 1
 
             # Record certificate row
             if not_before and not_after:
                 await self._record_certificate(
-                    session, asset.id, domain, sig_algo, key_algo,
-                    key_size, not_before, not_after,
+                    session,
+                    asset.id,
+                    domain,
+                    sig_algo,
+                    key_algo,
+                    key_size,
+                    not_before,
+                    not_after,
                     is_ca=("CA" in cert_type.upper()),
                     san_dns=[s for s in sans if not s.replace(".", "").isdigit()],
                     pqc_status=pqc_status,
@@ -362,7 +394,9 @@ class AWSPQCScanner:
             if is_qv:
                 sev = "high" if status == "ISSUED" else "medium"
                 created_f = await self._create_finding(
-                    session, asset, scan_id,
+                    session,
+                    asset,
+                    scan_id,
                     finding_type="weak_algorithm",
                     severity=sev,
                     title=f"Quantum-Vulnerable ACM Certificate ({sig_algo})",
@@ -407,25 +441,31 @@ class AWSPQCScanner:
                     lb_dns = lb.get("DNSName", "")
                     lb_type = lb.get("Type", "application")
                     try:
-                        listeners_resp = elbv2.describe_listeners(LoadBalancerArn=lb_arn)
+                        listeners_resp = elbv2.describe_listeners(
+                            LoadBalancerArn=lb_arn
+                        )
                         for listener in listeners_resp.get("Listeners", []):
                             if listener.get("Protocol") in ("HTTPS", "TLS"):
-                                results.append({
-                                    "lb_arn": lb_arn,
-                                    "lb_name": lb_name,
-                                    "lb_dns": lb_dns,
-                                    "lb_type": lb_type,
-                                    "listener_arn": listener["ListenerArn"],
-                                    "port": listener.get("Port", 443),
-                                    "protocol": listener.get("Protocol"),
-                                    "ssl_policy": listener.get("SslPolicy", ""),
-                                })
+                                results.append(
+                                    {
+                                        "lb_arn": lb_arn,
+                                        "lb_name": lb_name,
+                                        "lb_dns": lb_dns,
+                                        "lb_type": lb_type,
+                                        "listener_arn": listener["ListenerArn"],
+                                        "port": listener.get("Port", 443),
+                                        "protocol": listener.get("Protocol"),
+                                        "ssl_policy": listener.get("SslPolicy", ""),
+                                    }
+                                )
                     except Exception as e:
-                        results.append({
-                            "lb_arn": lb_arn,
-                            "lb_name": lb_name,
-                            "_error": str(e),
-                        })
+                        results.append(
+                            {
+                                "lb_arn": lb_arn,
+                                "lb_name": lb_name,
+                                "_error": str(e),
+                            }
+                        )
             return results
 
         listeners = await asyncio.to_thread(_list_lbs_and_listeners)
@@ -442,7 +482,11 @@ class AWSPQCScanner:
 
             is_pqc_policy = ssl_policy in PQC_TLS_POLICIES
             is_modern = any(ssl_policy.startswith(p) for p in MODERN_TLS_PREFIXES)
-            pqc_status = "pqc_ready" if is_pqc_policy else ("vulnerable" if not is_modern else "vulnerable")
+            pqc_status = (
+                "pqc_ready"
+                if is_pqc_policy
+                else ("vulnerable" if not is_modern else "vulnerable")
+            )
 
             # Upsert asset
             asset_name = f"aws-elb:{lb_name}"
@@ -469,15 +513,24 @@ class AWSPQCScanner:
             # Record algorithm (the TLS policy itself)
             algo_name = ssl_policy or "Unknown-TLS-Policy"
             await self._record_algorithm(
-                session, asset.id, scan_id, algo_name, "key_exchange",
-                None, pqc_status, not is_pqc_policy, protocol="TLS",
+                session,
+                asset.id,
+                scan_id,
+                algo_name,
+                "key_exchange",
+                None,
+                pqc_status,
+                not is_pqc_policy,
+                protocol="TLS",
             )
             stats["algorithms_recorded"] += 1
 
             # Finding for non-PQC TLS policies
             if not is_pqc_policy:
                 created_f = await self._create_finding(
-                    session, asset, scan_id,
+                    session,
+                    asset,
+                    scan_id,
                     finding_type="pqc_not_supported",
                     severity="high",
                     title=f"ELB/ALB TLS Policy Lacks PQC Support ({ssl_policy})",
@@ -507,7 +560,9 @@ class AWSPQCScanner:
         return stats
 
     # ── CloudFront ──────────────────────────────────────────────────────
-    async def _scan_cloudfront(self, session: AsyncSession, scan_id: str) -> Dict[str, Any]:
+    async def _scan_cloudfront(
+        self, session: AsyncSession, scan_id: str
+    ) -> Dict[str, Any]:
         import boto3
 
         stats = _empty_stats()
@@ -561,13 +616,22 @@ class AWSPQCScanner:
             stats["assets_created" if created else "assets_updated"] += 1
 
             await self._record_algorithm(
-                session, asset.id, scan_id, f"CloudFront-{min_protocol}", "key_exchange",
-                None, pqc_status, True, protocol="TLS",
+                session,
+                asset.id,
+                scan_id,
+                f"CloudFront-{min_protocol}",
+                "key_exchange",
+                None,
+                pqc_status,
+                True,
+                protocol="TLS",
             )
             stats["algorithms_recorded"] += 1
 
             created_f = await self._create_finding(
-                session, asset, scan_id,
+                session,
+                asset,
+                scan_id,
                 finding_type="pqc_not_supported",
                 severity="medium",
                 title=f"CloudFront Distribution Lacks PQC TLS ({dist_id})",
@@ -612,23 +676,31 @@ class AWSPQCScanner:
                 name = bucket["Name"]
                 try:
                     enc = s3.get_bucket_encryption(Bucket=name)
-                    rules = enc.get("ServerSideEncryptionConfiguration", {}).get("Rules", [])
+                    rules = enc.get("ServerSideEncryptionConfiguration", {}).get(
+                        "Rules", []
+                    )
                     for rule in rules:
                         sse = rule.get("ApplyServerSideEncryptionByDefault", {})
-                        results.append({
-                            "bucket": name,
-                            "sse_algorithm": sse.get("SSEAlgorithm", "NONE"),
-                            "kms_key_id": sse.get("KMSMasterKeyID"),
-                            "bucket_key_enabled": rule.get("BucketKeyEnabled", False),
-                        })
+                        results.append(
+                            {
+                                "bucket": name,
+                                "sse_algorithm": sse.get("SSEAlgorithm", "NONE"),
+                                "kms_key_id": sse.get("KMSMasterKeyID"),
+                                "bucket_key_enabled": rule.get(
+                                    "BucketKeyEnabled", False
+                                ),
+                            }
+                        )
                 except s3.exceptions.ClientError:
                     # No encryption config
-                    results.append({
-                        "bucket": name,
-                        "sse_algorithm": "NONE",
-                        "kms_key_id": None,
-                        "bucket_key_enabled": False,
-                    })
+                    results.append(
+                        {
+                            "bucket": name,
+                            "sse_algorithm": "NONE",
+                            "kms_key_id": None,
+                            "bucket_key_enabled": False,
+                        }
+                    )
                 except Exception as e:
                     results.append({"bucket": name, "_error": str(e)})
             return results
@@ -687,15 +759,24 @@ class AWSPQCScanner:
             stats["assets_created" if created else "assets_updated"] += 1
 
             await self._record_algorithm(
-                session, asset.id, scan_id, algo_name, algo_type,
-                key_size, pqc_status, is_qv, protocol="S3-SSE",
+                session,
+                asset.id,
+                scan_id,
+                algo_name,
+                algo_type,
+                key_size,
+                pqc_status,
+                is_qv,
+                protocol="S3-SSE",
             )
             stats["algorithms_recorded"] += 1
 
         return stats
 
     # ── IAM Server Certificates ─────────────────────────────────────────
-    async def _scan_iam_certs(self, session: AsyncSession, scan_id: str) -> Dict[str, Any]:
+    async def _scan_iam_certs(
+        self, session: AsyncSession, scan_id: str
+    ) -> Dict[str, Any]:
         import boto3
 
         stats = _empty_stats()
@@ -717,7 +798,6 @@ class AWSPQCScanner:
         for cert_meta in iam_certs:
             cert_name = cert_meta.get("ServerCertificateName", "unknown")
             arn = cert_meta.get("Arn", "")
-            expiration = cert_meta.get("Expiration")
 
             # IAM certs are always classical (RSA/ECDSA)
             asset_name = f"aws-iam-cert:{cert_name}"
@@ -739,13 +819,22 @@ class AWSPQCScanner:
             stats["assets_created" if created else "assets_updated"] += 1
 
             await self._record_algorithm(
-                session, asset.id, scan_id, "RSA (IAM Server Cert)", "signature",
-                2048, "vulnerable", True, protocol="IAM",
+                session,
+                asset.id,
+                scan_id,
+                "RSA (IAM Server Cert)",
+                "signature",
+                2048,
+                "vulnerable",
+                True,
+                protocol="IAM",
             )
             stats["algorithms_recorded"] += 1
 
             created_f = await self._create_finding(
-                session, asset, scan_id,
+                session,
+                asset,
+                scan_id,
                 finding_type="weak_algorithm",
                 severity="medium",
                 title=f"IAM Server Certificate Uses Classical Algorithm ({cert_name})",
@@ -864,7 +953,9 @@ class AWSPQCScanner:
     ):
         import hashlib
 
-        thumbprint = hashlib.sha256(f"{domain}:{sig_algo}:{not_after}".encode()).hexdigest()[:64]
+        thumbprint = hashlib.sha256(
+            f"{domain}:{sig_algo}:{not_after}".encode()
+        ).hexdigest()[:64]
 
         # Check if already exists
         stmt = select(Certificate).where(
@@ -886,15 +977,25 @@ class AWSPQCScanner:
             sig_algorithm=sig_algo,
             pub_key_algorithm=pub_key_algo,
             pub_key_size=key_size,
-            not_before=not_before if isinstance(not_before, datetime) else datetime.now(timezone.utc),
-            not_after=not_after if isinstance(not_after, datetime) else datetime.now(timezone.utc),
+            not_before=(
+                not_before
+                if isinstance(not_before, datetime)
+                else datetime.now(timezone.utc)
+            ),
+            not_after=(
+                not_after
+                if isinstance(not_after, datetime)
+                else datetime.now(timezone.utc)
+            ),
             is_self_signed=False,
             is_ca=is_ca,
             san_dns=san_dns or [],
             pqc_capable=classification.get("is_pqc", False),
             pqc_details={
                 "pqc_status": pqc_status,
-                "is_quantum_vulnerable": classification.get("is_quantum_vulnerable", True),
+                "is_quantum_vulnerable": classification.get(
+                    "is_quantum_vulnerable", True
+                ),
             },
         )
         session.add(cert)
@@ -932,7 +1033,11 @@ class AWSPQCScanner:
             return False
 
         # Calculate risk score
-        system_exposure = "internet" if asset.asset_type in ["load_balancer", "web_app", "api"] else "internal"
+        system_exposure = (
+            "internet"
+            if asset.asset_type in ["load_balancer", "web_app", "api"]
+            else "internal"
+        )
         risk_score = calculate_risk_score(
             hndl_exposure="high" if pqc_status == "vulnerable" else "low",
             system_exposure=system_exposure,
@@ -980,6 +1085,7 @@ def _empty_stats() -> Dict[str, Any]:
 def _parse_key_size(key_algo: str) -> Optional[int]:
     """Extract key size from ACM key algorithm strings like RSA_2048, EC_prime256v1."""
     import re
+
     m = re.search(r"(\d{3,5})", key_algo)
     if m:
         return int(m.group(1))

@@ -24,9 +24,9 @@ import logging
 import os
 import socket
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
+from typing import List, Sequence
 
-import dns.resolver
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +34,6 @@ ALLOW_PRIVATE_RANGES = os.environ.get("PQC_ALLOW_PRIVATE_RANGES", "0") == "1"
 ALLOW_LOOPBACK = os.environ.get("PQC_ALLOW_LOOPBACK", "0") == "1"
 ALLOW_LINK_LOCAL = os.environ.get("PQC_ALLOW_LINK_LOCAL", "0") == "1"
 ALLOW_MULTICAST = os.environ.get("PQC_ALLOW_MULTICAST", "0") == "1"
-
-from app.config import settings
 
 ALLOW_PRIVATE_RANGES = settings.PQC_ALLOW_PRIVATE_RANGES
 ALLOW_LOOPBACK = settings.PQC_ALLOW_LOOPBACK
@@ -58,6 +56,7 @@ class SafeTarget:
     address that downstream code must use. Passing `ip` (not `host`) to
     `socket.create_connection` is what makes DNS-rebinding attacks fail.
     """
+
     host: str
     ip: str
     port: int
@@ -125,9 +124,7 @@ def validate_cidr(cidr: str) -> None:
             )
         # Spot-check the network address; if it's unsafe, reject.
         if not _ip_is_safe(str(net.network_address)):
-            raise UnsafeTargetError(
-                f"network range {cidr} contains unsafe addresses"
-            )
+            raise UnsafeTargetError(f"network range {cidr} contains unsafe addresses")
     else:
         validate_ip(cidr)
 
@@ -181,9 +178,7 @@ def build_safe_target(host: str, port: int) -> SafeTarget:
         raise UnsafeTargetError(f"host {host!r} could not be resolved")
     chosen = next((a for a in addrs if _ip_is_safe(a)), None)
     if not chosen:
-        raise UnsafeTargetError(
-            f"host {host!r} resolved only to unsafe IPs: {addrs}"
-        )
+        raise UnsafeTargetError(f"host {host!r} resolved only to unsafe IPs: {addrs}")
     return SafeTarget(host=host, ip=chosen, port=port)
 
 

@@ -5,6 +5,7 @@ Revises: 61bc0e3f062b
 Create Date: 2026-06-04 13:35:00.000000
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -18,7 +19,9 @@ depends_on = None
 def upgrade() -> None:
     op.add_column(
         "scans",
-        sa.Column("advanced_tools", sa.Boolean(), nullable=False, server_default="false"),
+        sa.Column(
+            "advanced_tools", sa.Boolean(), nullable=False, server_default="false"
+        ),
     )
 
 

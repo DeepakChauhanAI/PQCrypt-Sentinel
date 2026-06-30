@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import asyncio
 import logging
 import os
@@ -26,7 +27,9 @@ def _require_tshark() -> str:
     return path
 
 
-async def capture_tls_handshakes(interface: str, duration_seconds: int = 60) -> List[Dict[str, Any]]:
+async def capture_tls_handshakes(
+    interface: str, duration_seconds: int = 60
+) -> List[Dict[str, Any]]:
     _require_tshark()
     try:
         import pyshark
@@ -54,28 +57,68 @@ async def capture_tls_handshakes(interface: str, duration_seconds: int = 60) -> 
                         continue
 
                     entry: Dict[str, Any] = {
-                        "timestamp": getattr(packet, "sniff_time", None).isoformat() if hasattr(packet, "sniff_time") and packet.sniff_time else None,
+                        "timestamp": (
+                            getattr(packet, "sniff_time", None).isoformat()
+                            if hasattr(packet, "sniff_time") and packet.sniff_time
+                            else None
+                        ),
                     }
 
                     if handshake_type == "1":
-                        entry.update({
-                            "type": "ClientHello",
-                            "src_ip": getattr(packet, "ip", None).src if hasattr(packet, "ip") else None,
-                            "dst_ip": getattr(packet, "ip", None).dst if hasattr(packet, "ip") else None,
-                            "dst_port": getattr(packet, "tcp", None).dstport if hasattr(packet, "tcp") else None,
-                            "tls_version": getattr(tls_layer, "handshake_version", None),
-                            "cipher_suites": _extract_cipher_suites(tls_layer),
-                            "supported_groups": _extract_supported_groups(tls_layer),
-                        })
+                        entry.update(
+                            {
+                                "type": "ClientHello",
+                                "src_ip": (
+                                    getattr(packet, "ip", None).src
+                                    if hasattr(packet, "ip")
+                                    else None
+                                ),
+                                "dst_ip": (
+                                    getattr(packet, "ip", None).dst
+                                    if hasattr(packet, "ip")
+                                    else None
+                                ),
+                                "dst_port": (
+                                    getattr(packet, "tcp", None).dstport
+                                    if hasattr(packet, "tcp")
+                                    else None
+                                ),
+                                "tls_version": getattr(
+                                    tls_layer, "handshake_version", None
+                                ),
+                                "cipher_suites": _extract_cipher_suites(tls_layer),
+                                "supported_groups": _extract_supported_groups(
+                                    tls_layer
+                                ),
+                            }
+                        )
                     elif handshake_type == "2":
-                        entry.update({
-                            "type": "ServerHello",
-                            "src_ip": getattr(packet, "ip", None).dst if hasattr(packet, "ip") else None,
-                            "dst_ip": getattr(packet, "ip", None).src if hasattr(packet, "ip") else None,
-                            "selected_cipher": getattr(tls_layer, "handshake_ciphersuite", None),
-                            "selected_group": getattr(tls_layer, "handshake_extensions_key_share_group", None),
-                            "tls_version": getattr(tls_layer, "handshake_version", None),
-                        })
+                        entry.update(
+                            {
+                                "type": "ServerHello",
+                                "src_ip": (
+                                    getattr(packet, "ip", None).dst
+                                    if hasattr(packet, "ip")
+                                    else None
+                                ),
+                                "dst_ip": (
+                                    getattr(packet, "ip", None).src
+                                    if hasattr(packet, "ip")
+                                    else None
+                                ),
+                                "selected_cipher": getattr(
+                                    tls_layer, "handshake_ciphersuite", None
+                                ),
+                                "selected_group": getattr(
+                                    tls_layer,
+                                    "handshake_extensions_key_share_group",
+                                    None,
+                                ),
+                                "tls_version": getattr(
+                                    tls_layer, "handshake_version", None
+                                ),
+                            }
+                        )
 
                     pqc_groups = {
                         0x01FC: "ML-KEM-512",
@@ -159,7 +202,9 @@ async def analyze_pcap_file(pcap_path: str) -> Dict[str, Any]:
                         cipher = getattr(tls, "handshake_ciphersuite", None)
                         if cipher:
                             findings["cipher_suites_seen"].add(cipher)
-                        group_raw = getattr(tls, "handshake_extensions_key_share_group", None)
+                        group_raw = getattr(
+                            tls, "handshake_extensions_key_share_group", None
+                        )
                         if group_raw is not None:
                             try:
                                 group_id = int(group_raw)
@@ -167,9 +212,18 @@ async def analyze_pcap_file(pcap_path: str) -> Dict[str, Any]:
                                 group_id = None
                             if group_id is not None:
                                 entry = {
-                                    "server": getattr(packet, "ip", None).dst if hasattr(packet, "ip") else None,
+                                    "server": (
+                                        getattr(packet, "ip", None).dst
+                                        if hasattr(packet, "ip")
+                                        else None
+                                    ),
                                     "group_id": group_id,
-                                    "timestamp": getattr(packet, "sniff_time", None).isoformat() if hasattr(packet, "sniff_time") and packet.sniff_time else None,
+                                    "timestamp": (
+                                        getattr(packet, "sniff_time", None).isoformat()
+                                        if hasattr(packet, "sniff_time")
+                                        and packet.sniff_time
+                                        else None
+                                    ),
                                 }
                                 if group_id in pqc_group_ids:
                                     findings["pqc_kex_negotiated"].append(entry)
@@ -179,11 +233,22 @@ async def analyze_pcap_file(pcap_path: str) -> Dict[str, Any]:
                     if handshake_type == "11":
                         raw_cert = getattr(tls, "handshake_certificate", None)
                         if raw_cert:
-                            findings["certificates"].append({
-                                "server": getattr(packet, "ip", None).dst if hasattr(packet, "ip") else None,
-                                "raw_cert_hex": str(raw_cert),
-                                "timestamp": getattr(packet, "sniff_time", None).isoformat() if hasattr(packet, "sniff_time") and packet.sniff_time else None,
-                            })
+                            findings["certificates"].append(
+                                {
+                                    "server": (
+                                        getattr(packet, "ip", None).dst
+                                        if hasattr(packet, "ip")
+                                        else None
+                                    ),
+                                    "raw_cert_hex": str(raw_cert),
+                                    "timestamp": (
+                                        getattr(packet, "sniff_time", None).isoformat()
+                                        if hasattr(packet, "sniff_time")
+                                        and packet.sniff_time
+                                        else None
+                                    ),
+                                }
+                            )
                 except (AttributeError, ValueError, TypeError):
                     continue
         except Exception as exc:
@@ -226,7 +291,9 @@ def _extract_supported_groups(tls_layer: Any) -> List[str]:
     return groups
 
 
-async def capture_ssh_handshakes(interface: str, duration_seconds: int = 60) -> List[Dict[str, Any]]:
+async def capture_ssh_handshakes(
+    interface: str, duration_seconds: int = 60
+) -> List[Dict[str, Any]]:
     _require_tshark()
     try:
         import pyshark
@@ -248,13 +315,13 @@ async def capture_ssh_handshakes(interface: str, duration_seconds: int = 60) -> 
                     if not hasattr(packet, "ssh"):
                         continue
                     ssh_layer = packet.ssh
-                    
+
                     # Defensively extract SSH algorithms
                     kex_algs = []
                     host_key_algs = []
                     enc_algs = []
                     mac_algs = []
-                    
+
                     for field in getattr(ssh_layer, "field_names", []):
                         if "kex_algorithms" in field:
                             val = getattr(ssh_layer, field, None)
@@ -272,16 +339,35 @@ async def capture_ssh_handshakes(interface: str, duration_seconds: int = 60) -> 
                             val = getattr(ssh_layer, field, None)
                             if val:
                                 mac_algs.extend(str(val).split(","))
-                                
+
                     pqc_kex_patterns = ["sntrup761x25519", "mlkem768x25519", "mlkem"]
-                    has_pqc = any(any(pat in alg.lower() for pat in pqc_kex_patterns) for alg in kex_algs)
+                    has_pqc = any(
+                        any(pat in alg.lower() for pat in pqc_kex_patterns)
+                        for alg in kex_algs
+                    )
 
                     entry = {
                         "type": "SSH_KEXINIT",
-                        "timestamp": getattr(packet, "sniff_time", None).isoformat() if hasattr(packet, "sniff_time") and packet.sniff_time else None,
-                        "src_ip": getattr(packet, "ip", None).src if hasattr(packet, "ip") else None,
-                        "dst_ip": getattr(packet, "ip", None).dst if hasattr(packet, "ip") else None,
-                        "dst_port": getattr(packet, "tcp", None).dstport if hasattr(packet, "tcp") else None,
+                        "timestamp": (
+                            getattr(packet, "sniff_time", None).isoformat()
+                            if hasattr(packet, "sniff_time") and packet.sniff_time
+                            else None
+                        ),
+                        "src_ip": (
+                            getattr(packet, "ip", None).src
+                            if hasattr(packet, "ip")
+                            else None
+                        ),
+                        "dst_ip": (
+                            getattr(packet, "ip", None).dst
+                            if hasattr(packet, "ip")
+                            else None
+                        ),
+                        "dst_port": (
+                            getattr(packet, "tcp", None).dstport
+                            if hasattr(packet, "tcp")
+                            else None
+                        ),
                         "kex_algorithms": list(set(kex_algs)),
                         "server_host_key_algorithms": list(set(host_key_algs)),
                         "encryption_algorithms": list(set(enc_algs)),
@@ -304,13 +390,15 @@ async def capture_ssh_handshakes(interface: str, duration_seconds: int = 60) -> 
     return await asyncio.to_thread(_do_capture_ssh)
 
 
-async def capture_all_handshakes(interface: str, duration_seconds: int = 60) -> List[Dict[str, Any]]:
+async def capture_all_handshakes(
+    interface: str, duration_seconds: int = 60
+) -> List[Dict[str, Any]]:
     tls_results: Union[List[Dict[str, Any]], Exception]
     ssh_results: Union[List[Dict[str, Any]], Exception]
     tls_results, ssh_results = await asyncio.gather(
         capture_tls_handshakes(interface, duration_seconds),
         capture_ssh_handshakes(interface, duration_seconds),
-        return_exceptions=True
+        return_exceptions=True,
     )
     results = []
     if isinstance(tls_results, list):

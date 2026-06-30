@@ -27,7 +27,11 @@ def async_retry(
     max_delay: float = 8.0,
     backoff: float = 2.0,
     jitter: float = 0.1,
-    retry_on: Iterable[Type[BaseException]] = (asyncio.TimeoutError, ConnectionError, OSError),
+    retry_on: Iterable[Type[BaseException]] = (
+        asyncio.TimeoutError,
+        ConnectionError,
+        OSError,
+    ),
 ) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
     """
     Decorator that retries the wrapped coroutine on the given exception types.

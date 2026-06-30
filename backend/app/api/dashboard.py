@@ -1,10 +1,8 @@
-import json
 import logging
 from datetime import datetime, timezone
 from typing import List, Optional, Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy import select, func, and_
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import get_current_user
@@ -136,7 +134,7 @@ async def get_summary(
             and_(
                 Finding.severity == "critical",
                 Finding.status == "open",
-                Finding.deleted_at.is_(None)
+                Finding.deleted_at.is_(None),
             )
         )
     )
@@ -147,7 +145,7 @@ async def get_summary(
             and_(
                 Finding.severity == "high",
                 Finding.status == "open",
-                Finding.deleted_at.is_(None)
+                Finding.deleted_at.is_(None),
             )
         )
     )
@@ -159,7 +157,7 @@ async def get_summary(
             and_(
                 Finding.finding_type.in_(["config_drift", "pqc_downgrade"]),
                 Finding.status == "open",
-                Finding.deleted_at.is_(None)
+                Finding.deleted_at.is_(None),
             )
         )
     )
@@ -220,7 +218,10 @@ async def get_progress(
 
     # Fetch last 12 completed scans
     scans_res = await session.execute(
-        select(Scan).where(Scan.status == "completed").order_by(Scan.completed_at.desc()).limit(12)
+        select(Scan)
+        .where(Scan.status == "completed")
+        .order_by(Scan.completed_at.desc())
+        .limit(12)
     )
     scans = scans_res.scalars().all()
     scans = list(reversed(scans))
@@ -254,7 +255,11 @@ async def get_progress(
 
         completed_at = getattr(s, "completed_at", None)
         created_at = getattr(s, "created_at", None) or datetime.now(timezone.utc)
-        date_str = completed_at.strftime("%Y-%m-%d") if completed_at else created_at.strftime("%Y-%m-%d")
+        date_str = (
+            completed_at.strftime("%Y-%m-%d")
+            if completed_at
+            else created_at.strftime("%Y-%m-%d")
+        )
 
         progress.append(
             {
@@ -271,13 +276,41 @@ async def get_progress(
 
 # Layer definitions for 7 infrastructure layers
 LAYER_DEFINITIONS = [
-    {"id": "L1", "name": "Network", "description": "TLS, SSH, VPN/IKEv2, DNSSEC, OCSP, SMTP STARTTLS"},
-    {"id": "L2", "name": "PKI", "description": "Root CA, Intermediate CAs, TLS Server Certs, Code-signing, TSA"},
-    {"id": "L3", "name": "HSM/KMS", "description": "General HSMs, Payment HSMs (3DES), Cloud KMS"},
-    {"id": "L4", "name": "Application", "description": "JWT Algorithms, Container Images, API Crypto"},
-    {"id": "L5", "name": "Data", "description": "TDE Algorithms, Backup Encryption, Column-level Encryption"},
-    {"id": "L6", "name": "Infrastructure", "description": "SSH Host Keys, Kerberos RC4, Windows CNG/Schannel"},
-    {"id": "L7", "name": "Endpoint", "description": "Windows Cert Store, BitLocker, Firmware Signing"},
+    {
+        "id": "L1",
+        "name": "Network",
+        "description": "TLS, SSH, VPN/IKEv2, DNSSEC, OCSP, SMTP STARTTLS",
+    },
+    {
+        "id": "L2",
+        "name": "PKI",
+        "description": "Root CA, Intermediate CAs, TLS Server Certs, Code-signing, TSA",
+    },
+    {
+        "id": "L3",
+        "name": "HSM/KMS",
+        "description": "General HSMs, Payment HSMs (3DES), Cloud KMS",
+    },
+    {
+        "id": "L4",
+        "name": "Application",
+        "description": "JWT Algorithms, Container Images, API Crypto",
+    },
+    {
+        "id": "L5",
+        "name": "Data",
+        "description": "TDE Algorithms, Backup Encryption, Column-level Encryption",
+    },
+    {
+        "id": "L6",
+        "name": "Infrastructure",
+        "description": "SSH Host Keys, Kerberos RC4, Windows CNG/Schannel",
+    },
+    {
+        "id": "L7",
+        "name": "Endpoint",
+        "description": "Windows Cert Store, BitLocker, Firmware Signing",
+    },
 ]
 
 # Mapping of asset types / discovery sources to layers
@@ -293,12 +326,10 @@ ASSET_TO_LAYER = {
     "ssh_scan": "L1",
     "ike_scan": "L1",
     "mail_scan": "L1",
-    
     # L2 PKI
     "certificate_authority": "L2",
     "pki": "L2",
     "ct_log": "L2",
-    
     # L3 HSM/KMS
     "hsm": "L3",
     "kms": "L3",
@@ -307,7 +338,6 @@ ASSET_TO_LAYER = {
     "gcp_kms": "L3",
     "pkcs11": "L3",
     "kmip": "L3",
-    
     # L4 Application
     "application": "L4",
     "container": "L4",
@@ -317,18 +347,15 @@ ASSET_TO_LAYER = {
     "saml": "L4",
     "saml_metadata": "L4",
     "source_code": "L4",
-    
     # L5 Data
     "database": "L5",
     "tde": "L5",
     "backup": "L5",
     "backup_encryption": "L5",
-    
     # L6 Infrastructure
     "ssh_host_key": "L6",
     "kerberos": "L6",
     "windows_cng": "L6",
-    
     # L7 Endpoint
     "endpoint": "L7",
     "windows_cert_store": "L7",
@@ -343,12 +370,12 @@ def _determine_layer_for_asset(asset: Asset) -> str:
     asset_type = (asset.asset_type or "").lower()
     if asset_type in ASSET_TO_LAYER:
         return ASSET_TO_LAYER[asset_type]
-    
+
     # Check discovery source
     disc_source = (asset.discovery_source or "").lower()
     if disc_source in ASSET_TO_LAYER:
         return ASSET_TO_LAYER[disc_source]
-    
+
     # Check asset metadata for hints
     meta = asset.asset_metadata or {}
     if isinstance(meta, dict):
@@ -358,7 +385,7 @@ def _determine_layer_for_asset(asset: Asset) -> str:
         key_type = meta.get("key_type", "").lower()
         if "hsm" in key_type or "kms" in key_type:
             return "L3"
-    
+
     # Default to L1 for unknown
     return "L1"
 
@@ -378,9 +405,7 @@ async def get_layer_coverage(
         return cached
 
     # Get all active assets
-    assets_res = await session.execute(
-        select(Asset).where(Asset.deleted_at.is_(None))
-    )
+    assets_res = await session.execute(select(Asset).where(Asset.deleted_at.is_(None)))
     assets = assets_res.scalars().all()
 
     # Initialize layer stats. The dict values are heterogeneous
@@ -474,18 +499,20 @@ async def get_layer_coverage(
     for layer in LAYER_DEFINITIONS:
         layer_id = layer["id"]
         layer_counts = counts[layer_id]
-        layers.append({
-            "layer_id": layer_id,
-            "layer_name": layer["name"],
-            "description": layer["description"],
-            "total_assets": layer_counts["total"],
-            "scanned_assets": layer_counts["scanned"],
-            "vulnerable_assets": layer_counts["vulnerable"],
-            "hybrid_assets": layer_counts["hybrid"],
-            "pqc_ready_assets": layer_counts["pqc_ready"],
-            "coverage_pct": layer_stats[layer_id]["coverage_pct"],
-            "risk_score_avg": layer_stats[layer_id]["risk_score_avg"],
-        })
+        layers.append(
+            {
+                "layer_id": layer_id,
+                "layer_name": layer["name"],
+                "description": layer["description"],
+                "total_assets": layer_counts["total"],
+                "scanned_assets": layer_counts["scanned"],
+                "vulnerable_assets": layer_counts["vulnerable"],
+                "hybrid_assets": layer_counts["hybrid"],
+                "pqc_ready_assets": layer_counts["pqc_ready"],
+                "coverage_pct": layer_stats[layer_id]["coverage_pct"],
+                "risk_score_avg": layer_stats[layer_id]["risk_score_avg"],
+            }
+        )
 
     # Weight the overall coverage by asset count per layer so that
     # layers with zero assets don't artificially drag the score down
@@ -494,9 +521,9 @@ async def get_layer_coverage(
     scanned_all = sum(c["scanned"] for c in counts.values())
     response = {
         "layers": layers,
-        "overall_coverage_pct": round(
-            (scanned_all / total_all) * 100, 1
-        ) if total_all > 0 else 0.0,
+        "overall_coverage_pct": (
+            round((scanned_all / total_all) * 100, 1) if total_all > 0 else 0.0
+        ),
     }
 
     await set_cache(cache_key, response)

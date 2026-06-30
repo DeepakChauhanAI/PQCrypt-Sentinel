@@ -21,5 +21,3 @@ def register_routes(application: FastAPI) -> None:
     application.include_router(dashboard_router)
     application.include_router(reports_router)
     application.include_router(connectors_router)
-
-

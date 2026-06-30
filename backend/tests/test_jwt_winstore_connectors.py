@@ -1,12 +1,13 @@
 """
 Tests for the L4 JWT and L7 Windows Cert Store connectors.
 """
+
 from __future__ import annotations
 
 import asyncio
 import base64
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -18,11 +19,13 @@ def _b64url(data: bytes) -> str:
 
 
 def _make_jwt(header: Dict[str, Any], payload: Dict[str, Any], sig: bytes = b"") -> str:
-    return ".".join([
-        _b64url(json.dumps(header).encode("utf-8")),
-        _b64url(json.dumps(payload).encode("utf-8")),
-        _b64url(sig),
-    ])
+    return ".".join(
+        [
+            _b64url(json.dumps(header).encode("utf-8")),
+            _b64url(json.dumps(payload).encode("utf-8")),
+            _b64url(sig),
+        ]
+    )
 
 
 def test_jwt_connector_decodes_offline_token():
@@ -31,7 +34,12 @@ def test_jwt_connector_decodes_offline_token():
 
     token = _make_jwt(
         {"alg": "RS256", "typ": "JWT", "kid": "k1"},
-        {"iss": "https://issuer", "sub": "user-1", "exp": 9999999999, "scope": "read write"},
+        {
+            "iss": "https://issuer",
+            "sub": "user-1",
+            "exp": 9999999999,
+            "scope": "read write",
+        },
     )
 
     session = AsyncMock()
@@ -165,7 +173,9 @@ def test_jwt_connector_derive_key_size_ecc():
     """An EC JWK in the header exposes the curve bit-length."""
     from app.connectors.jwt_connector import JWTConnector
 
-    token = _make_jwt({"alg": "ES384", "jwk": {"kty": "EC", "crv": "P-384"}}, {"sub": "x"})
+    token = _make_jwt(
+        {"alg": "ES384", "jwk": {"kty": "EC", "crv": "P-384"}}, {"sub": "x"}
+    )
 
     session = AsyncMock()
     session.execute = AsyncMock()
@@ -235,7 +245,9 @@ def test_windows_cert_store_parses_certutil_dump():
     assert result["status"] == "success"
     assert result["imported"] == 2
     assert session.add.call_count == 2
-    subjects = sorted(call.args[0].asset_metadata["subject"] for call in session.add.call_args_list)
+    subjects = sorted(
+        call.args[0].asset_metadata["subject"] for call in session.add.call_args_list
+    )
     assert subjects == ["CN=host.example.com", "CN=other.example.com"]
 
 
@@ -252,7 +264,9 @@ def test_windows_cert_store_layer_is_L7():
     c = WindowsCertStoreConnector(store_name="Root", store_kind="enterprise")
     asyncio.run(c.sync(session, dump_text=CERTUTIL_DUMP))
 
-    layers = [call.args[0].asset_metadata["layer"] for call in session.add.call_args_list]
+    layers = [
+        call.args[0].asset_metadata["layer"] for call in session.add.call_args_list
+    ]
     assert all(layer == "L7" for layer in layers)
 
 
@@ -335,6 +349,7 @@ def test_jwt_connector_uses_dict_credentials_ref():
         return {"token": "bearer-abc"}
 
     import app.connectors.jwt_connector as jc
+
     jc.get_vault_secret = _fake_vault  # type: ignore[assignment]
 
     c = JWTConnector(credentials_ref={"vault_path": "secret/pqc/jwt", "version": None})
@@ -351,9 +366,12 @@ def test_jwt_connector_uses_object_credentials_ref():
         return {"token": "bearer-xyz"}
 
     import app.connectors.jwt_connector as jc
+
     jc.get_vault_secret = _fake_vault  # type: ignore[assignment]
 
-    c = JWTConnector(credentials_ref=SimpleNamespace(vault_path="secret/pqc/jwt2", version=1))
+    c = JWTConnector(
+        credentials_ref=SimpleNamespace(vault_path="secret/pqc/jwt2", version=1)
+    )
     creds = asyncio.run(c._get_credentials())
     assert creds == {"token": "bearer-xyz"}
 

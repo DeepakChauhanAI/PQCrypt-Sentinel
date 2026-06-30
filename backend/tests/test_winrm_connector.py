@@ -1,7 +1,6 @@
 import sys
 from unittest.mock import MagicMock, AsyncMock, patch
 import pytest
-import json
 
 # Setup mock modules for winrm
 mock_winrm = MagicMock()
@@ -24,9 +23,11 @@ def reset_winrm_mocks():
 async def test_winrm_get_credentials_dict():
     connector = WinRMConnector(
         credentials_ref={"vault_path": "secret/pqc/winrm", "version": 3},
-        host="10.0.0.2"
+        host="10.0.0.2",
     )
-    with patch("app.connectors.winrm_connector.get_vault_secret", new_callable=AsyncMock) as mock_get:
+    with patch(
+        "app.connectors.winrm_connector.get_vault_secret", new_callable=AsyncMock
+    ) as mock_get:
         mock_get.return_value = {"username": "admin", "password": "pwd"}
         creds = await connector._get_credentials()
         mock_get.assert_called_once_with("secret/pqc/winrm", 3)
@@ -41,7 +42,9 @@ async def test_winrm_get_credentials_obj():
             self.version = 1
 
     connector = WinRMConnector(credentials_ref=FakeRef(), host="10.0.0.2")
-    with patch("app.connectors.winrm_connector.get_vault_secret", new_callable=AsyncMock) as mock_get:
+    with patch(
+        "app.connectors.winrm_connector.get_vault_secret", new_callable=AsyncMock
+    ) as mock_get:
         mock_get.return_value = {"username": "admin-obj"}
         creds = await connector._get_credentials()
         mock_get.assert_called_once_with("secret/pqc/winrm-obj", 1)
@@ -56,7 +59,9 @@ async def test_winrm_run_ps_command_missing_library():
     sys.modules["winrm.protocol"] = None
     try:
         with pytest.raises(RuntimeError) as exc:
-            await connector._run_ps_command({"username": "u", "password": "p"}, "Get-Process")
+            await connector._run_ps_command(
+                {"username": "u", "password": "p"}, "Get-Process"
+            )
         assert "pywinrm is required" in str(exc.value)
     finally:
         sys.modules["winrm.protocol"] = orig
@@ -70,37 +75,43 @@ async def test_winrm_run_ps_command_success():
         port=5986,
         transport="ntlm",
         use_https=True,
-        verify_ssl=False
+        verify_ssl=False,
     )
-    
+
     # Mock Protocol instance and methods
     mock_protocol_instance = MagicMock()
     mock_winrm_protocol.Protocol.return_value = mock_protocol_instance
-    
+
     mock_protocol_instance.open_shell.return_value = "shell-123"
     mock_protocol_instance.run_command.return_value = "cmd-123"
-    mock_protocol_instance.get_command_output.return_value = (b"output-stdout\n", b"output-stderr\n", 0)
-    
-    res = await connector._run_ps_command(
-        {"username": "user1", "password": "pwd1"},
-        "Get-Service"
+    mock_protocol_instance.get_command_output.return_value = (
+        b"output-stdout\n",
+        b"output-stderr\n",
+        0,
     )
-    
+
+    res = await connector._run_ps_command(
+        {"username": "user1", "password": "pwd1"}, "Get-Service"
+    )
+
     mock_winrm_protocol.Protocol.assert_called_once_with(
         endpoint="https://10.0.0.2:5986/wsman",
         transport="ntlm",
         username="user1",
         password="pwd1",
-        server_cert_validation="ignore"
+        server_cert_validation="ignore",
     )
-    
+
     mock_protocol_instance.open_shell.assert_called_once()
     mock_protocol_instance.run_command.assert_called_once_with(
-        "shell-123",
-        "powershell -NoProfile -NonInteractive -Command Get-Service"
+        "shell-123", "powershell -NoProfile -NonInteractive -Command Get-Service"
     )
-    mock_protocol_instance.get_command_output.assert_called_once_with("shell-123", "cmd-123")
-    mock_protocol_instance.cleanup_command.assert_called_once_with("shell-123", "cmd-123")
+    mock_protocol_instance.get_command_output.assert_called_once_with(
+        "shell-123", "cmd-123"
+    )
+    mock_protocol_instance.cleanup_command.assert_called_once_with(
+        "shell-123", "cmd-123"
+    )
     mock_protocol_instance.close_shell.assert_called_once_with("shell-123")
 
     assert res == {
@@ -113,12 +124,14 @@ async def test_winrm_run_ps_command_success():
 @pytest.mark.asyncio
 async def test_winrm_run_ps_command_exception():
     connector = WinRMConnector(credentials_ref={}, host="10.0.0.2")
-    
+
     mock_protocol_instance = MagicMock()
     mock_winrm_protocol.Protocol.return_value = mock_protocol_instance
     mock_protocol_instance.open_shell.side_effect = Exception("WinRM network reset")
-    
-    res = await connector._run_ps_command({"username": "u", "password": "p"}, "Get-Service")
+
+    res = await connector._run_ps_command(
+        {"username": "u", "password": "p"}, "Get-Service"
+    )
     assert res == {
         "exit_code": -1,
         "stdout": "",
@@ -136,7 +149,7 @@ async def test_winrm_get_cert_store_variants():
         mock_run.return_value = {
             "exit_code": 0,
             "stdout": '[{"Thumbprint": "T1", "Subject": "S1"}, {"Thumbprint": "T2", "Subject": "S2"}]',
-            "stderr": ""
+            "stderr": "",
         }
         res = await connector._get_cert_store(proto, "My")
         assert len(res) == 2
@@ -147,7 +160,7 @@ async def test_winrm_get_cert_store_variants():
         mock_run.return_value = {
             "exit_code": 0,
             "stdout": '{"Thumbprint": "T3", "Subject": "S3"}',
-            "stderr": ""
+            "stderr": "",
         }
         res = await connector._get_cert_store(proto, "My")
         assert len(res) == 1
@@ -155,11 +168,7 @@ async def test_winrm_get_cert_store_variants():
 
     # Case 3: Bad JSON stdout
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {
-            "exit_code": 0,
-            "stdout": 'not a json',
-            "stderr": ""
-        }
+        mock_run.return_value = {"exit_code": 0, "stdout": "not a json", "stderr": ""}
         res = await connector._get_cert_store(proto, "My")
         assert res == []
 
@@ -168,7 +177,7 @@ async def test_winrm_get_cert_store_variants():
         mock_run.return_value = {
             "exit_code": 1,
             "stdout": '[{"Thumbprint": "T1"}]',
-            "stderr": "error"
+            "stderr": "error",
         }
         res = await connector._get_cert_store(proto, "My")
         assert res == []
@@ -181,8 +190,10 @@ async def test_winrm_get_all_cert_stores():
 
     with patch.object(connector, "_get_cert_store", new_callable=AsyncMock) as mock_get:
         # Mock My and Root stores returning certificates, other stores empty
-        mock_get.side_effect = lambda p, store: [{"Thumbprint": f"T_{store}"}] if store in ["My", "Root"] else []
-        
+        mock_get.side_effect = lambda p, store: (
+            [{"Thumbprint": f"T_{store}"}] if store in ["My", "Root"] else []
+        )
+
         stores = await connector._get_all_cert_stores(proto)
         assert len(stores) == 2
         assert stores["My"] == [{"Thumbprint": "T_My"}]
@@ -196,7 +207,10 @@ async def test_winrm_get_cng_keys():
 
     # Case 1: List returned
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 0, "stdout": '[{"Name": "K1"}, {"Name": "K2"}]'}
+        mock_run.return_value = {
+            "exit_code": 0,
+            "stdout": '[{"Name": "K1"}, {"Name": "K2"}]',
+        }
         res = await connector._get_cng_keys(proto)
         assert len(res) == 2
         assert res[0]["Name"] == "K1"
@@ -210,13 +224,13 @@ async def test_winrm_get_cng_keys():
 
     # Case 3: Parse exception
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 0, "stdout": 'bad json'}
+        mock_run.return_value = {"exit_code": 0, "stdout": "bad json"}
         res = await connector._get_cng_keys(proto)
         assert res == []
 
     # Case 4: Exit code non-zero
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 1, "stdout": '[]'}
+        mock_run.return_value = {"exit_code": 1, "stdout": "[]"}
         res = await connector._get_cng_keys(proto)
         assert res == []
 
@@ -228,19 +242,22 @@ async def test_winrm_get_schannel_settings():
 
     # Case 1: success
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 0, "stdout": '{"TLS 1.2": {"Enabled": 1}}'}
+        mock_run.return_value = {
+            "exit_code": 0,
+            "stdout": '{"TLS 1.2": {"Enabled": 1}}',
+        }
         res = await connector._get_schannel_settings(proto)
         assert res == {"TLS 1.2": {"Enabled": 1}}
 
     # Case 2: parsing exception
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 0, "stdout": 'bad json'}
+        mock_run.return_value = {"exit_code": 0, "stdout": "bad json"}
         res = await connector._get_schannel_settings(proto)
         assert res == {}
 
     # Case 3: Exit code non-zero
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": -1, "stdout": '{}'}
+        mock_run.return_value = {"exit_code": -1, "stdout": "{}"}
         res = await connector._get_schannel_settings(proto)
         assert res == {}
 
@@ -259,13 +276,13 @@ async def test_winrm_get_iis_bindings():
 
     # Case 2: exception
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 0, "stdout": 'bad json'}
+        mock_run.return_value = {"exit_code": 0, "stdout": "bad json"}
         res = await connector._get_iis_bindings(proto)
         assert res == []
 
     # Case 3: Exit code non-zero
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 127, "stdout": '[]'}
+        mock_run.return_value = {"exit_code": 127, "stdout": "[]"}
         res = await connector._get_iis_bindings(proto)
         assert res == []
 
@@ -296,13 +313,13 @@ async def test_winrm_get_bitlocker_status():
 
     # Case 3: exception
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 0, "stdout": 'bad json'}
+        mock_run.return_value = {"exit_code": 0, "stdout": "bad json"}
         res = await connector._get_bitlocker_status(proto)
         assert res["volumes"] == []
 
     # Case 4: Exit code non-zero
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": -1, "stdout": ''}
+        mock_run.return_value = {"exit_code": -1, "stdout": ""}
         res = await connector._get_bitlocker_status(proto)
         assert res["volumes"] == []
 
@@ -320,13 +337,13 @@ async def test_winrm_get_firmware_info():
 
     # Case 2: exception
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 0, "stdout": 'bad json'}
+        mock_run.return_value = {"exit_code": 0, "stdout": "bad json"}
         res = await connector._get_firmware_info(proto)
         assert res == {}
 
     # Case 3: Exit code non-zero
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 1, "stdout": ''}
+        mock_run.return_value = {"exit_code": 1, "stdout": ""}
         res = await connector._get_firmware_info(proto)
         assert res == {}
 
@@ -344,13 +361,13 @@ async def test_winrm_get_tpm_info():
 
     # Case 2: exception
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 0, "stdout": 'bad json'}
+        mock_run.return_value = {"exit_code": 0, "stdout": "bad json"}
         res = await connector._get_tpm_info(proto)
         assert res == {}
 
     # Case 3: Exit code non-zero
     with patch.object(connector, "_run_ps_command", new_callable=AsyncMock) as mock_run:
-        mock_run.return_value = {"exit_code": 1, "stdout": ''}
+        mock_run.return_value = {"exit_code": 1, "stdout": ""}
         res = await connector._get_tpm_info(proto)
         assert res == {}
 
@@ -358,32 +375,45 @@ async def test_winrm_get_tpm_info():
 @pytest.mark.asyncio
 async def test_winrm_connector_sync_new_asset(mock_db):
     connector = WinRMConnector(
-        credentials_ref={"vault_path": "secret/pqc/winrm"},
-        host="10.0.0.2",
-        port=5985
+        credentials_ref={"vault_path": "secret/pqc/winrm"}, host="10.0.0.2", port=5985
     )
-    
+
     mock_creds = {"username": "admin", "password": "pwd"}
-    
+
     mock_db_result = MagicMock()
     mock_db_result.scalar_one_or_none.return_value = None
     mock_db.execute.return_value = mock_db_result
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value=mock_creds), \
-         patch.object(connector, "_get_all_cert_stores", new_callable=AsyncMock, return_value={"My": [{"Thumbprint": "T1"}]}), \
-         patch.object(connector, "_get_cng_keys", new_callable=AsyncMock, return_value=[]), \
-         patch.object(connector, "_get_schannel_settings", new_callable=AsyncMock, return_value={}), \
-         patch.object(connector, "_get_iis_bindings", new_callable=AsyncMock, return_value=[]), \
-         patch.object(connector, "_get_bitlocker_status", new_callable=AsyncMock, return_value={"volumes": []}), \
-         patch.object(connector, "_get_firmware_info", new_callable=AsyncMock, return_value={}), \
-         patch.object(connector, "_get_tpm_info", new_callable=AsyncMock, return_value={}):
-             
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value=mock_creds
+    ), patch.object(
+        connector,
+        "_get_all_cert_stores",
+        new_callable=AsyncMock,
+        return_value={"My": [{"Thumbprint": "T1"}]},
+    ), patch.object(
+        connector, "_get_cng_keys", new_callable=AsyncMock, return_value=[]
+    ), patch.object(
+        connector, "_get_schannel_settings", new_callable=AsyncMock, return_value={}
+    ), patch.object(
+        connector, "_get_iis_bindings", new_callable=AsyncMock, return_value=[]
+    ), patch.object(
+        connector,
+        "_get_bitlocker_status",
+        new_callable=AsyncMock,
+        return_value={"volumes": []},
+    ), patch.object(
+        connector, "_get_firmware_info", new_callable=AsyncMock, return_value={}
+    ), patch.object(
+        connector, "_get_tpm_info", new_callable=AsyncMock, return_value={}
+    ):
+
         res = await connector.sync(mock_db)
-        
+
         assert res["status"] == "success"
         assert res["imported"] == 1
         assert res["updated"] == 0
-        
+
         mock_db.add.assert_called_once()
         added_asset = mock_db.add.call_args[0][0]
         assert added_asset.name == "winrm:10.0.0.2:5985"
@@ -395,37 +425,48 @@ async def test_winrm_connector_sync_new_asset(mock_db):
 @pytest.mark.asyncio
 async def test_winrm_connector_sync_existing_asset(mock_db):
     connector = WinRMConnector(
-        credentials_ref={"vault_path": "secret/pqc/winrm"},
-        host="10.0.0.2",
-        port=5985
+        credentials_ref={"vault_path": "secret/pqc/winrm"}, host="10.0.0.2", port=5985
     )
-    
+
     mock_creds = {"username": "admin", "password": "pwd"}
-    
+
     existing_asset = Asset(
-        name="winrm:10.0.0.2:5985",
-        asset_type="endpoint",
-        asset_metadata={}
+        name="winrm:10.0.0.2:5985", asset_type="endpoint", asset_metadata={}
     )
     mock_db_result = MagicMock()
     mock_db_result.scalar_one_or_none.return_value = existing_asset
     mock_db.execute.return_value = mock_db_result
 
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value=mock_creds), \
-         patch.object(connector, "_get_all_cert_stores", new_callable=AsyncMock, return_value={}), \
-         patch.object(connector, "_get_cng_keys", new_callable=AsyncMock, return_value=[{"Name": "CNGKey1"}]), \
-         patch.object(connector, "_get_schannel_settings", new_callable=AsyncMock, return_value={}), \
-         patch.object(connector, "_get_iis_bindings", new_callable=AsyncMock, return_value=[]), \
-         patch.object(connector, "_get_bitlocker_status", new_callable=AsyncMock, return_value={"volumes": []}), \
-         patch.object(connector, "_get_firmware_info", new_callable=AsyncMock, return_value={}), \
-         patch.object(connector, "_get_tpm_info", new_callable=AsyncMock, return_value={}):
-             
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value=mock_creds
+    ), patch.object(
+        connector, "_get_all_cert_stores", new_callable=AsyncMock, return_value={}
+    ), patch.object(
+        connector,
+        "_get_cng_keys",
+        new_callable=AsyncMock,
+        return_value=[{"Name": "CNGKey1"}],
+    ), patch.object(
+        connector, "_get_schannel_settings", new_callable=AsyncMock, return_value={}
+    ), patch.object(
+        connector, "_get_iis_bindings", new_callable=AsyncMock, return_value=[]
+    ), patch.object(
+        connector,
+        "_get_bitlocker_status",
+        new_callable=AsyncMock,
+        return_value={"volumes": []},
+    ), patch.object(
+        connector, "_get_firmware_info", new_callable=AsyncMock, return_value={}
+    ), patch.object(
+        connector, "_get_tpm_info", new_callable=AsyncMock, return_value={}
+    ):
+
         res = await connector.sync(mock_db)
-        
+
         assert res["status"] == "success"
         assert res["imported"] == 0
         assert res["updated"] == 1
-        
+
         assert existing_asset.asset_metadata["cng_keys"] == [{"Name": "CNGKey1"}]
         mock_db.flush.assert_called_once()
 
@@ -433,7 +474,9 @@ async def test_winrm_connector_sync_existing_asset(mock_db):
 @pytest.mark.asyncio
 async def test_winrm_connector_sync_missing_creds():
     connector = WinRMConnector(credentials_ref={}, host="10.0.0.2")
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value={}):
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value={}
+    ):
         with pytest.raises(RuntimeError) as exc:
             await connector.sync(MagicMock())
         assert "requires username and password" in str(exc.value)
@@ -442,32 +485,39 @@ async def test_winrm_connector_sync_missing_creds():
 @pytest.mark.asyncio
 async def test_winrm_connector_sync_parallel_exceptions(mock_db):
     connector = WinRMConnector(
-        credentials_ref={"vault_path": "secret/pqc/winrm"},
-        host="10.0.0.2",
-        port=5985
+        credentials_ref={"vault_path": "secret/pqc/winrm"}, host="10.0.0.2", port=5985
     )
-    
+
     mock_creds = {"username": "admin", "password": "pwd"}
-    
+
     mock_db_result = MagicMock()
     mock_db_result.scalar_one_or_none.return_value = None
     mock_db.execute.return_value = mock_db_result
 
     # Raise exceptions in all methods to test fallbacks
-    with patch.object(connector, "_get_credentials", new_callable=AsyncMock, return_value=mock_creds), \
-         patch.object(connector, "_get_all_cert_stores", side_effect=Exception("cert error")), \
-         patch.object(connector, "_get_cng_keys", side_effect=Exception("cng error")), \
-         patch.object(connector, "_get_schannel_settings", side_effect=Exception("schannel error")), \
-         patch.object(connector, "_get_iis_bindings", side_effect=Exception("iis error")), \
-         patch.object(connector, "_get_bitlocker_status", side_effect=Exception("bitlocker error")), \
-         patch.object(connector, "_get_firmware_info", side_effect=Exception("firmware error")), \
-         patch.object(connector, "_get_tpm_info", side_effect=Exception("tpm error")):
-             
+    with patch.object(
+        connector, "_get_credentials", new_callable=AsyncMock, return_value=mock_creds
+    ), patch.object(
+        connector, "_get_all_cert_stores", side_effect=Exception("cert error")
+    ), patch.object(
+        connector, "_get_cng_keys", side_effect=Exception("cng error")
+    ), patch.object(
+        connector, "_get_schannel_settings", side_effect=Exception("schannel error")
+    ), patch.object(
+        connector, "_get_iis_bindings", side_effect=Exception("iis error")
+    ), patch.object(
+        connector, "_get_bitlocker_status", side_effect=Exception("bitlocker error")
+    ), patch.object(
+        connector, "_get_firmware_info", side_effect=Exception("firmware error")
+    ), patch.object(
+        connector, "_get_tpm_info", side_effect=Exception("tpm error")
+    ):
+
         res = await connector.sync(mock_db)
-        
+
         assert res["status"] == "success"
         assert res["imported"] == 1
-        
+
         added_asset = mock_db.add.call_args[0][0]
         assert added_asset.asset_metadata["cert_stores"] == {}
         assert added_asset.asset_metadata["cng_keys"] == []

@@ -1,4 +1,5 @@
 """Tests for the ScanGroup API (Phase B - correlation model)."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -97,6 +98,7 @@ def _scan_row(
 def mock_db():
     session = AsyncMock()
     from app.db import get_session
+
     app.dependency_overrides[get_session] = lambda: session
     yield session
     app.dependency_overrides.pop(get_session, None)
@@ -209,8 +211,18 @@ def test_list_scan_groups_returns_rollups(mock_db, client):
 def test_get_scan_group_detail(mock_db, client):
     group = _group_row(group_id="g-1", name="Q1 Audit", members=2)
     member_scans = [
-        _scan_row(scan_id="s-1", scan_type="tls_only", target="api.example.com", group_id="g-1"),
-        _scan_row(scan_id="s-2", scan_type="cloud_sync", target="aws:us-east-1", group_id="g-1"),
+        _scan_row(
+            scan_id="s-1",
+            scan_type="tls_only",
+            target="api.example.com",
+            group_id="g-1",
+        ),
+        _scan_row(
+            scan_id="s-2",
+            scan_type="cloud_sync",
+            target="aws:us-east-1",
+            group_id="g-1",
+        ),
     ]
     call_count = {"n": 0}
 
@@ -271,6 +283,7 @@ def test_cancel_scan_group_cancels_members(mock_db, client):
 def test_scans_assets_endpoint_returns_scoped_assets(mock_db, client):
     """The /scans/{id}/assets endpoint returns assets where the scan is the first or last."""
     from app.models.models import Asset
+
     now = datetime.now(timezone.utc)
     # Use a real Asset ORM object so Pydantic can serialize it cleanly
     asset = Asset(
@@ -335,8 +348,13 @@ def test_finding_enrichment_populates_scan_group_name(mock_db, client):
         recommended_algorithm="ML-DSA-65",
         status="open",
         asset=SimpleNamespace(
-            id="a-1", name="api.example.com:443", asset_type="server",
-            fqdn="api.example.com", ip_address=None, port=443, environment="production",
+            id="a-1",
+            name="api.example.com:443",
+            asset_type="server",
+            fqdn="api.example.com",
+            ip_address=None,
+            port=443,
+            environment="production",
         ),
         first_detected_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         last_verified_at=None,
@@ -377,14 +395,27 @@ def test_finding_enrichment_populates_scan_group_name(mock_db, client):
 
 def test_finding_enrichment_handles_missing_scan_gracefully(mock_db, client):
     finding = SimpleNamespace(
-        id="f-1", asset_id="a-1", scan_id="missing-scan",
-        finding_type="weak_algorithm", severity="high", title="t",
-        description=None, algorithm=None, algorithm_type=None,
-        pqc_status=None, risk_score=None, layer=None, hndl_exposure=None,
-        evidence=None, remediation=None, recommended_algorithm=None,
-        status="open", asset=None,
+        id="f-1",
+        asset_id="a-1",
+        scan_id="missing-scan",
+        finding_type="weak_algorithm",
+        severity="high",
+        title="t",
+        description=None,
+        algorithm=None,
+        algorithm_type=None,
+        pqc_status=None,
+        risk_score=None,
+        layer=None,
+        hndl_exposure=None,
+        evidence=None,
+        remediation=None,
+        recommended_algorithm=None,
+        status="open",
+        asset=None,
         first_detected_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        last_verified_at=None, resolved_at=None,
+        last_verified_at=None,
+        resolved_at=None,
         created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         updated_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         deleted_at=None,

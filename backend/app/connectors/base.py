@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 
+
 class BaseConnector(ABC):
     """
     Abstract base class for all CMDB and discovery integration connectors.
     """
+
     def __init__(self, name: str):
         self.name = name
 

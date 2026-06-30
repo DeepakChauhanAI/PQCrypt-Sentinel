@@ -6,17 +6,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import pytest
 import asyncio
 import socket
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch, AsyncMock
 
 from app.scanners.safe_target import (
     validate_ip,
     validate_cidr,
-    validate_port,
     _resolve_sync,
     build_safe_target,
     resolve_safely,
     build_safe_target_async,
-    _ip_is_safe,
     UnsafeTargetError,
 )
 
@@ -24,7 +22,9 @@ from app.scanners.safe_target import (
 class TestValidateIp:
     def test_multicast_address_rejected(self):
         with patch("app.scanners.safe_target.ALLOW_MULTICAST", False):
-            with pytest.raises(UnsafeTargetError, match="not in the safe-target policy"):
+            with pytest.raises(
+                UnsafeTargetError, match="not in the safe-target policy"
+            ):
                 validate_ip("224.0.0.1")
 
     def test_reserved_address_rejected(self):
@@ -37,12 +37,16 @@ class TestValidateIp:
 
     def test_loopback_rejected_when_disabled(self):
         with patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
-            with pytest.raises(UnsafeTargetError, match="not in the safe-target policy"):
+            with pytest.raises(
+                UnsafeTargetError, match="not in the safe-target policy"
+            ):
                 validate_ip("127.0.0.1")
 
     def test_private_rejected_when_disabled(self):
         with patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False):
-            with pytest.raises(UnsafeTargetError, match="not in the safe-target policy"):
+            with pytest.raises(
+                UnsafeTargetError, match="not in the safe-target policy"
+            ):
                 validate_ip("192.168.1.1")
 
     def test_public_ip_accepted(self):
@@ -67,7 +71,9 @@ class TestValidateCidr:
 
     def test_single_ip_delegates_to_validate_ip(self):
         with patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
-            with pytest.raises(UnsafeTargetError, match="not in the safe-target policy"):
+            with pytest.raises(
+                UnsafeTargetError, match="not in the safe-target policy"
+            ):
                 validate_cidr("127.0.0.1")
 
 
@@ -110,8 +116,9 @@ class TestBuildSafeTarget:
             build_safe_target("", 443)
 
     def test_no_safe_ips_after_resolution(self):
-        with patch("app.scanners.safe_target._resolve_sync", return_value=["192.168.1.1"]), \
-             patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False):
+        with patch(
+            "app.scanners.safe_target._resolve_sync", return_value=["192.168.1.1"]
+        ), patch("app.scanners.safe_target.ALLOW_PRIVATE_RANGES", False):
             with pytest.raises(UnsafeTargetError, match="resolved only to unsafe IPs"):
                 build_safe_target("internal.host", 443)
 
@@ -131,16 +138,22 @@ class TestBuildSafeTarget:
 class TestResolveSafely:
     def test_all_unsafe_ips_raises(self):
         async def _test():
-            with patch("app.scanners.safe_target._resolve_sync", return_value=["127.0.0.1"]), \
-                 patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
-                with pytest.raises(UnsafeTargetError, match="did not resolve to any safe IPs"):
+            with patch(
+                "app.scanners.safe_target._resolve_sync", return_value=["127.0.0.1"]
+            ), patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
+                with pytest.raises(
+                    UnsafeTargetError, match="did not resolve to any safe IPs"
+                ):
                     await resolve_safely("localhost")
 
         asyncio.run(_test())
 
     def test_safe_ips_returned(self):
         async def _test():
-            with patch("app.scanners.safe_target._resolve_sync", return_value=["8.8.8.8", "1.1.1.1"]):
+            with patch(
+                "app.scanners.safe_target._resolve_sync",
+                return_value=["8.8.8.8", "1.1.1.1"],
+            ):
                 result = await resolve_safely("example.com")
                 assert result == ["8.8.8.8", "1.1.1.1"]
 
@@ -148,8 +161,10 @@ class TestResolveSafely:
 
     def test_mixed_safe_unsafe_filters(self):
         async def _test():
-            with patch("app.scanners.safe_target._resolve_sync", return_value=["8.8.8.8", "127.0.0.1"]), \
-                 patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
+            with patch(
+                "app.scanners.safe_target._resolve_sync",
+                return_value=["8.8.8.8", "127.0.0.1"],
+            ), patch("app.scanners.safe_target.ALLOW_LOOPBACK", False):
                 result = await resolve_safely("mixed.host")
                 assert result == ["8.8.8.8"]
 
@@ -159,7 +174,9 @@ class TestResolveSafely:
 class TestBuildSafeTargetAsync:
     def test_happy_path(self):
         async def _test():
-            with patch("app.scanners.safe_target.resolve_safely", new_callable=AsyncMock) as mock_resolve:
+            with patch(
+                "app.scanners.safe_target.resolve_safely", new_callable=AsyncMock
+            ) as mock_resolve:
                 mock_resolve.return_value = ["93.184.216.34"]
                 result = await build_safe_target_async("example.com", 443)
                 assert result.host == "example.com"

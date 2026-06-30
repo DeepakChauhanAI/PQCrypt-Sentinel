@@ -59,7 +59,9 @@ class SSHConnector(BaseConnector):
 
         return await get_vault_secret(vault_path, version)
 
-    async def _run_ssh_command(self, client, command: str, sudo: bool = False) -> Dict[str, Any]:
+    async def _run_ssh_command(
+        self, client, command: str, sudo: bool = False
+    ) -> Dict[str, Any]:
         """Execute a command over SSH and return stdout/stderr/exit_code."""
         full_cmd = f"sudo -S {command}" if sudo else command
 
@@ -132,7 +134,9 @@ class SSHConnector(BaseConnector):
             ks_data["entries_raw"] = result.get("stdout", "")
         elif "PKCS#12" in file_type or path.endswith((".p12", ".pfx")):
             ks_data["format"] = "PKCS12"
-            list_cmd = f"openssl pkcs12 -info -in '{path}' -passin pass:'' 2>&1 | head -30"
+            list_cmd = (
+                f"openssl pkcs12 -info -in '{path}' -passin pass:'' 2>&1 | head -30"
+            )
             result = await self._run_ssh_command(client, list_cmd)
             ks_data["entries_raw"] = result.get("stdout", "")
         elif "PEM" in file_type or path.endswith((".pem", ".crt", ".cer")):
@@ -153,7 +157,9 @@ class SSHConnector(BaseConnector):
             # Parse version
             for line in result["stdout"].splitlines():
                 if line.startswith("OpenSSL"):
-                    info["version"] = line.split()[1] if len(line.split()) > 1 else "unknown"
+                    info["version"] = (
+                        line.split()[1] if len(line.split()) > 1 else "unknown"
+                    )
 
         # Get OpenSSL config location
         result = await self._run_ssh_command(client, "openssl version -d")
@@ -169,7 +175,9 @@ class SSHConnector(BaseConnector):
         # Server config
         server_paths = ["/etc/ssh/sshd_config", "/etc/ssh/sshd_config.d/*.conf"]
         for sp in server_paths:
-            result = await self._run_ssh_command(client, f"cat {sp} 2>/dev/null", sudo=True)
+            result = await self._run_ssh_command(
+                client, f"cat {sp} 2>/dev/null", sudo=True
+            )
             if result["exit_code"] == 0 and result["stdout"]:
                 configs["server"][sp] = result["stdout"]
 
@@ -189,13 +197,18 @@ class SSHConnector(BaseConnector):
         if result["exit_code"] == 0:
             krb["krb5_conf"] = result["stdout"]
             # Check for RC4 encryption types
-            if "rc4" in result["stdout"].lower() or "arcfour" in result["stdout"].lower():
+            if (
+                "rc4" in result["stdout"].lower()
+                or "arcfour" in result["stdout"].lower()
+            ):
                 krb["has_rc4"] = True
             else:
                 krb["has_rc4"] = False
 
         # Check keytabs
-        result = await self._run_ssh_command(client, "ls -la /etc/krb5.keytab /etc/krb5.keytab.* 2>/dev/null", sudo=True)
+        result = await self._run_ssh_command(
+            client, "ls -la /etc/krb5.keytab /etc/krb5.keytab.* 2>/dev/null", sudo=True
+        )
         if result["exit_code"] == 0:
             krb["keytabs"] = result["stdout"]
 
@@ -203,14 +216,16 @@ class SSHConnector(BaseConnector):
 
     async def _get_tpm_info(self, client) -> Dict[str, Any]:
         """Get TPM status and version information."""
-        result = await self._run_ssh_command(client, "tpm2_getcap properties-fixed 2>/dev/null")
+        result = await self._run_ssh_command(
+            client, "tpm2_getcap properties-fixed 2>/dev/null"
+        )
         if result["exit_code"] != 0 or not result["stdout"]:
             return {}
 
         tpm_info = {
             "manufacturer": "unknown",
             "firmware_version": "unknown",
-            "algorithms": []
+            "algorithms": [],
         }
 
         # Parse properties-fixed output
@@ -218,34 +233,53 @@ class SSHConnector(BaseConnector):
         import re
 
         # Extract Manufacturer
-        man_match = re.search(r"TPM2_PT_MANUFACTURER:\s*\n\s*raw:\s*(0x[0-9A-Fa-f]+)\s*\n\s*value:\s*\"([^\"]+)\"", stdout)
+        man_match = re.search(
+            r"TPM2_PT_MANUFACTURER:\s*\n\s*raw:\s*(0x[0-9A-Fa-f]+)\s*\n\s*value:\s*\"([^\"]+)\"",
+            stdout,
+        )
         if man_match:
             tpm_info["manufacturer"] = man_match.group(2).strip()
         else:
-            man_match_raw = re.search(r"TPM2_PT_MANUFACTURER:\s*\n\s*raw:\s*(0x[0-9A-Fa-f]+)", stdout)
+            man_match_raw = re.search(
+                r"TPM2_PT_MANUFACTURER:\s*\n\s*raw:\s*(0x[0-9A-Fa-f]+)", stdout
+            )
             if man_match_raw:
                 try:
                     raw_val = man_match_raw.group(1)
-                    val = bytes.fromhex(raw_val[2:]).decode("utf-8", errors="ignore").strip()
+                    val = (
+                        bytes.fromhex(raw_val[2:])
+                        .decode("utf-8", errors="ignore")
+                        .strip()
+                    )
                     tpm_info["manufacturer"] = val if val else raw_val
                 except Exception:
                     tpm_info["manufacturer"] = man_match_raw.group(1)
 
         # Extract Firmware Version
-        fw1_match = re.search(r"TPM2_PT_FIRMWARE_VERSION_1:\s*\n\s*raw:\s*(0x[0-9A-Fa-f]+)", stdout)
-        fw2_match = re.search(r"TPM2_PT_FIRMWARE_VERSION_2:\s*\n\s*raw:\s*(0x[0-9A-Fa-f]+)", stdout)
+        fw1_match = re.search(
+            r"TPM2_PT_FIRMWARE_VERSION_1:\s*\n\s*raw:\s*(0x[0-9A-Fa-f]+)", stdout
+        )
+        fw2_match = re.search(
+            r"TPM2_PT_FIRMWARE_VERSION_2:\s*\n\s*raw:\s*(0x[0-9A-Fa-f]+)", stdout
+        )
         if fw1_match and fw2_match:
             try:
                 v1 = int(fw1_match.group(1), 16)
                 v2 = int(fw2_match.group(1), 16)
-                tpm_info["firmware_version"] = f"{(v1 >> 16) & 0xffff}.{v1 & 0xffff}.{(v2 >> 16) & 0xffff}.{v2 & 0xffff}"
+                tpm_info["firmware_version"] = (
+                    f"{(v1 >> 16) & 0xffff}.{v1 & 0xffff}.{(v2 >> 16) & 0xffff}.{v2 & 0xffff}"
+                )
             except Exception:
-                tpm_info["firmware_version"] = f"{fw1_match.group(1)}.{fw2_match.group(1)}"
+                tpm_info["firmware_version"] = (
+                    f"{fw1_match.group(1)}.{fw2_match.group(1)}"
+                )
         elif fw1_match:
             tpm_info["firmware_version"] = fw1_match.group(1)
 
         # Parse algorithms
-        alg_result = await self._run_ssh_command(client, "tpm2_getcap algorithms 2>/dev/null")
+        alg_result = await self._run_ssh_command(
+            client, "tpm2_getcap algorithms 2>/dev/null"
+        )
         if alg_result["exit_code"] == 0 and alg_result["stdout"]:
             algorithms = []
             for line in alg_result["stdout"].splitlines():
@@ -256,7 +290,16 @@ class SSHConnector(BaseConnector):
                 match_paren = re.match(r"^([a-zA-Z0-9_\-]+)\s*\(", line_stripped)
                 if match_colon:
                     name = match_colon.group(1).lower()
-                    if name not in ["raw", "value", "symmetric", "hash", "object", "signing", "decrypting", "method"]:
+                    if name not in [
+                        "raw",
+                        "value",
+                        "symmetric",
+                        "hash",
+                        "object",
+                        "signing",
+                        "decrypting",
+                        "method",
+                    ]:
                         algorithms.append(name)
                 elif match_paren:
                     algorithms.append(match_paren.group(1).lower())
@@ -274,7 +317,9 @@ class SSHConnector(BaseConnector):
         key_passphrase = creds.get("key_passphrase")
 
         if not username or (not password and not private_key):
-            raise RuntimeError("SSH connector requires username + password or private_key from vault")
+            raise RuntimeError(
+                "SSH connector requires username + password or private_key from vault"
+            )
 
         client = paramiko.SSHClient()
         # Security: RejectPolicy is the safe default. Operators can opt in to
@@ -286,14 +331,17 @@ class SSHConnector(BaseConnector):
                 "PQC_SSH_AUTO_ADD_HOST_KEY=1 — accepting unknown host keys. "
                 "This is MITM-vulnerable; do not use in production."
             )
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # nosec B507
         else:
             client.set_missing_host_key_policy(paramiko.RejectPolicy())
 
         try:
             if private_key:
                 from io import StringIO
-                pkey = paramiko.RSAKey.from_private_key(StringIO(private_key), password=key_passphrase)
+
+                pkey = paramiko.RSAKey.from_private_key(
+                    StringIO(private_key), password=key_passphrase
+                )
                 client.connect(
                     self.host,
                     port=self.port,
@@ -341,7 +389,9 @@ class SSHConnector(BaseConnector):
 
             # Create asset record
             asset_name = f"ssh:{self.host}:{self.port}"
-            stmt = select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+            stmt = select(Asset).where(
+                Asset.name == asset_name, Asset.deleted_at.is_(None)
+            )
             res = await session.execute(stmt)
             existing = res.scalar_one_or_none()
 
@@ -349,11 +399,17 @@ class SSHConnector(BaseConnector):
                 "provider": "ssh_agentless",
                 "host": self.host,
                 "port": self.port,
-                "openssl": openssl_info if not isinstance(openssl_info, Exception) else {},
-                "ssh_config": ssh_config if not isinstance(ssh_config, Exception) else {},
+                "openssl": (
+                    openssl_info if not isinstance(openssl_info, Exception) else {}
+                ),
+                "ssh_config": (
+                    ssh_config if not isinstance(ssh_config, Exception) else {}
+                ),
                 "kerberos": kerberos if not isinstance(kerberos, Exception) else {},
                 "tpm": tpm if not isinstance(tpm, Exception) else {},
-                "keystores_count": len(keystores) if not isinstance(keystores, Exception) else 0,
+                "keystores_count": (
+                    len(keystores) if not isinstance(keystores, Exception) else 0
+                ),
                 "keystores": keystores if not isinstance(keystores, Exception) else [],
             }
 
@@ -363,6 +419,7 @@ class SSHConnector(BaseConnector):
                 # The model column is DateTime, but the loop clock is a float
                 # epoch timestamp. Convert it before assignment.
                 from datetime import datetime, timezone
+
                 existing.last_verified_at = datetime.now(timezone.utc)
                 await session.flush()
                 return {"status": "success", "updated": 1, "imported": 0}

@@ -14,6 +14,7 @@ This script:
      * AES-256    (2035 -> 2099)
      * SHA-384/512 (2035 -> 2099)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -37,7 +38,7 @@ logging.basicConfig(level=logging.INFO)
 DEADLINE_CORRECTIONS: list[tuple[str, int, int]] = [
     ("rsa-3072", 2030, 2035),
     ("rsa-4096", 2035, 2035),  # status changed but deadline stayed 2035
-    ("ecdsa", 2030, 2035),     # P-384 only; we re-evaluate per key size
+    ("ecdsa", 2030, 2035),  # P-384 only; we re-evaluate per key size
     ("aes-256", 2035, 2099),
     ("sha-384", 2035, 2099),
     ("sha-512", 2035, 2099),
@@ -100,7 +101,6 @@ async def _recompute_risk_scores(session: AsyncSession) -> int:
     now_year = datetime.now(timezone.utc).year
 
     # Build a filter: any algorithm that contains one of the correction keywords
-    from sqlalchemy import or_
     filter_clauses = []
     for pattern, _old, _new in DEADLINE_CORRECTIONS:
         filter_clauses.append(Finding.algorithm.ilike(f"%{pattern}%"))
@@ -120,7 +120,11 @@ async def _recompute_risk_scores(session: AsyncSession) -> int:
 
         # Keep existing Mosca values from evidence
         replaceability = _extract_replaceability(finding.evidence)
-        system_exposure = finding.evidence.get("system_exposure", "internal") if finding.evidence else "internal"
+        system_exposure = (
+            finding.evidence.get("system_exposure", "internal")
+            if finding.evidence
+            else "internal"
+        )
         hndl_exposure = finding.hndl_exposure or "medium"
         pqc_status = finding.pqc_status or "vulnerable"
 

@@ -1,4 +1,5 @@
 """Tests for the CSV CMDB connector."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
@@ -25,7 +26,9 @@ async def test_sync_empty_csv(connector):
 @pytest.mark.asyncio
 async def test_sync_missing_name_skipped(connector):
     session = AsyncMock()
-    session.execute.return_value = MagicMock(scalar_one_or_none=MagicMock(return_value=None))
+    session.execute.return_value = MagicMock(
+        scalar_one_or_none=MagicMock(return_value=None)
+    )
     csv_content = "name,asset_type,environment\n,server,production"
     result = await connector.sync(csv_content, session)
     assert result["status"] == "success"
@@ -36,8 +39,12 @@ async def test_sync_missing_name_skipped(connector):
 @pytest.mark.asyncio
 async def test_sync_duplicate_name_skipped(connector):
     session = AsyncMock()
-    session.execute.return_value = MagicMock(scalar_one_or_none=MagicMock(return_value=None))
-    csv_content = "name,asset_type,environment\ndup,server,production\ndup,database,staging"
+    session.execute.return_value = MagicMock(
+        scalar_one_or_none=MagicMock(return_value=None)
+    )
+    csv_content = (
+        "name,asset_type,environment\ndup,server,production\ndup,database,staging"
+    )
     result = await connector.sync(csv_content, session)
     assert result["status"] == "success"
     assert result["imported"] == 1
@@ -48,7 +55,9 @@ async def test_sync_duplicate_name_skipped(connector):
 @pytest.mark.asyncio
 async def test_sync_invalid_asset_type_normalized(connector):
     session = AsyncMock()
-    session.execute.return_value = MagicMock(scalar_one_or_none=MagicMock(return_value=None))
+    session.execute.return_value = MagicMock(
+        scalar_one_or_none=MagicMock(return_value=None)
+    )
     csv_content = "name,asset_type,environment\ns1,unknown_type,production"
     result = await connector.sync(csv_content, session)
     assert result["status"] == "success"
@@ -58,7 +67,9 @@ async def test_sync_invalid_asset_type_normalized(connector):
 @pytest.mark.asyncio
 async def test_sync_invalid_environment_normalized(connector):
     session = AsyncMock()
-    session.execute.return_value = MagicMock(scalar_one_or_none=MagicMock(return_value=None))
+    session.execute.return_value = MagicMock(
+        scalar_one_or_none=MagicMock(return_value=None)
+    )
     csv_content = "name,asset_type,environment\ns1,server,invalid_env"
     result = await connector.sync(csv_content, session)
     assert result["status"] == "success"
@@ -69,7 +80,9 @@ async def test_sync_invalid_environment_normalized(connector):
 async def test_sync_updates_existing_asset(connector):
     existing = MagicMock()
     session = AsyncMock()
-    session.execute.return_value = MagicMock(scalar_one_or_none=MagicMock(return_value=existing))
+    session.execute.return_value = MagicMock(
+        scalar_one_or_none=MagicMock(return_value=existing)
+    )
     csv_content = "name,asset_type,environment\ns1,server,production"
     result = await connector.sync(csv_content, session)
     assert result["status"] == "success"
@@ -93,7 +106,9 @@ async def test_sync_row_db_error(connector):
 @pytest.mark.asyncio
 async def test_sync_commit_failure(connector):
     session = AsyncMock()
-    session.execute.return_value = MagicMock(scalar_one_or_none=MagicMock(return_value=None))
+    session.execute.return_value = MagicMock(
+        scalar_one_or_none=MagicMock(return_value=None)
+    )
     session.commit.side_effect = IntegrityError("stmt", {}, Exception("dup"))
     csv_content = "name,asset_type,environment\ns1,server,production"
     result = await connector.sync(csv_content, session)
@@ -104,7 +119,9 @@ async def test_sync_commit_failure(connector):
 @pytest.mark.asyncio
 async def test_sync_full_row(connector):
     session = AsyncMock()
-    session.execute.return_value = MagicMock(scalar_one_or_none=MagicMock(return_value=None))
+    session.execute.return_value = MagicMock(
+        scalar_one_or_none=MagicMock(return_value=None)
+    )
     csv_content = (
         "name,asset_type,environment,ip_address,fqdn,port,protocol,os,business_service,cmdb_ci_id\n"
         "srv-1,server,production,10.0.0.1,srv-1.example.com,443,https,Linux,payments,CI123"

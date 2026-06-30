@@ -1,4 +1,5 @@
 """Tests for the async retry helper."""
+
 import asyncio
 import sys
 from pathlib import Path
@@ -14,6 +15,7 @@ def test_async_retry_succeeds_first_try():
     @async_retry(attempts=3)
     async def ok():
         return 42
+
     assert asyncio.run(ok()) == 42
 
 

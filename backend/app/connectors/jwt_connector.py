@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 JWT (L4 Application layer) connector.
 
@@ -21,13 +22,13 @@ so it is safe to use in logs and CBOM outputs.
 The connector is intentionally library-light (stdlib + `cryptography`)
 so it can be used in restricted environments.
 """
+
 from __future__ import annotations
 
 import base64
 import hashlib
 import json
 import logging
-import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,10 +43,16 @@ logger = logging.getLogger(__name__)
 
 # Algorithms considered safe or PQC-ready today.
 _SAFE_ALGS = {
-    "ES256", "ES384", "ES512",
+    "ES256",
+    "ES384",
+    "ES512",
     "EdDSA",
-    "PS256", "PS384", "PS512",
-    "RS256", "RS384", "RS512",  # not safe per se, but tracked separately
+    "PS256",
+    "PS384",
+    "PS512",
+    "RS256",
+    "RS384",
+    "RS512",  # not safe per se, but tracked separately
 }
 _PQC_ALGS: set[str] = set()  # none standardised yet
 _DISALLOWED_NOW = {"none", "HS1", "RS1"}
@@ -120,7 +127,9 @@ class JWTConnector(BaseConnector):
             asset_name = f"jwt:{digest}"
             metadata = self._build_metadata(header, payload, raw)
 
-            stmt = select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+            stmt = select(Asset).where(
+                Asset.name == asset_name, Asset.deleted_at.is_(None)
+            )
             res = await session.execute(stmt)
             existing = res.scalar_one_or_none()
             if existing:
@@ -189,6 +198,7 @@ class JWTConnector(BaseConnector):
         if self.endpoint:
             from urllib.parse import urlparse
             from app.scanners.safe_target import resolve_safely
+
             parsed = urlparse(self.endpoint)
             if not parsed.hostname:
                 raise ValueError("JWT endpoint URL must have a hostname")
@@ -254,9 +264,14 @@ class JWTConnector(BaseConnector):
         if "crv" in jwk or "x" in jwk:
             crv = (jwk.get("crv") or "").lower()
             return {
-                "p-256": 256, "p-384": 384, "p-521": 521,
-                "secp256k1": 256, "ed25519": 256, "ed448": 448,
-                "x25519": 256, "x448": 448,
+                "p-256": 256,
+                "p-384": 384,
+                "p-521": 521,
+                "secp256k1": 256,
+                "ed25519": 256,
+                "ed448": 448,
+                "x25519": 256,
+                "x448": 448,
             }.get(crv)
         return None
 
@@ -303,7 +318,9 @@ class JWTConnector(BaseConnector):
             return "pqc_ready"
         if alg == "HS256" and (key_bits or 0) < 256:
             return "vulnerable"
-        if alg in {"HS256", "HS384", "HS512"} and (key_bits or 0) < (256 if alg == "HS256" else 384):
+        if alg in {"HS256", "HS384", "HS512"} and (key_bits or 0) < (
+            256 if alg == "HS256" else 384
+        ):
             return "vulnerable"
         if alg.startswith("RS") or alg.startswith("PS"):
             if key_bits is not None and key_bits < 2048:

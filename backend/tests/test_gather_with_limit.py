@@ -1,14 +1,16 @@
 """
 Tests for the orchestrator's `_gather_with_limit` concurrency helper.
 """
+
 from __future__ import annotations
 
 import asyncio
-import time
 
-import pytest
 
-from app.services.scan_orchestrator import _gather_with_limit, MAX_CONCURRENT_PORT_PROBES
+from app.services.scan_orchestrator import (
+    _gather_with_limit,
+    MAX_CONCURRENT_PORT_PROBES,
+)
 
 
 async def _slow(value, delay):
@@ -18,6 +20,7 @@ async def _slow(value, delay):
 
 def test_gather_with_limit_returns_results_in_order():
     """Results come back in the same order as the input coroutines."""
+
     async def _run():
         coros = [_slow(i, 0.01) for i in range(5)]
         return await _gather_with_limit(coros, limit=2)
@@ -52,6 +55,7 @@ def test_gather_with_limit_caps_concurrency():
 
 def test_gather_with_limit_captures_exceptions():
     """An exception in one coroutine is captured as a tagged tuple, not raised."""
+
     async def _boom():
         raise RuntimeError("kaboom")
 
@@ -70,6 +74,7 @@ def test_gather_with_limit_captures_exceptions():
 
 def test_gather_with_limit_default_limit_matches_constant():
     """The default limit equals the public MAX_CONCURRENT_PORT_PROBES constant."""
+
     async def _run():
         coros = [_slow(i, 0.001) for i in range(MAX_CONCURRENT_PORT_PROBES + 1)]
         # Calling with default limit; ensure it accepts a coroutine list
@@ -82,6 +87,7 @@ def test_gather_with_limit_default_limit_matches_constant():
 
 def test_gather_with_limit_empty_list_returns_empty():
     """An empty input returns an empty result list."""
+
     async def _run():
         return await _gather_with_limit([])
 

@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
 from app.connectors.saml_connector import SAMLMetadataConnector
-from app.models.models import Asset
 
 xml_blob = """<?xml version="1.0"?>
 <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://example.com">
@@ -36,13 +35,15 @@ mock_cert_meta = {
     "pqc_capable": False,
     "pqc_details": {
         "pqc_status": "vulnerable",
-    }
+    },
 }
 
 mock_db = AsyncMock()
 mock_db.execute.return_value.scalar_one_or_none.return_value = None
 
-with patch("app.connectors.saml_connector.parse_certificate", return_value=mock_cert_meta):
+with patch(
+    "app.connectors.saml_connector.parse_certificate", return_value=mock_cert_meta
+):
     connector = SAMLMetadataConnector(xml_blob=xml_blob)
     res = asyncio.run(connector.sync(mock_db))
 

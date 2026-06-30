@@ -12,6 +12,7 @@ no-hit scans own no assets and no findings.
 Usage (from backend/ dir with venv active):
     python cleanup_no_hit_scans.py [--dry-run]
 """
+
 import asyncio
 import os
 import sys
@@ -29,11 +30,13 @@ async def cleanup(dry_run: bool = False) -> None:
     async with AsyncSessionLocal() as session:
         # 1. Find candidate scans: terminal status, no assets, no findings
         result = await session.execute(
-            select(Scan).where(
+            select(Scan)
+            .where(
                 Scan.status.in_(["completed", "failed", "cancelled"]),
                 Scan.assets_found == 0,
                 Scan.findings_created == 0,
-            ).order_by(Scan.created_at.asc())
+            )
+            .order_by(Scan.created_at.asc())
         )
         candidates = result.scalars().all()
 
@@ -41,7 +44,9 @@ async def cleanup(dry_run: bool = False) -> None:
             print("No no-hit scans found. Nothing to clean up.")
             return
 
-        print(f"{'[DRY RUN] ' if dry_run else ''}Found {len(candidates)} no-hit scan(s):")
+        print(
+            f"{'[DRY RUN] ' if dry_run else ''}Found {len(candidates)} no-hit scan(s):"
+        )
         for s in candidates:
             print(
                 f"  - {s.id}  type={s.scan_type:10s}  target={s.target!s:30s}  "
@@ -83,9 +88,7 @@ async def cleanup(dry_run: bool = False) -> None:
         print(f"Deleted {deleted_logs.rowcount or 0} scan log(s).")
 
         # 5. Hard-delete the scan rows.
-        deleted_scans = await session.execute(
-            delete(Scan).where(Scan.id.in_(scan_ids))
-        )
+        deleted_scans = await session.execute(delete(Scan).where(Scan.id.in_(scan_ids)))
         print(f"Deleted {deleted_scans.rowcount or 0} scan row(s).")
 
         await session.commit()

@@ -7,6 +7,7 @@ into the Finding table via the l1_finding_service.
 
 The probe layer is patched so the test is fully offline and fast.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -207,9 +208,11 @@ def test_l1_probe_endpoint_ocsp_persists_revoked_finding(mock_db):
 
     # Build a minimal self-signed PEM cert so the endpoint has raw bytes.
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
-    ])
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COMMON_NAME, "example.com"),
+        ]
+    )
     now = datetime.now(timezone.utc)
     cert = (
         x509.CertificateBuilder()
@@ -301,7 +304,7 @@ def test_l1_probe_endpoint_requires_auth():
     """Unauthenticated calls must be rejected (the endpoint requires get_current_user)."""
     # Build a fresh app without the auth override.
     from app.main import create_app as _create
-    from app.api.auth import get_current_user as _gcu
+
     fresh = _create()
     client = TestClient(fresh)
     resp = client.post("/api/v1/scans/00000000-0000-0000-0000-000000000000/l1-probe")

@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import shutil
 import socket
@@ -18,6 +17,7 @@ class _IKEResultDict(TypedDict, total=False):
     when the function falls back to the ike-scan binary; the TypedDict
     lists only the fields that callers actually consume.
     """
+
     success: bool
     skipped: bool
     error_message: str
@@ -31,6 +31,7 @@ class _IKEResultDict(TypedDict, total=False):
     raw_response: str
     stdout: str
     stderr: str
+
 
 _IKE_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="ike_scanner")
 
@@ -100,38 +101,37 @@ class IKEScanResult:
 def _parse_ikev2_response(data: bytes) -> Dict[str, Any]:
     if len(data) < 28:
         return {"error": "Response too short"}
-        
+
     next_payload = data[16]
     offset = 28
-    
+
     dh_groups = []
     pqc_status = "vulnerable"
     encryption = []
     integrity = []
-    
+
     while next_payload != 0 and offset < len(data):
         if offset + 4 > len(data):
             break
-            
+
         payload_type = next_payload
         next_payload = data[offset]
-        pay_len = int.from_bytes(data[offset+2:offset+4], "big")
-        
+        pay_len = int.from_bytes(data[offset + 2 : offset + 4], "big")
+
         if pay_len < 4 or offset + pay_len > len(data):
             break
-            
-        payload_body = data[offset+4 : offset+pay_len]
-        
+
+        payload_body = data[offset + 4 : offset + pay_len]
+
         # Parse SA Payload (Type 33)
         if payload_type == 33:
-            t_offset = 4
             idx = 0
             while idx + 8 <= len(payload_body):
-                t_type = payload_body[idx+4]
-                t_id = int.from_bytes(payload_body[idx+6:idx+8], "big")
-                t_len = int.from_bytes(payload_body[idx+2:idx+4], "big")
-                
-                if t_type == 4: # DH
+                t_type = payload_body[idx + 4]
+                t_id = int.from_bytes(payload_body[idx + 6 : idx + 8], "big")
+                t_len = int.from_bytes(payload_body[idx + 2 : idx + 4], "big")
+
+                if t_type == 4:  # DH
                     dh_str = str(t_id)
                     if dh_str in _DH_GROUP_POLICY:
                         dh_groups.append(_DH_GROUP_POLICY[dh_str]["name"])
@@ -142,16 +142,16 @@ def _parse_ikev2_response(data: bytes) -> Dict[str, Any]:
                             pqc_status = "hybrid"
                     else:
                         dh_groups.append(f"DH Group {t_id}")
-                elif t_type == 1: # ENCR
+                elif t_type == 1:  # ENCR
                     encryption.append(f"ENCR_{t_id}")
-                elif t_type == 3: # INTEG
+                elif t_type == 3:  # INTEG
                     integrity.append(f"INTEG_{t_id}")
-                
+
                 if t_len >= 8:
                     idx += t_len
                 else:
                     idx += 8
-                    
+
         # Parse Notify Payload (Type 41)
         elif payload_type == 41:
             if len(payload_body) >= 4:
@@ -161,7 +161,9 @@ def _parse_ikev2_response(data: bytes) -> Dict[str, Any]:
                     spi_size = payload_body[1]
                     data_offset = 4 + spi_size
                     if len(payload_body) >= data_offset + 2:
-                        pref_group = int.from_bytes(payload_body[data_offset:data_offset+2], "big")
+                        pref_group = int.from_bytes(
+                            payload_body[data_offset : data_offset + 2], "big"
+                        )
                         dh_str = str(pref_group)
                         if dh_str in _DH_GROUP_POLICY:
                             dh_groups.append(_DH_GROUP_POLICY[dh_str]["name"])
@@ -169,14 +171,14 @@ def _parse_ikev2_response(data: bytes) -> Dict[str, Any]:
                         else:
                             dh_groups.append(f"DH Group {pref_group}")
                             pqc_status = "vulnerable"
-                            
+
         offset += pay_len
-        
+
     return {
         "dh_groups": list(set(dh_groups)),
         "pqc_status": pqc_status,
         "encryption_algorithms": list(set(encryption)),
-        "integrity_algorithms": list(set(integrity))
+        "integrity_algorithms": list(set(integrity)),
     }
 
 
@@ -184,51 +186,57 @@ def _do_socket_ike_probe(host: str, port: int, timeout: int) -> _IKEResultDict:
     try:
         ispi = b"\x3f\x5a\x2b\x1c\x0d\x9e\x8f\x7a"
         rspi = b"\x00" * 8
-        next_payload = 33 # SA
+        next_payload = 33  # SA
         version = 0x20
-        exch = 34 # IKE_SA_INIT
-        flags = 0x08 # Initiator
+        exch = 34  # IKE_SA_INIT
+        flags = 0x08  # Initiator
         msg_id = b"\x00\x00\x00\x00"
 
         sa_bytes = (
             b"\x22\x00\x00\x30"  # Next payload: 34 (KE), length: 48
             b"\x00\x00\x00\x2c"  # Proposal #1, Protocol: IKE, SPI: 0, Transforms: 4
-            b"\x03\x00\x00\x0c\x01\x00\x00\x0c\x80\x0e\x01\x00" # ENCR AES_CBC 256
-            b"\x03\x00\x00\x08\x02\x00\x00\x05"                 # PRF HMAC_SHA2_256
-            b"\x03\x00\x00\x08\x03\x00\x00\x0c"                 # INTEG HMAC_SHA2_256_128
-            b"\x00\x00\x00\x08\x04\x00\x00\x13"                 # DH NIST P-256 (Group 19)
+            b"\x03\x00\x00\x0c\x01\x00\x00\x0c\x80\x0e\x01\x00"  # ENCR AES_CBC 256
+            b"\x03\x00\x00\x08\x02\x00\x00\x05"  # PRF HMAC_SHA2_256
+            b"\x03\x00\x00\x08\x03\x00\x00\x0c"  # INTEG HMAC_SHA2_256_128
+            b"\x00\x00\x00\x08\x04\x00\x00\x13"  # DH NIST P-256 (Group 19)
         )
 
         ke_bytes = (
             b"\x28\x00\x00\x28"  # Next payload: 40 (Nonce), length: 40
-            b"\x00\x13\x00\x00"  # DH Group 19
-            + b"\xaa" * 32
+            b"\x00\x13\x00\x00" + b"\xaa" * 32  # DH Group 19
         )
 
-        nonce_bytes = (
-            b"\x00\x00\x00\x14"  # Next payload: 0, length: 20
-            + b"\xbb" * 16
-        )
+        nonce_bytes = b"\x00\x00\x00\x14" + b"\xbb" * 16  # Next payload: 0, length: 20
 
         payloads = sa_bytes + ke_bytes + nonce_bytes
         length = 28 + len(payloads)
-        header = ispi + rspi + bytes([next_payload, version, exch, flags]) + msg_id + length.to_bytes(4, "big")
+        header = (
+            ispi
+            + rspi
+            + bytes([next_payload, version, exch, flags])
+            + msg_id
+            + length.to_bytes(4, "big")
+        )
         packet = header + payloads
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(timeout)
         sock.sendto(packet, (host, port))
-        
+
         data, addr = sock.recvfrom(2048)
         sock.close()
-        
+
         parsed = _parse_ikev2_response(data)
         if "error" in parsed:
             return {"success": False, "error_message": parsed["error"]}
 
         pqc_dh_groups = [
-            g for g in parsed["dh_groups"]
-            if any(p in g.lower() for p in ["ml-kem", "mlkem", "kyber", "sntrup", "ntrup", "hybrid"])
+            g
+            for g in parsed["dh_groups"]
+            if any(
+                p in g.lower()
+                for p in ["ml-kem", "mlkem", "kyber", "sntrup", "ntrup", "hybrid"]
+            )
         ]
 
         return {
@@ -239,7 +247,7 @@ def _do_socket_ike_probe(host: str, port: int, timeout: int) -> _IKEResultDict:
             "integrity_algorithms": parsed["integrity_algorithms"],
             "pqc_dh_groups": pqc_dh_groups,
             "pqc_status": parsed["pqc_status"],
-            "response_len": len(data)
+            "response_len": len(data),
         }
     except socket.timeout:
         return {"success": False, "error_message": "IKE probe timeout (no response)"}
@@ -320,13 +328,15 @@ def _do_ike_probe(host: str, port: int, timeout: int) -> _IKEResultDict:
             dh_groups.append(group_name)
 
     pqc_dh_groups = [
-        g for g in dh_groups
-        if any(p in g.lower() for p in ["ml-kem", "mlkem", "kyber", "sntrup", "ntrup", "hybrid"])
+        g
+        for g in dh_groups
+        if any(
+            p in g.lower()
+            for p in ["ml-kem", "mlkem", "kyber", "sntrup", "ntrup", "hybrid"]
+        )
     ]
     pqc_status = (
-        "pqc_ready" if pqc_dh_groups
-        else "vulnerable" if dh_groups
-        else "unknown"
+        "pqc_ready" if pqc_dh_groups else "vulnerable" if dh_groups else "unknown"
     )
 
     return {
@@ -342,8 +352,14 @@ def _do_ike_probe(host: str, port: int, timeout: int) -> _IKEResultDict:
     }
 
 
-@async_retry(attempts=2, initial_delay=0.5, retry_on=(asyncio.TimeoutError, ConnectionError, OSError))
-async def scan_ike_endpoint(host: str, port: int = 500, timeout: int = 5) -> IKEScanResult:
+@async_retry(
+    attempts=2,
+    initial_delay=0.5,
+    retry_on=(asyncio.TimeoutError, ConnectionError, OSError),
+)
+async def scan_ike_endpoint(
+    host: str, port: int = 500, timeout: int = 5
+) -> IKEScanResult:
     try:
         loop = asyncio.get_event_loop()
         result = await asyncio.wait_for(
@@ -351,7 +367,9 @@ async def scan_ike_endpoint(host: str, port: int = 500, timeout: int = 5) -> IKE
             timeout=timeout + 2,
         )
     except Exception as exc:
-        return IKEScanResult(host=host, port=port, success=False, error_message=str(exc))
+        return IKEScanResult(
+            host=host, port=port, success=False, error_message=str(exc)
+        )
 
     if not result.get("success"):
         return IKEScanResult(

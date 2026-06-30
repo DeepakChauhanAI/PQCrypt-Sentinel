@@ -36,7 +36,9 @@ def mock_dashboard_redis():
     fake_cache.get = AsyncMock(return_value=None)
     fake_cache.set = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=AsyncMock())
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         yield
 
 
@@ -44,6 +46,7 @@ def mock_dashboard_redis():
 def mock_db():
     session = AsyncMock()
     from app.db import get_session
+
     app.dependency_overrides[get_session] = lambda: session
     yield session
     app.dependency_overrides.pop(get_session, None)
@@ -73,7 +76,9 @@ def test_worst_pqc_status_only_safe():
 
 
 def test_worst_pqc_status_mixed_vulnerable_wins():
-    assert _worst_pqc_status(["safe", "hybrid", "vulnerable", "pqc_ready"]) == "vulnerable"
+    assert (
+        _worst_pqc_status(["safe", "hybrid", "vulnerable", "pqc_ready"]) == "vulnerable"
+    )
 
 
 def test_worst_pqc_status_mixed_no_vulnerable():
@@ -104,12 +109,14 @@ def test_summary_safe_count(mock_db):
             return MagicMock(scalar_one=MagicMock(return_value=4))
         if call_count["n"] == 2:
             r = MagicMock()
-            r.all = MagicMock(return_value=[
-                ("a-0", "safe"),
-                ("a-1", "safe"),
-                ("a-2", "hybrid"),
-                ("a-3", "pqc_ready"),
-            ])
+            r.all = MagicMock(
+                return_value=[
+                    ("a-0", "safe"),
+                    ("a-1", "safe"),
+                    ("a-2", "hybrid"),
+                    ("a-3", "pqc_ready"),
+                ]
+            )
             return r
         if call_count["n"] == 3:
             return MagicMock(scalar_one=MagicMock(return_value=0))
@@ -142,13 +149,15 @@ def test_risk_distribution_iterates_severities(mock_db):
         call_count["n"] += 1
         if call_count["n"] == 1:
             r = MagicMock()
-            r.all = MagicMock(return_value=[
-                ("Critical", 5),
-                ("HIGH", 3),
-                ("Medium", 8),
-                ("low", 1),
-                ("info", 2),
-            ])
+            r.all = MagicMock(
+                return_value=[
+                    ("Critical", 5),
+                    ("HIGH", 3),
+                    ("Medium", 8),
+                    ("low", 1),
+                    ("info", 2),
+                ]
+            )
             return r
         r = MagicMock()
         r.all = MagicMock(return_value=[])
@@ -206,14 +215,16 @@ def test_progress_full_processing_loop(mock_db):
             return r
         if call_count["n"] == 2:
             r = MagicMock()
-            r.all = MagicMock(return_value=[
-                ("scan-0", "asset-a", "vulnerable"),
-                ("scan-0", "asset-b", "hybrid"),
-                ("scan-0", "asset-c", "pqc_ready"),
-                ("scan-1", "asset-a", "vulnerable"),
-                ("scan-1", "asset-b", "vulnerable"),
-                ("scan-2", "asset-a", "safe"),
-            ])
+            r.all = MagicMock(
+                return_value=[
+                    ("scan-0", "asset-a", "vulnerable"),
+                    ("scan-0", "asset-b", "hybrid"),
+                    ("scan-0", "asset-c", "pqc_ready"),
+                    ("scan-1", "asset-a", "vulnerable"),
+                    ("scan-1", "asset-b", "vulnerable"),
+                    ("scan-2", "asset-a", "safe"),
+                ]
+            )
             return r
         r = MagicMock()
         r.all = MagicMock(return_value=[])
@@ -246,8 +257,15 @@ def test_progress_full_processing_loop(mock_db):
 # --- /layer-coverage with various pqc_status values ---
 
 
-def _make_asset(asset_id, asset_type, discovery_source=None, last_verified_at=None,
-                pqc_status=None, risk_score=None, asset_metadata=None):
+def _make_asset(
+    asset_id,
+    asset_type,
+    discovery_source=None,
+    last_verified_at=None,
+    pqc_status=None,
+    risk_score=None,
+    asset_metadata=None,
+):
     return SimpleNamespace(
         id=asset_id,
         asset_type=asset_type,
@@ -349,7 +367,9 @@ def test_layer_coverage_unknown_layer_id_skipped(mock_db):
     r.scalars.return_value.all.return_value = assets
     mock_db.execute.return_value = r
 
-    with patch("app.api.dashboard._determine_layer_for_asset", return_value="UNKNOWN_LAYER"):
+    with patch(
+        "app.api.dashboard._determine_layer_for_asset", return_value="UNKNOWN_LAYER"
+    ):
         client = TestClient(app)
         resp = client.get("/api/v1/dashboard/layer-coverage")
 
@@ -367,8 +387,11 @@ def test_clear_dashboard_cache_scan_exception():
     fake_client.scan = AsyncMock(side_effect=Exception("scan broke"))
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=fake_client)
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         import asyncio
+
         asyncio.run(clear_dashboard_cache())
 
 
@@ -378,16 +401,22 @@ def test_clear_dashboard_cache_delete_exception():
     fake_client.delete = AsyncMock(side_effect=Exception("delete broke"))
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=fake_client)
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         import asyncio
+
         asyncio.run(clear_dashboard_cache())
 
 
 def test_clear_dashboard_cache_get_client_exception():
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(side_effect=Exception("redis down"))
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         import asyncio
+
         asyncio.run(clear_dashboard_cache())
 
 
@@ -423,12 +452,14 @@ async def test_get_summary_direct():
 
     def pairs_result():
         r = MagicMock()
-        r.all = MagicMock(return_value=[
-            ("a-0", "safe"),
-            ("a-1", "vulnerable"),
-            ("a-2", "hybrid"),
-            ("a-3", "pqc_ready"),
-        ])
+        r.all = MagicMock(
+            return_value=[
+                ("a-0", "safe"),
+                ("a-1", "vulnerable"),
+                ("a-2", "hybrid"),
+                ("a-3", "pqc_ready"),
+            ]
+        )
         return r
 
     def zero_result():
@@ -436,13 +467,15 @@ async def test_get_summary_direct():
         r.scalar_one = MagicMock(return_value=0)
         return r
 
-    session = _make_counting_session([
-        total_assets_result,
-        pairs_result,
-        zero_result,
-        zero_result,
-        zero_result,
-    ])
+    session = _make_counting_session(
+        [
+            total_assets_result,
+            pairs_result,
+            zero_result,
+            zero_result,
+            zero_result,
+        ]
+    )
 
     with patch("app.api.dashboard.get_cache", new=AsyncMock(return_value=None)):
         with patch("app.api.dashboard.set_cache", new=AsyncMock()) as mock_set:
@@ -461,13 +494,15 @@ async def test_get_summary_direct():
 async def test_get_risk_distribution_direct():
     def dist_result():
         r = MagicMock()
-        r.all = MagicMock(return_value=[
-            ("critical", 5),
-            ("high", 3),
-            ("medium", 8),
-            ("low", 1),
-            ("info", 2),
-        ])
+        r.all = MagicMock(
+            return_value=[
+                ("critical", 5),
+                ("high", 3),
+                ("medium", 8),
+                ("low", 1),
+                ("info", 2),
+            ]
+        )
         return r
 
     session = _make_counting_session([dist_result])
@@ -495,14 +530,16 @@ async def test_get_progress_direct():
 
     def algo_result():
         r = MagicMock()
-        r.all = MagicMock(return_value=[
-            ("scan-0", "asset-a", "vulnerable"),
-            ("scan-0", "asset-b", "hybrid"),
-            ("scan-0", "asset-c", "pqc_ready"),
-            ("scan-1", "asset-a", "vulnerable"),
-            ("scan-1", "asset-b", "vulnerable"),
-            ("scan-2", "asset-a", "safe"),
-        ])
+        r.all = MagicMock(
+            return_value=[
+                ("scan-0", "asset-a", "vulnerable"),
+                ("scan-0", "asset-b", "hybrid"),
+                ("scan-0", "asset-c", "pqc_ready"),
+                ("scan-1", "asset-a", "vulnerable"),
+                ("scan-1", "asset-b", "vulnerable"),
+                ("scan-2", "asset-a", "safe"),
+            ]
+        )
         return r
 
     session = _make_counting_session([scans_result, algo_result])
@@ -590,23 +627,43 @@ async def test_get_layer_coverage_unmapped_branches():
         r.scalars.return_value.all.return_value = [
             # discovered by source
             SimpleNamespace(
-                id="a-1", asset_type="unknown", discovery_source="database",
-                asset_metadata={}, last_verified_at=now, pqc_status="pqc_ready", risk_score=10,
+                id="a-1",
+                asset_type="unknown",
+                discovery_source="database",
+                asset_metadata={},
+                last_verified_at=now,
+                pqc_status="pqc_ready",
+                risk_score=10,
             ),
             # metadata provider hint
             SimpleNamespace(
-                id="a-2", asset_type="unknown", discovery_source=None,
-                asset_metadata={"provider": "kubernetes"}, last_verified_at=now, pqc_status=None, risk_score=20,
+                id="a-2",
+                asset_type="unknown",
+                discovery_source=None,
+                asset_metadata={"provider": "kubernetes"},
+                last_verified_at=now,
+                pqc_status=None,
+                risk_score=20,
             ),
             # metadata key_type hsm/kms hint
             SimpleNamespace(
-                id="a-3", asset_type="unknown", discovery_source=None,
-                asset_metadata={"key_type": "cloud_hsm"}, last_verified_at=now, pqc_status=None, risk_score=30,
+                id="a-3",
+                asset_type="unknown",
+                discovery_source=None,
+                asset_metadata={"key_type": "cloud_hsm"},
+                last_verified_at=now,
+                pqc_status=None,
+                risk_score=30,
             ),
             # completely unknown -> should be skipped by counts.get (line 423)
             SimpleNamespace(
-                id="a-4", asset_type="totally_unknown", discovery_source=None,
-                asset_metadata={}, last_verified_at=now, pqc_status=None, risk_score=None,
+                id="a-4",
+                asset_type="totally_unknown",
+                discovery_source=None,
+                asset_metadata={},
+                last_verified_at=now,
+                pqc_status=None,
+                risk_score=None,
             ),
         ]
         return r
@@ -630,19 +687,27 @@ async def test_get_layer_coverage_unmapped_branches():
 def test_clear_dashboard_cache_no_client():
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=None)
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         import asyncio
+
         asyncio.run(clear_dashboard_cache())
 
 
 def test_clear_dashboard_cache_successful_clear():
     fake_client = MagicMock()
-    fake_client.scan = AsyncMock(return_value=(0, ["pqc:dashboard:key1", "pqc:dashboard:key2"]))
+    fake_client.scan = AsyncMock(
+        return_value=(0, ["pqc:dashboard:key1", "pqc:dashboard:key2"])
+    )
     fake_client.delete = AsyncMock()
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=fake_client)
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         import asyncio
+
         asyncio.run(clear_dashboard_cache())
     fake_client.delete.assert_awaited_once()
 

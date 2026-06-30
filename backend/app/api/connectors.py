@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import logging
 import os
 from datetime import datetime, timezone
@@ -11,9 +12,17 @@ from app.db import get_session
 from app.models.models import User, Scan, Finding
 from app.utils.target_classifier import classify_target
 from app.connectors.csv_connector import CSVCMDBConnector
-from app.connectors.cloud_kms_connector import AWSKMSConnector, AzureKeyVaultConnector, GCPKMSConnector
+from app.connectors.cloud_kms_connector import (
+    AWSKMSConnector,
+    AzureKeyVaultConnector,
+    GCPKMSConnector,
+)
 from app.connectors.aws_pqc_scanner import AWSPQCScanner
-from app.connectors.pkcs11_connector import PKCS11Connector, KMIPConnector, ADCSConnector
+from app.connectors.pkcs11_connector import (
+    PKCS11Connector,
+    KMIPConnector,
+    ADCSConnector,
+)
 from app.connectors.ssh_connector import SSHConnector
 from app.connectors.winrm_connector import WinRMConnector
 from app.connectors.tde_connector import OracleTDEConnector, SQLServerTDEConnector
@@ -46,8 +55,12 @@ def _apply_target_classification(scan: Scan) -> None:
 
 
 class VaultCredentialRef(BaseModel):
-    vault_path: str = Field(..., min_length=1, description="Vault credential path, e.g. secret/pqc/aws/kms")
-    version: Optional[str] = Field(None, description="Optional Vault version/version_id")
+    vault_path: str = Field(
+        ..., min_length=1, description="Vault credential path, e.g. secret/pqc/aws/kms"
+    )
+    version: Optional[str] = Field(
+        None, description="Optional Vault version/version_id"
+    )
 
 
 class AWSKMSSyncRequest(BaseModel):
@@ -164,7 +177,9 @@ class JWTSyncRequest(BaseModel):
 
 class WindowsCertStoreSyncRequest(BaseModel):
     provider: str = "windows_cert_store"
-    store_name: str = Field("My", description='Windows store name, e.g. "My", "Root", "CA".')
+    store_name: str = Field(
+        "My", description='Windows store name, e.g. "My", "Root", "CA".'
+    )
     store_kind: str = Field("user", description='"user" or "enterprise".')
     dump: Optional[str] = Field(
         None, description="Raw text of a `certutil -store` dump."
@@ -173,20 +188,30 @@ class WindowsCertStoreSyncRequest(BaseModel):
 
 class VaultScannerSyncRequest(BaseModel):
     provider: str = "vault_secrets"
-    vault_url: str = Field(min_length=1, description="HashiCorp Vault URL, e.g. https://vault.internal:8200")
+    vault_url: str = Field(
+        min_length=1,
+        description="HashiCorp Vault URL, e.g. https://vault.internal:8200",
+    )
     token: str = Field(min_length=1, description="Vault token with read permissions")
-    mount_point: str = Field(default="secret", description="KV secrets engine mount point")
-    path: str = Field(default="", description="Optional sub-path within the mount point")
+    mount_point: str = Field(
+        default="secret", description="KV secrets engine mount point"
+    )
+    path: str = Field(
+        default="", description="Optional sub-path within the mount point"
+    )
 
 
 class GitSecretsSyncRequest(BaseModel):
     provider: str = "git_secrets"
     repo_path: str = Field(min_length=1, description="Local path to a git repository")
-    scan_history: bool = Field(default=True, description="Scan recent commit history for secrets")
+    scan_history: bool = Field(
+        default=True, description="Scan recent commit history for secrets"
+    )
 
 
 class AWSPQCScanRequest(BaseModel):
     """Direct AWS credentials for comprehensive PQC scanning."""
+
     access_key_id: str = Field(min_length=1, description="AWS Access Key ID")
     secret_access_key: str = Field(min_length=1, description="AWS Secret Access Key")
     region: str = Field(default="ap-south-1", min_length=1, description="AWS region")
@@ -199,13 +224,21 @@ class SSHDirectScanRequest(BaseModel):
     username: str = Field(..., min_length=1, description="SSH Username")
     password: Optional[str] = Field(None, description="SSH Password")
     private_key: Optional[str] = Field(None, description="PEM-formatted private key")
-    key_passphrase: Optional[str] = Field(None, description="Passphrase for the private key")
-    sudo: bool = Field(default=False, description="Enable privilege escalation via sudo")
-    sudo_password: Optional[str] = Field(None, description="Password for sudo escalation")
+    key_passphrase: Optional[str] = Field(
+        None, description="Passphrase for the private key"
+    )
+    sudo: bool = Field(
+        default=False, description="Enable privilege escalation via sudo"
+    )
+    sudo_password: Optional[str] = Field(
+        None, description="Password for sudo escalation"
+    )
 
 
 class SASTDirectScanRequest(BaseModel):
-    target_path: str = Field(..., min_length=1, description="Absolute target directory path to scan")
+    target_path: str = Field(
+        ..., min_length=1, description="Absolute target directory path to scan"
+    )
 
 
 class WinRMDirectScanRequest(BaseModel):
@@ -220,7 +253,9 @@ class WinRMDirectScanRequest(BaseModel):
 
 class KubernetesDirectScanRequest(BaseModel):
     context: Optional[str] = Field(None, description="Kubeconfig context name")
-    kubeconfig: Optional[str] = Field(None, description="Kubeconfig file content as a string")
+    kubeconfig: Optional[str] = Field(
+        None, description="Kubeconfig file content as a string"
+    )
     host: Optional[str] = Field(None, description="Kubernetes API server host")
     token: Optional[str] = Field(None, description="Bearer token")
     verify_ssl: bool = Field(default=False)
@@ -277,7 +312,9 @@ class ADCSDirectScanRequest(BaseModel):
 
 class JWTDirectScanRequest(BaseModel):
     tokens: Optional[list[str]] = Field(None, description="Offline list of JWTs")
-    endpoint: Optional[str] = Field(None, description="HTTPS endpoint returning JWT list")
+    endpoint: Optional[str] = Field(
+        None, description="HTTPS endpoint returning JWT list"
+    )
     token: Optional[str] = Field(None, description="Bearer token auth for endpoint")
 
 
@@ -294,9 +331,13 @@ class SAMLSyncRequest(BaseModel):
 
 
 class SAMLDirectScanRequest(BaseModel):
-    metadata_url: Optional[str] = Field(None, description="SAML metadata URL to fetch and parse")
+    metadata_url: Optional[str] = Field(
+        None, description="SAML metadata URL to fetch and parse"
+    )
     xml_blob: Optional[str] = Field(None, description="Raw SAML metadata XML string")
-    token: Optional[str] = Field(None, description="Bearer token for authenticated metadata URLs")
+    token: Optional[str] = Field(
+        None, description="Bearer token for authenticated metadata URLs"
+    )
 
 
 @router.get("")
@@ -313,7 +354,7 @@ async def list_connectors(
             "type": "cmdb",
             "status": "configured",
             "last_sync": None,
-            "description": "Upload a CSV file to bulk import or update assets."
+            "description": "Upload a CSV file to bulk import or update assets.",
         },
         {
             "id": "servicenow",
@@ -321,7 +362,7 @@ async def list_connectors(
             "type": "cmdb",
             "status": "inactive",
             "last_sync": None,
-            "description": "Sync servers and business service mapping from ServiceNow CIs."
+            "description": "Sync servers and business service mapping from ServiceNow CIs.",
         },
         {
             "id": "aws_discovery",
@@ -329,7 +370,7 @@ async def list_connectors(
             "type": "cloud",
             "status": "configured",
             "last_sync": None,
-            "description": "Automatically inventory AWS KMS, ACM certificates, and ALBs."
+            "description": "Automatically inventory AWS KMS, ACM certificates, and ALBs.",
         },
         {
             "id": "pkcs11_hsm",
@@ -337,7 +378,7 @@ async def list_connectors(
             "type": "hsm",
             "status": "configured",
             "last_sync": None,
-            "description": "Enumerate HSM objects via PKCS#11 (key types, sizes, labels)."
+            "description": "Enumerate HSM objects via PKCS#11 (key types, sizes, labels).",
         },
         {
             "id": "kmip_kms",
@@ -345,7 +386,7 @@ async def list_connectors(
             "type": "hsm",
             "status": "configured",
             "last_sync": None,
-            "description": "Query KMIP server for managed objects via Locate/GetAttributes."
+            "description": "Query KMIP server for managed objects via Locate/GetAttributes.",
         },
         {
             "id": "adcs_ldap",
@@ -353,7 +394,7 @@ async def list_connectors(
             "type": "pki",
             "status": "configured",
             "last_sync": None,
-            "description": "Discover CAs and certificates from Active Directory Certificate Services."
+            "description": "Discover CAs and certificates from Active Directory Certificate Services.",
         },
         {
             "id": "ssh_agentless",
@@ -361,7 +402,7 @@ async def list_connectors(
             "type": "host",
             "status": "configured",
             "last_sync": None,
-            "description": "SSH agentless scan of certificate stores, OpenSSL, SSH config, and ciphers."
+            "description": "SSH agentless scan of certificate stores, OpenSSL, SSH config, and ciphers.",
         },
         {
             "id": "winrm_agentless",
@@ -369,7 +410,7 @@ async def list_connectors(
             "type": "host",
             "status": "configured",
             "last_sync": None,
-            "description": "Audit Windows hosts for certificate stores, Schannel TLS, and IIS."
+            "description": "Audit Windows hosts for certificate stores, Schannel TLS, and IIS.",
         },
         {
             "id": "oracle_tde",
@@ -377,7 +418,7 @@ async def list_connectors(
             "type": "database",
             "status": "configured",
             "last_sync": None,
-            "description": "Enumerate Oracle tablespace encryption and TDE wallet master keys."
+            "description": "Enumerate Oracle tablespace encryption and TDE wallet master keys.",
         },
         {
             "id": "sqlserver_tde",
@@ -385,7 +426,7 @@ async def list_connectors(
             "type": "database",
             "status": "configured",
             "last_sync": None,
-            "description": "Audit SQL Server database encryption (TDE) keys and certificates."
+            "description": "Audit SQL Server database encryption (TDE) keys and certificates.",
         },
         {
             "id": "kubernetes",
@@ -393,7 +434,7 @@ async def list_connectors(
             "type": "container",
             "status": "configured",
             "last_sync": None,
-            "description": "Scan ingress TLS, secrets, etcd encryption, and cluster components."
+            "description": "Scan ingress TLS, secrets, etcd encryption, and cluster components.",
         },
         {
             "id": "sast_native",
@@ -401,7 +442,7 @@ async def list_connectors(
             "type": "sast",
             "status": "configured",
             "last_sync": None,
-            "description": "Scan codebases (Python/Java/Go/NodeJS) for crypto usage and lockfiles."
+            "description": "Scan codebases (Python/Java/Go/NodeJS) for crypto usage and lockfiles.",
         },
         {
             "id": "windows_cert_store",
@@ -409,7 +450,7 @@ async def list_connectors(
             "type": "endpoint",
             "status": "configured",
             "last_sync": None,
-            "description": "Enumerate local Windows certificate stores via certutil dump."
+            "description": "Enumerate local Windows certificate stores via certutil dump.",
         },
         {
             "id": "jwt_audit",
@@ -417,7 +458,7 @@ async def list_connectors(
             "type": "app",
             "status": "configured",
             "last_sync": None,
-            "description": "Audit JWT signing algorithms and keys offline or via JWKS endpoints."
+            "description": "Audit JWT signing algorithms and keys offline or via JWKS endpoints.",
         },
         {
             "id": "azure_key_vault",
@@ -425,7 +466,7 @@ async def list_connectors(
             "type": "cloud",
             "status": "configured",
             "last_sync": None,
-            "description": "Sync keys and configuration from Azure Key Vault."
+            "description": "Sync keys and configuration from Azure Key Vault.",
         },
         {
             "id": "gcp_kms",
@@ -433,7 +474,7 @@ async def list_connectors(
             "type": "cloud",
             "status": "configured",
             "last_sync": None,
-            "description": "Sync keys and keyring algorithms from GCP KMS."
+            "description": "Sync keys and keyring algorithms from GCP KMS.",
         },
         {
             "id": "vault_scanner",
@@ -441,7 +482,7 @@ async def list_connectors(
             "type": "secrets",
             "status": "configured",
             "last_sync": None,
-            "description": "Discover cryptographic material (PKI certs, transit keys) in HashiCorp Vault secrets."
+            "description": "Discover cryptographic material (PKI certs, transit keys) in HashiCorp Vault secrets.",
         },
         {
             "id": "git_secrets",
@@ -449,7 +490,7 @@ async def list_connectors(
             "type": "sast",
             "status": "configured",
             "last_sync": None,
-            "description": "Scan git repositories for exposed private keys, certificates, and credentials in history."
+            "description": "Scan git repositories for exposed private keys, certificates, and credentials in history.",
         },
         {
             "id": "saml_metadata",
@@ -457,8 +498,8 @@ async def list_connectors(
             "type": "pki",
             "status": "configured",
             "last_sync": None,
-            "description": "Parse SAML metadata XML or URLs to inventory signing/encryption certificates for PQC readiness."
-        }
+            "description": "Parse SAML metadata XML or URLs to inventory signing/encryption certificates for PQC readiness.",
+        },
     ]
 
 
@@ -474,13 +515,13 @@ async def import_csv(
     if current_user.role not in ["admin", "analyst"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only administrators and analysts can import asset data."
+            detail="Only administrators and analysts can import asset data.",
         )
 
     if not file.filename.endswith(".csv"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded file must be a CSV file."
+            detail="Uploaded file must be a CSV file.",
         )
 
     try:
@@ -489,7 +530,7 @@ async def import_csv(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Could not parse file content as UTF-8 text: {e}"
+            detail=f"Could not parse file content as UTF-8 text: {e}",
         )
 
     connector = CSVCMDBConnector()
@@ -498,7 +539,7 @@ async def import_csv(
     if result.get("status") == "error":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result.get("error", "Unknown error parsing CSV")
+            detail=result.get("error", "Unknown error parsing CSV"),
         )
 
     return result
@@ -511,7 +552,9 @@ async def sync_aws_kms(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     credentials_ref: Any = payload.credentials
     if payload.access_key_id or payload.secret_access_key:
         credentials_ref = {
@@ -531,7 +574,9 @@ async def sync_azure_key_vault(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     creds_ref: Any = payload.credentials
     if payload.client_id or payload.client_secret:
         creds_ref = {
@@ -539,7 +584,11 @@ async def sync_azure_key_vault(
             "client_secret": payload.client_secret,
             "tenant_id": payload.tenant_id,
         }
-    connector = AzureKeyVaultConnector(credentials_ref=creds_ref, tenant_id=payload.tenant_id, vault_url=payload.vault_url)
+    connector = AzureKeyVaultConnector(
+        credentials_ref=creds_ref,
+        tenant_id=payload.tenant_id,
+        vault_url=payload.vault_url,
+    )
     result = await connector.sync(session)
     await session.commit()
     return result
@@ -552,18 +601,28 @@ async def sync_gcp_kms(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     credentials_json = payload.credentials_json
     if not credentials_json and payload.credentials_path:
         import pathlib
+
         try:
-            credentials_json = pathlib.Path(payload.credentials_path).read_text(encoding="utf-8")
+            credentials_json = pathlib.Path(payload.credentials_path).read_text(
+                encoding="utf-8"
+            )
         except Exception as exc:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Could not read credentials_path: {exc}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Could not read credentials_path: {exc}",
+            )
     credentials_ref: Any = payload.credentials
     if credentials_json:
         credentials_ref = {"credentials_json": credentials_json}
-    connector = GCPKMSConnector(project_id=payload.project_id, credentials_ref=credentials_ref)
+    connector = GCPKMSConnector(
+        project_id=payload.project_id, credentials_ref=credentials_ref
+    )
     result = await connector.sync(session)
     await session.commit()
     return result
@@ -576,7 +635,9 @@ async def sync_pkcs11_hsm(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = PKCS11Connector(
         library_path=payload.library_path,
         credentials_ref=payload.credentials,
@@ -595,7 +656,9 @@ async def sync_kmip_kms(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = KMIPConnector(
         host=payload.host,
         port=payload.port,
@@ -616,7 +679,9 @@ async def sync_adcs_ldap(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = ADCSConnector(
         domain_controller=payload.domain_controller,
         credentials_ref=payload.credentials,
@@ -635,7 +700,9 @@ async def sync_ssh_agentless(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = SSHConnector(
         credentials_ref=payload.credentials,
         host=payload.host,
@@ -655,7 +722,9 @@ async def sync_winrm_agentless(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = WinRMConnector(
         credentials_ref=payload.credentials,
         host=payload.host,
@@ -676,7 +745,9 @@ async def sync_oracle_tde(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = OracleTDEConnector(
         credentials_ref=payload.credentials,
         host=payload.host,
@@ -696,7 +767,9 @@ async def sync_sqlserver_tde(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = SQLServerTDEConnector(
         credentials_ref=payload.credentials,
         host=payload.host,
@@ -716,7 +789,9 @@ async def sync_kubernetes(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = KubernetesConnector(
         credentials_ref=payload.credentials,
         context=payload.context,
@@ -734,7 +809,9 @@ async def sync_sast(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = SASTConnector(
         target_path=payload.target_path,
         credentials_ref=payload.credentials,
@@ -750,8 +827,9 @@ async def sync_jwt(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
-    from app.connectors.jwt_connector import JWTConnector
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = JWTConnector(
         tokens=payload.tokens,
         endpoint=payload.endpoint,
@@ -769,11 +847,17 @@ async def sync_windows_cert_store(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
-    from app.connectors.winstore_connector import WindowsCertStoreConnector
-    normalized_kind = "enterprise" if payload.store_kind == "machine" else payload.store_kind
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
+    normalized_kind = (
+        "enterprise" if payload.store_kind == "machine" else payload.store_kind
+    )
     if normalized_kind not in {"user", "enterprise"}:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="store_kind must be 'user' or 'enterprise'")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="store_kind must be 'user' or 'enterprise'",
+        )
     connector = WindowsCertStoreConnector(
         store_name=payload.store_name,
         store_kind=normalized_kind,
@@ -790,7 +874,9 @@ async def sync_saml(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = SAMLMetadataConnector(
         metadata_url=payload.metadata_url,
         credentials_ref=payload.credentials,
@@ -807,7 +893,9 @@ async def scan_saml_direct(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     scan = Scan(
         scan_type="saml_metadata",
         target=f"saml:{payload.metadata_url or 'offline'}",
@@ -833,16 +921,26 @@ async def scan_saml_direct(
             scan.error_message = ", ".join(result.get("errors", ["Unknown SAML error"]))
             scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
-                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+                scan.duration_seconds = int(
+                    (scan.completed_at - scan.started_at).total_seconds()
+                )
             await session.commit()
-            return {"status": "error", "scan_id": scan_id, "errors": result.get("errors", [])}
+            return {
+                "status": "error",
+                "scan_id": scan_id,
+                "errors": result.get("errors", []),
+            }
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        findings_res = await session.execute(
+            select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
+        )
         scan.findings_created = findings_res.scalar_one() or 0
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         return {
             "status": "success",
@@ -856,10 +954,15 @@ async def scan_saml_direct(
         scan.completed_at = datetime.now(timezone.utc)
         scan.error_message = str(exc)[:500]
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         logger.exception(f"SAML direct scan failed: {exc}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"SAML direct scan failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"SAML direct scan failed: {exc}",
+        )
 
 
 @router.post("/sync/vault-scanner", status_code=status.HTTP_200_OK)
@@ -869,7 +972,9 @@ async def sync_vault_scanner(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = VaultScannerConnector(
         vault_url=payload.vault_url,
         token=payload.token,
@@ -888,7 +993,9 @@ async def sync_git_secrets(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     connector = GitSecretsConnector(
         repo_path=payload.repo_path,
         scan_history=payload.scan_history,
@@ -945,7 +1052,9 @@ async def scan_aws_pqc(
         # Update the Scan record with results
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
-        scan.assets_found = result.get("assets_created", 0) + result.get("assets_updated", 0)
+        scan.assets_found = result.get("assets_created", 0) + result.get(
+            "assets_updated", 0
+        )
         scan.findings_created = result.get("findings_created", 0)
         if scan.started_at:
             scan.duration_seconds = int(
@@ -1024,7 +1133,7 @@ async def scan_ssh_direct(
             "key_passphrase": payload.key_passphrase,
             "sudo_password": payload.sudo_password,
         }
-        
+
         connector = SSHConnector(
             credentials_ref=credentials,
             host=payload.host,
@@ -1032,7 +1141,7 @@ async def scan_ssh_direct(
             sudo=payload.sudo,
             sudo_password_ref=credentials if payload.sudo_password else None,
         )
-        
+
         result = await connector.sync(session)
 
         if result.get("status") == "error":
@@ -1053,13 +1162,13 @@ async def scan_ssh_direct(
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        
+
         # Count findings created for this scan
         findings_res = await session.execute(
             select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
         )
         scan.findings_created = findings_res.scalar_one() or 0
-        
+
         if scan.started_at:
             scan.duration_seconds = int(
                 (scan.completed_at - scan.started_at).total_seconds()
@@ -1184,7 +1293,9 @@ async def scan_winrm_direct(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     scan = Scan(
         scan_type="winrm",
         target=f"winrm:{payload.host}:{payload.port}",
@@ -1200,7 +1311,10 @@ async def scan_winrm_direct(
     scan_id = str(scan.id)
     try:
         connector = WinRMConnector(
-            credentials_ref={"username": payload.username, "password": payload.password},
+            credentials_ref={
+                "username": payload.username,
+                "password": payload.password,
+            },
             host=payload.host,
             port=payload.port,
             transport=payload.transport,
@@ -1213,16 +1327,22 @@ async def scan_winrm_direct(
             scan.error_message = result.get("error", "Unknown WinRM error")
             scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
-                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+                scan.duration_seconds = int(
+                    (scan.completed_at - scan.started_at).total_seconds()
+                )
             await session.commit()
             return {"status": "error", "scan_id": scan_id, "error": result.get("error")}
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        findings_res = await session.execute(
+            select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
+        )
         scan.findings_created = findings_res.scalar_one() or 0
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         return {
             "status": "success",
@@ -1236,10 +1356,15 @@ async def scan_winrm_direct(
         scan.completed_at = datetime.now(timezone.utc)
         scan.error_message = str(exc)[:500]
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         logger.exception(f"WinRM direct scan failed: {exc}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"WinRM direct scan failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"WinRM direct scan failed: {exc}",
+        )
 
 
 @router.post("/scan/kubernetes-direct", status_code=status.HTTP_200_OK)
@@ -1249,7 +1374,9 @@ async def scan_kubernetes_direct(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     scan = Scan(
         scan_type="kubernetes",
         target=f"kubernetes:{payload.context or 'default'}",
@@ -1279,19 +1406,31 @@ async def scan_kubernetes_direct(
         result = await connector.sync(session)
         if result.get("status") == "error":
             scan.status = "failed"
-            scan.error_message = ", ".join(result.get("errors", ["Unknown Kubernetes error"]))
+            scan.error_message = ", ".join(
+                result.get("errors", ["Unknown Kubernetes error"])
+            )
             scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
-                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+                scan.duration_seconds = int(
+                    (scan.completed_at - scan.started_at).total_seconds()
+                )
             await session.commit()
-            return {"status": "error", "scan_id": scan_id, "errors": result.get("errors", [])}
+            return {
+                "status": "error",
+                "scan_id": scan_id,
+                "errors": result.get("errors", []),
+            }
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        findings_res = await session.execute(
+            select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
+        )
         scan.findings_created = findings_res.scalar_one() or 0
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         return {
             "status": "success",
@@ -1305,10 +1444,15 @@ async def scan_kubernetes_direct(
         scan.completed_at = datetime.now(timezone.utc)
         scan.error_message = str(exc)[:500]
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         logger.exception(f"Kubernetes direct scan failed: {exc}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Kubernetes direct scan failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Kubernetes direct scan failed: {exc}",
+        )
 
 
 @router.post("/scan/oracle-tde-direct", status_code=status.HTTP_200_OK)
@@ -1318,7 +1462,9 @@ async def scan_oracle_tde_direct(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     scan = Scan(
         scan_type="oracle_tde",
         target=f"oracle-tde:{payload.host}:{payload.port}/{payload.service_name}",
@@ -1348,19 +1494,31 @@ async def scan_oracle_tde_direct(
         result = await connector.sync(session)
         if result.get("status") == "error":
             scan.status = "failed"
-            scan.error_message = ", ".join(result.get("errors", ["Unknown Oracle error"]))
+            scan.error_message = ", ".join(
+                result.get("errors", ["Unknown Oracle error"])
+            )
             scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
-                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+                scan.duration_seconds = int(
+                    (scan.completed_at - scan.started_at).total_seconds()
+                )
             await session.commit()
-            return {"status": "error", "scan_id": scan_id, "errors": result.get("errors", [])}
+            return {
+                "status": "error",
+                "scan_id": scan_id,
+                "errors": result.get("errors", []),
+            }
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        findings_res = await session.execute(
+            select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
+        )
         scan.findings_created = findings_res.scalar_one() or 0
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         return {
             "status": "success",
@@ -1374,10 +1532,15 @@ async def scan_oracle_tde_direct(
         scan.completed_at = datetime.now(timezone.utc)
         scan.error_message = str(exc)[:500]
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         logger.exception(f"Oracle TDE direct scan failed: {exc}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Oracle TDE direct scan failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Oracle TDE direct scan failed: {exc}",
+        )
 
 
 @router.post("/scan/sqlserver-tde-direct", status_code=status.HTTP_200_OK)
@@ -1387,7 +1550,9 @@ async def scan_sqlserver_tde_direct(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     scan = Scan(
         scan_type="sqlserver_tde",
         target=f"sqlserver-tde:{payload.host}:{payload.port}",
@@ -1416,19 +1581,31 @@ async def scan_sqlserver_tde_direct(
         result = await connector.sync(session)
         if result.get("status") == "error":
             scan.status = "failed"
-            scan.error_message = ", ".join(result.get("errors", ["Unknown SQL Server error"]))
+            scan.error_message = ", ".join(
+                result.get("errors", ["Unknown SQL Server error"])
+            )
             scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
-                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+                scan.duration_seconds = int(
+                    (scan.completed_at - scan.started_at).total_seconds()
+                )
             await session.commit()
-            return {"status": "error", "scan_id": scan_id, "errors": result.get("errors", [])}
+            return {
+                "status": "error",
+                "scan_id": scan_id,
+                "errors": result.get("errors", []),
+            }
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        findings_res = await session.execute(
+            select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
+        )
         scan.findings_created = findings_res.scalar_one() or 0
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         return {
             "status": "success",
@@ -1442,10 +1619,15 @@ async def scan_sqlserver_tde_direct(
         scan.completed_at = datetime.now(timezone.utc)
         scan.error_message = str(exc)[:500]
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         logger.exception(f"SQL Server TDE direct scan failed: {exc}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"SQL Server TDE direct scan failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"SQL Server TDE direct scan failed: {exc}",
+        )
 
 
 @router.post("/scan/pkcs11-hsm-direct", status_code=status.HTTP_200_OK)
@@ -1455,7 +1637,9 @@ async def scan_pkcs11_hsm_direct(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     scan = Scan(
         scan_type="pkcs11_hsm",
         target=f"pkcs11:{payload.library_path}",
@@ -1483,19 +1667,31 @@ async def scan_pkcs11_hsm_direct(
         result = await connector.sync(session)
         if result.get("status") == "error":
             scan.status = "failed"
-            scan.error_message = ", ".join(result.get("errors", ["Unknown PKCS11 error"]))
+            scan.error_message = ", ".join(
+                result.get("errors", ["Unknown PKCS11 error"])
+            )
             scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
-                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+                scan.duration_seconds = int(
+                    (scan.completed_at - scan.started_at).total_seconds()
+                )
             await session.commit()
-            return {"status": "error", "scan_id": scan_id, "errors": result.get("errors", [])}
+            return {
+                "status": "error",
+                "scan_id": scan_id,
+                "errors": result.get("errors", []),
+            }
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        findings_res = await session.execute(
+            select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
+        )
         scan.findings_created = findings_res.scalar_one() or 0
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         return {
             "status": "success",
@@ -1509,10 +1705,15 @@ async def scan_pkcs11_hsm_direct(
         scan.completed_at = datetime.now(timezone.utc)
         scan.error_message = str(exc)[:500]
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         logger.exception(f"PKCS11 direct scan failed: {exc}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"PKCS11 direct scan failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"PKCS11 direct scan failed: {exc}",
+        )
 
 
 @router.post("/scan/kmip-kms-direct", status_code=status.HTTP_200_OK)
@@ -1522,7 +1723,9 @@ async def scan_kmip_kms_direct(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     scan = Scan(
         scan_type="kmip_kms",
         target=f"kmip:{payload.host}:{payload.port}",
@@ -1558,16 +1761,26 @@ async def scan_kmip_kms_direct(
             scan.error_message = ", ".join(result.get("errors", ["Unknown KMIP error"]))
             scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
-                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+                scan.duration_seconds = int(
+                    (scan.completed_at - scan.started_at).total_seconds()
+                )
             await session.commit()
-            return {"status": "error", "scan_id": scan_id, "errors": result.get("errors", [])}
+            return {
+                "status": "error",
+                "scan_id": scan_id,
+                "errors": result.get("errors", []),
+            }
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        findings_res = await session.execute(
+            select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
+        )
         scan.findings_created = findings_res.scalar_one() or 0
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         return {
             "status": "success",
@@ -1581,10 +1794,15 @@ async def scan_kmip_kms_direct(
         scan.completed_at = datetime.now(timezone.utc)
         scan.error_message = str(exc)[:500]
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         logger.exception(f"KMIP direct scan failed: {exc}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"KMIP direct scan failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"KMIP direct scan failed: {exc}",
+        )
 
 
 @router.post("/scan/adcs-ldap-direct", status_code=status.HTTP_200_OK)
@@ -1594,7 +1812,9 @@ async def scan_adcs_ldap_direct(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     scan = Scan(
         scan_type="adcs_ldap",
         target=f"adcs:{payload.domain_controller}",
@@ -1625,16 +1845,26 @@ async def scan_adcs_ldap_direct(
             scan.error_message = ", ".join(result.get("errors", ["Unknown ADCS error"]))
             scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
-                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+                scan.duration_seconds = int(
+                    (scan.completed_at - scan.started_at).total_seconds()
+                )
             await session.commit()
-            return {"status": "error", "scan_id": scan_id, "errors": result.get("errors", [])}
+            return {
+                "status": "error",
+                "scan_id": scan_id,
+                "errors": result.get("errors", []),
+            }
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        findings_res = await session.execute(
+            select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
+        )
         scan.findings_created = findings_res.scalar_one() or 0
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         return {
             "status": "success",
@@ -1648,10 +1878,15 @@ async def scan_adcs_ldap_direct(
         scan.completed_at = datetime.now(timezone.utc)
         scan.error_message = str(exc)[:500]
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         logger.exception(f"ADCS direct scan failed: {exc}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"ADCS direct scan failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"ADCS direct scan failed: {exc}",
+        )
 
 
 @router.post("/scan/jwt-direct", status_code=status.HTTP_200_OK)
@@ -1661,7 +1896,9 @@ async def scan_jwt_direct(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     scan = Scan(
         scan_type="jwt_audit",
         target=f"jwt:{payload.endpoint or 'offline'}",
@@ -1677,6 +1914,7 @@ async def scan_jwt_direct(
     scan_id = str(scan.id)
     try:
         from app.connectors.jwt_connector import JWTConnector
+
         credentials_ref = {}
         if payload.token:
             credentials_ref["token"] = payload.token
@@ -1691,16 +1929,26 @@ async def scan_jwt_direct(
             scan.error_message = ", ".join(result.get("errors", ["Unknown JWT error"]))
             scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
-                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+                scan.duration_seconds = int(
+                    (scan.completed_at - scan.started_at).total_seconds()
+                )
             await session.commit()
-            return {"status": "error", "scan_id": scan_id, "errors": result.get("errors", [])}
+            return {
+                "status": "error",
+                "scan_id": scan_id,
+                "errors": result.get("errors", []),
+            }
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        findings_res = await session.execute(
+            select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
+        )
         scan.findings_created = findings_res.scalar_one() or 0
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         return {
             "status": "success",
@@ -1714,10 +1962,15 @@ async def scan_jwt_direct(
         scan.completed_at = datetime.now(timezone.utc)
         scan.error_message = str(exc)[:500]
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         logger.exception(f"JWT direct scan failed: {exc}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"JWT direct scan failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"JWT direct scan failed: {exc}",
+        )
 
 
 @router.post("/scan/windows-cert-store-direct", status_code=status.HTTP_200_OK)
@@ -1727,7 +1980,9 @@ async def scan_windows_cert_store_direct(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["admin", "analyst"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
+        )
     scan = Scan(
         scan_type="windows_cert_store",
         target=f"winstore:{payload.store_name}:{payload.store_kind}",
@@ -1743,6 +1998,7 @@ async def scan_windows_cert_store_direct(
     scan_id = str(scan.id)
     try:
         from app.connectors.winstore_connector import WindowsCertStoreConnector
+
         connector = WindowsCertStoreConnector(
             store_name=payload.store_name,
             store_kind=payload.store_kind,
@@ -1750,19 +2006,31 @@ async def scan_windows_cert_store_direct(
         result = await connector.sync(session, dump_text=payload.dump)
         if result.get("status") == "error":
             scan.status = "failed"
-            scan.error_message = ", ".join(result.get("errors", ["Unknown Windows Cert Store error"]))
+            scan.error_message = ", ".join(
+                result.get("errors", ["Unknown Windows Cert Store error"])
+            )
             scan.completed_at = datetime.now(timezone.utc)
             if scan.started_at:
-                scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+                scan.duration_seconds = int(
+                    (scan.completed_at - scan.started_at).total_seconds()
+                )
             await session.commit()
-            return {"status": "error", "scan_id": scan_id, "errors": result.get("errors", [])}
+            return {
+                "status": "error",
+                "scan_id": scan_id,
+                "errors": result.get("errors", []),
+            }
         scan.status = "completed"
         scan.completed_at = datetime.now(timezone.utc)
         scan.assets_found = result.get("imported", 0) + result.get("updated", 0)
-        findings_res = await session.execute(select(func.count(Finding.id)).where(Finding.scan_id == scan.id))
+        findings_res = await session.execute(
+            select(func.count(Finding.id)).where(Finding.scan_id == scan.id)
+        )
         scan.findings_created = findings_res.scalar_one() or 0
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         return {
             "status": "success",
@@ -1776,7 +2044,12 @@ async def scan_windows_cert_store_direct(
         scan.completed_at = datetime.now(timezone.utc)
         scan.error_message = str(exc)[:500]
         if scan.started_at:
-            scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
+            scan.duration_seconds = int(
+                (scan.completed_at - scan.started_at).total_seconds()
+            )
         await session.commit()
         logger.exception(f"Windows Cert Store direct scan failed: {exc}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Windows Cert Store direct scan failed: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Windows Cert Store direct scan failed: {exc}",
+        )

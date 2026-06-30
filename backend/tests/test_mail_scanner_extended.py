@@ -1,8 +1,6 @@
-import pytest
 import socket
-import ssl
-from unittest.mock import patch, MagicMock, PropertyMock
-from app.scanners.mail_scanner import _do_mail_connect, _recv_line, _SMTP_PORTS
+from unittest.mock import patch, MagicMock
+from app.scanners.mail_scanner import _do_mail_connect, _recv_line
 
 
 class TestRecvLine:
@@ -29,10 +27,15 @@ class TestDoMailConnect:
         mock_ssock.cipher.return_value = ("TLS_AES_256_GCM_SHA384", "TLSv1.3", 256)
         mock_ssock.getpeercert.return_value = b"der-bytes"
 
-        with patch("socket.create_connection") as mock_conn, \
-             patch("ssl.create_default_context") as mock_ctx, \
-             patch("ssl.DER_cert_to_PEM_cert", return_value="-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----"), \
-             patch("app.scanners.mail_scanner.parse_certificate", return_value={"thumbprint": "a" * 64}):
+        with patch("socket.create_connection") as mock_conn, patch(
+            "ssl.create_default_context"
+        ) as mock_ctx, patch(
+            "ssl.DER_cert_to_PEM_cert",
+            return_value="-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
+        ), patch(
+            "app.scanners.mail_scanner.parse_certificate",
+            return_value={"thumbprint": "a" * 64},
+        ):
             mock_conn.return_value.__enter__ = MagicMock(return_value=mock_sock)
             mock_conn.return_value.__exit__ = MagicMock(return_value=False)
             ctx = MagicMock()
@@ -57,10 +60,15 @@ class TestDoMailConnect:
         mock_ssock.cipher.return_value = ("ECDHE-RSA-AES256-GCM-SHA384", "TLSv1.2", 256)
         mock_ssock.getpeercert.return_value = b"der-bytes"
 
-        with patch("socket.create_connection") as mock_conn, \
-             patch("ssl.create_default_context") as mock_ctx, \
-             patch("ssl.DER_cert_to_PEM_cert", return_value="-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----"), \
-             patch("app.scanners.mail_scanner.parse_certificate", return_value={"thumbprint": "b" * 64}):
+        with patch("socket.create_connection") as mock_conn, patch(
+            "ssl.create_default_context"
+        ) as mock_ctx, patch(
+            "ssl.DER_cert_to_PEM_cert",
+            return_value="-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
+        ), patch(
+            "app.scanners.mail_scanner.parse_certificate",
+            return_value={"thumbprint": "b" * 64},
+        ):
             mock_conn.return_value.__enter__ = MagicMock(return_value=mock_sock)
             mock_conn.return_value.__exit__ = MagicMock(return_value=False)
             ctx = MagicMock()
@@ -77,8 +85,9 @@ class TestDoMailConnect:
         mock_sock = MagicMock()
         mock_sock.recv.return_value = b"550 Blocked\r\n"
 
-        with patch("socket.create_connection") as mock_conn, \
-             patch("ssl.create_default_context"):
+        with patch("socket.create_connection") as mock_conn, patch(
+            "ssl.create_default_context"
+        ):
             mock_conn.return_value.__enter__ = MagicMock(return_value=mock_sock)
             mock_conn.return_value.__exit__ = MagicMock(return_value=False)
 
@@ -93,8 +102,9 @@ class TestDoMailConnect:
             b"250-SIZE\r\n250 OK\r\n",
         ]
 
-        with patch("socket.create_connection") as mock_conn, \
-             patch("ssl.create_default_context"):
+        with patch("socket.create_connection") as mock_conn, patch(
+            "ssl.create_default_context"
+        ):
             mock_conn.return_value.__enter__ = MagicMock(return_value=mock_sock)
             mock_conn.return_value.__exit__ = MagicMock(return_value=False)
 
@@ -110,8 +120,9 @@ class TestDoMailConnect:
             b"454 TLS not available\r\n",
         ]
 
-        with patch("socket.create_connection") as mock_conn, \
-             patch("ssl.create_default_context"):
+        with patch("socket.create_connection") as mock_conn, patch(
+            "ssl.create_default_context"
+        ):
             mock_conn.return_value.__enter__ = MagicMock(return_value=mock_sock)
             mock_conn.return_value.__exit__ = MagicMock(return_value=False)
 
@@ -121,15 +132,17 @@ class TestDoMailConnect:
         assert "STARTTLS rejected" in result.get("error_message", "")
 
     def test_connection_refused(self):
-        with patch("socket.create_connection", side_effect=ConnectionError("refused")), \
-             patch("ssl.create_default_context"):
+        with patch(
+            "socket.create_connection", side_effect=ConnectionError("refused")
+        ), patch("ssl.create_default_context"):
             result = _do_mail_connect("mx.example.com", 25, 5)
         assert result["success"] is False
         assert "refused" in result["error_message"]
 
     def test_socket_timeout(self):
-        with patch("socket.create_connection", side_effect=socket.timeout("timed out")), \
-             patch("ssl.create_default_context"):
+        with patch(
+            "socket.create_connection", side_effect=socket.timeout("timed out")
+        ), patch("ssl.create_default_context"):
             result = _do_mail_connect("mx.example.com", 25, 5)
         assert result["success"] is False
         assert "timed out" in result["error_message"]

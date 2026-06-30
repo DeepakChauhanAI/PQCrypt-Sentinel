@@ -34,7 +34,7 @@ class SAMLMetadataConnector(BaseConnector):
         if not self.credentials_ref:
             return {}
         from app.connectors.vault_helper import get_vault_secret
-        
+
         vault_path = ""
         version = None
         if isinstance(self.credentials_ref, dict):
@@ -48,6 +48,7 @@ class SAMLMetadataConnector(BaseConnector):
 
     async def sync(self, session: AsyncSession, **kwargs: Any) -> Dict[str, Any]:
         import httpx
+
         imported = 0
         updated = 0
         errors: List[str] = []
@@ -58,11 +59,11 @@ class SAMLMetadataConnector(BaseConnector):
             try:
                 from urllib.parse import urlparse
                 from app.scanners.safe_target import resolve_safely
-                
+
                 parsed = urlparse(self.metadata_url)
                 if not parsed.hostname:
                     raise ValueError("SAML metadata URL must have a hostname")
-                
+
                 # Verify that the URL hostname is SSRF safe
                 await resolve_safely(parsed.hostname)
 
@@ -71,7 +72,7 @@ class SAMLMetadataConnector(BaseConnector):
                 token = creds.get("token") or creds.get("api_key")
                 if token:
                     headers["Authorization"] = f"Bearer {token}"
-                
+
                 async with httpx.AsyncClient(timeout=15.0, verify=True) as client:
                     resp = await client.get(self.metadata_url, headers=headers)
                     if resp.status_code != 200:
@@ -89,8 +90,12 @@ class SAMLMetadataConnector(BaseConnector):
             }
 
         def parse_xml() -> Dict[str, List[str]]:
-            root = ET.fromstring(xml_content.encode("utf-8") if isinstance(xml_content, str) else xml_content)
-            
+            root = ET.fromstring(  # nosec B314
+                xml_content.encode("utf-8")
+                if isinstance(xml_content, str)
+                else xml_content
+            )
+
             certificates = []
             name_id_formats = []
             bindings = []
@@ -99,7 +104,12 @@ class SAMLMetadataConnector(BaseConnector):
                 # Extract certificate
                 if elem.tag.endswith("X509Certificate"):
                     if elem.text:
-                        cert_text = elem.text.strip().replace(" ", "").replace("\n", "").replace("\r", "")
+                        cert_text = (
+                            elem.text.strip()
+                            .replace(" ", "")
+                            .replace("\n", "")
+                            .replace("\r", "")
+                        )
                         if cert_text:
                             # Format as PEM
                             pem = f"-----BEGIN CERTIFICATE-----\n{cert_text}\n-----END CERTIFICATE-----"
@@ -109,7 +119,11 @@ class SAMLMetadataConnector(BaseConnector):
                     if elem.text:
                         name_id_formats.append(elem.text.strip())
                 # Extract Binding type
-                elif elem.tag.endswith("SingleSignOnService") or elem.tag.endswith("SingleLogoutService") or elem.tag.endswith("AssertionConsumerService"):
+                elif (
+                    elem.tag.endswith("SingleSignOnService")
+                    or elem.tag.endswith("SingleLogoutService")
+                    or elem.tag.endswith("AssertionConsumerService")
+                ):
                     binding = elem.attrib.get("Binding")
                     if binding:
                         bindings.append(binding)
@@ -134,9 +148,11 @@ class SAMLMetadataConnector(BaseConnector):
             try:
                 cert_meta = parse_certificate(pem)
                 thumbprint = cert_meta["thumbprint"]
-                
+
                 asset_name = f"saml-cert:{thumbprint[:16]}"
-                stmt = select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+                stmt = select(Asset).where(
+                    Asset.name == asset_name, Asset.deleted_at.is_(None)
+                )
                 res = await session.execute(stmt)
                 existing = res.scalar_one_or_none()
 

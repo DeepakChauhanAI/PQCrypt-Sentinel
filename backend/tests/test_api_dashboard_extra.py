@@ -7,6 +7,7 @@ Additional tests for `app.api.dashboard`:
 - risk-distribution with cache hit
 - progress with completed_at=None fallback
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -42,6 +43,7 @@ app.dependency_overrides[get_current_user] = lambda: mock_user
 def mock_db():
     session = AsyncMock()
     from app.db import get_session
+
     app.dependency_overrides[get_session] = lambda: session
     yield session
     app.dependency_overrides.pop(get_session, None)
@@ -54,8 +56,11 @@ def test_get_cache_returns_value():
     """get_cache delegates to RedisCache.get with the prefix."""
     fake_cache = AsyncMock()
     fake_cache.get = AsyncMock(return_value={"x": 1})
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         import asyncio
+
         out = asyncio.run(get_cache("summary"))
     assert out == {"x": 1}
     fake_cache.get.assert_called_once()
@@ -67,8 +72,11 @@ def test_set_cache_calls_redis():
     """set_cache delegates to RedisCache.set with prefix and TTL."""
     fake_cache = AsyncMock()
     fake_cache.set = AsyncMock()
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         import asyncio
+
         asyncio.run(set_cache("summary", {"a": 1}, ttl=60))
     fake_cache.set.assert_called_once()
     args = fake_cache.set.call_args
@@ -81,8 +89,11 @@ def test_clear_dashboard_cache_no_client():
     """When the cache client can't be obtained, clear is a no-op."""
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(side_effect=Exception("no redis"))
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         import asyncio
+
         asyncio.run(clear_dashboard_cache())  # should not raise
 
 
@@ -90,8 +101,11 @@ def test_clear_dashboard_cache_client_none():
     """When _get_client returns None, clear is a no-op."""
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=None)
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         import asyncio
+
         asyncio.run(clear_dashboard_cache())  # should not raise
 
 
@@ -102,8 +116,11 @@ def test_clear_dashboard_cache_deletes_keys():
     fake_client.delete = AsyncMock()
     fake_cache = AsyncMock()
     fake_cache._get_client = AsyncMock(return_value=fake_client)
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         import asyncio
+
         asyncio.run(clear_dashboard_cache())
     fake_client.delete.assert_called_once_with("pqc:dashboard:x")
 
@@ -111,8 +128,14 @@ def test_clear_dashboard_cache_deletes_keys():
 # ------------------- _determine_layer_for_asset --------------------
 
 
-def _asset(asset_type=None, discovery_source=None, asset_metadata=None,
-           last_verified_at=None, pqc_status=None, risk_score=None):
+def _asset(
+    asset_type=None,
+    discovery_source=None,
+    asset_metadata=None,
+    last_verified_at=None,
+    pqc_status=None,
+    risk_score=None,
+):
     return SimpleNamespace(
         asset_type=asset_type,
         discovery_source=discovery_source,
@@ -137,7 +160,9 @@ def test_determine_layer_by_discovery_source():
 
 def test_determine_layer_by_metadata_provider():
     """Metadata provider field is used as a fallback hint."""
-    a = _asset(asset_type="", discovery_source="", asset_metadata={"provider": "aws_kms"})
+    a = _asset(
+        asset_type="", discovery_source="", asset_metadata={"provider": "aws_kms"}
+    )
     assert _determine_layer_for_asset(a) == "L3"
 
 
@@ -179,7 +204,9 @@ def test_determine_layer_backup_encryption_maps_to_l5():
 
 def test_determine_layer_metadata_not_dict():
     """Non-dict asset_metadata is gracefully ignored."""
-    a = _asset(asset_type="mystery", discovery_source="mystery", asset_metadata="not a dict")
+    a = _asset(
+        asset_type="mystery", discovery_source="mystery", asset_metadata="not a dict"
+    )
     assert _determine_layer_for_asset(a) == "L1"
 
 
@@ -207,7 +234,9 @@ def test_summary_cache_hit_returns_cached(mock_db):
     }
     fake_cache = AsyncMock()
     fake_cache.get = AsyncMock(return_value=cached_value)
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         client = TestClient(app)
         resp = client.get("/api/v1/dashboard/summary")
     assert resp.status_code == 200
@@ -221,7 +250,9 @@ def test_risk_distribution_cache_hit(mock_db):
     cached = {"critical": 9, "high": 8, "medium": 7, "low": 6, "info": 5}
     fake_cache = AsyncMock()
     fake_cache.get = AsyncMock(return_value=cached)
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         client = TestClient(app)
         resp = client.get("/api/v1/dashboard/risk-distribution")
     assert resp.status_code == 200
@@ -235,7 +266,9 @@ def test_progress_cache_hit(mock_db):
     cached = [{"scan_date": "2026-01-01", "vulnerable": 1, "hybrid": 0, "pqc_ready": 2}]
     fake_cache = AsyncMock()
     fake_cache.get = AsyncMock(return_value=cached)
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         client = TestClient(app)
         resp = client.get("/api/v1/dashboard/progress")
     assert resp.status_code == 200
@@ -271,23 +304,33 @@ def test_progress_with_completed_at_none(mock_db):
 
 def test_layer_coverage_with_risk_scores(mock_db):
     """Assets with risk_scores contribute to per-layer risk_score_avg."""
+
     def _execute(stmt):
         # First call returns all assets
         r = MagicMock()
         assets = [
             SimpleNamespace(
-                id="a-1", asset_type="server", discovery_source="tls_scan",
-                asset_metadata={}, last_verified_at=datetime.now(timezone.utc),
-                pqc_status="vulnerable", risk_score=80,
+                id="a-1",
+                asset_type="server",
+                discovery_source="tls_scan",
+                asset_metadata={},
+                last_verified_at=datetime.now(timezone.utc),
+                pqc_status="vulnerable",
+                risk_score=80,
             ),
             SimpleNamespace(
-                id="a-2", asset_type="database", discovery_source=None,
-                asset_metadata={}, last_verified_at=datetime.now(timezone.utc),
-                pqc_status=None, risk_score=20,
+                id="a-2",
+                asset_type="database",
+                discovery_source=None,
+                asset_metadata={},
+                last_verified_at=datetime.now(timezone.utc),
+                pqc_status=None,
+                risk_score=20,
             ),
         ]
         r.scalars.return_value.all.return_value = assets
         return r
+
     mock_db.execute.side_effect = _execute
     client = TestClient(app)
     resp = client.get("/api/v1/dashboard/layer-coverage")
@@ -318,15 +361,27 @@ def test_layer_coverage_overall_calculation(mock_db):
 def test_layer_coverage_cache_hit(mock_db):
     """If cache is populated, no SQL is executed."""
     cached = {
-        "layers": [{"layer_id": "L1", "layer_name": "Network", "description": "x",
-                    "total_assets": 0, "scanned_assets": 0, "vulnerable_assets": 0,
-                    "hybrid_assets": 0, "pqc_ready_assets": 0, "coverage_pct": 0,
-                    "risk_score_avg": 0}],
+        "layers": [
+            {
+                "layer_id": "L1",
+                "layer_name": "Network",
+                "description": "x",
+                "total_assets": 0,
+                "scanned_assets": 0,
+                "vulnerable_assets": 0,
+                "hybrid_assets": 0,
+                "pqc_ready_assets": 0,
+                "coverage_pct": 0,
+                "risk_score_avg": 0,
+            }
+        ],
         "overall_coverage_pct": 0,
     }
     fake_cache = AsyncMock()
     fake_cache.get = AsyncMock(return_value=cached)
-    with patch("app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)):
+    with patch(
+        "app.api.dashboard.get_redis_cache", new=AsyncMock(return_value=fake_cache)
+    ):
         client = TestClient(app)
         resp = client.get("/api/v1/dashboard/layer-coverage")
     assert resp.status_code == 200

@@ -1,7 +1,11 @@
-import os
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
-from app.connectors.vault_helper import _redact_sensitive, _get_env_fallback, get_vault_secret
+from app.connectors.vault_helper import (
+    _redact_sensitive,
+    _get_env_fallback,
+    get_vault_secret,
+)
+
 
 def test_redact_sensitive():
     assert _redact_sensitive(None) == "<empty>"
@@ -35,7 +39,7 @@ async def test_get_vault_secret_no_config(monkeypatch):
     monkeypatch.delenv("VAULT_URL", raising=False)
     monkeypatch.delenv("VAULT_TOKEN", raising=False)
     monkeypatch.delenv("ALLOW_ENV_FALLBACK", raising=False)
-    
+
     # 1. Without ALLOW_ENV_FALLBACK
     res = await get_vault_secret("secret/data")
     assert res == {}
@@ -51,10 +55,10 @@ async def test_get_vault_secret_no_config(monkeypatch):
 async def test_get_vault_secret_empty_path(monkeypatch):
     monkeypatch.setenv("VAULT_URL", "http://vault:8200")
     monkeypatch.setenv("VAULT_TOKEN", "test-token")
-    
+
     res = await get_vault_secret("")
     assert res == {}
-    
+
     res = await get_vault_secret("/")
     assert res == {}
 
@@ -68,13 +72,7 @@ async def test_get_vault_secret_kv2_success(monkeypatch):
     # KV v2 JSON response structure with data.data
     mock_resp = MagicMock()
     mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "data": {
-            "data": {
-                "foo": "bar"
-            }
-        }
-    }
+    mock_resp.json.return_value = {"data": {"data": {"foo": "bar"}}}
 
     mock_client = AsyncMock()
     mock_client.get.return_value = mock_resp
@@ -103,11 +101,7 @@ async def test_get_vault_secret_kv2_data_only(monkeypatch):
     # KV v2 structure with data but no data.data
     mock_resp = MagicMock()
     mock_resp.status_code = 200
-    mock_resp.json.return_value = {
-        "data": {
-            "foo2": "bar2"
-        }
-    }
+    mock_resp.json.return_value = {"data": {"foo2": "bar2"}}
 
     mock_client = AsyncMock()
     mock_client.get.return_value = mock_resp
@@ -133,11 +127,7 @@ async def test_get_vault_secret_kv1_fallback(monkeypatch):
     # Second call (v1) returns 200
     mock_resp_v1 = MagicMock()
     mock_resp_v1.status_code = 200
-    mock_resp_v1.json.return_value = {
-        "data": {
-            "foo_v1": "bar_v1"
-        }
-    }
+    mock_resp_v1.json.return_value = {"data": {"foo_v1": "bar_v1"}}
 
     mock_client = AsyncMock()
     mock_client.get.side_effect = [mock_resp_v2, mock_resp_v1]

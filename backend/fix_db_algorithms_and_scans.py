@@ -12,6 +12,7 @@ from app.analysis.algo_classifier import classify_algorithm
 from app.services.risk_service import calculate_risk_score
 from app.utils.cache import get_redis_cache
 
+
 async def run_fix():
     print("Connecting to the database...")
     async with AsyncSessionLocal() as session:
@@ -21,18 +22,24 @@ async def run_fix():
         print("Finding empty, failed, or cancelled scans...")
         result = await session.execute(
             select(Scan).where(
-                (Scan.status.in_(["failed", "cancelled"])) |
-                ((Scan.status == "completed") & (Scan.assets_found == 0) & (Scan.findings_created == 0))
+                (Scan.status.in_(["failed", "cancelled"]))
+                | (
+                    (Scan.status == "completed")
+                    & (Scan.assets_found == 0)
+                    & (Scan.findings_created == 0)
+                )
             )
         )
         scans_to_delete = result.scalars().all()
-        
+
         if scans_to_delete:
             scan_ids = [s.id for s in scans_to_delete]
             print(f"Found {len(scans_to_delete)} scan(s) to delete:")
             for s in scans_to_delete:
-                print(f"  - ID: {s.id}, Type: {s.scan_type}, Status: {s.status}, Target: {s.target}")
-            
+                print(
+                    f"  - ID: {s.id}, Type: {s.scan_type}, Status: {s.status}, Target: {s.target}"
+                )
+
             # Nullify references in Asset table
             print("Nullifying scan references on assets...")
             await session.execute(
@@ -91,23 +98,27 @@ async def run_fix():
                 oid=algo.oid,
                 algorithm_type=algo.algorithm_type,
             )
-            
+
             detailed_status = classification.get("pqc_status", "unknown")
             is_qv = classification.get("is_quantum_vulnerable", False)
-            
+
             old_status = algo.pqc_status
             old_qv = algo.is_quantum_vulnerable
-            
+
             # This triggers validates decorator in models.py
             algo.pqc_status = detailed_status
             algo.is_quantum_vulnerable = is_qv
-            
+
             if algo.pqc_status != old_status or algo.is_quantum_vulnerable != old_qv:
                 print(f"  Updating algo {algo.algorithm_name} (OID: {algo.oid}):")
-                print(f"    pqc_status: {old_status} -> {algo.pqc_status} (detailed: {detailed_status})")
-                print(f"    is_quantum_vulnerable: {old_qv} -> {algo.is_quantum_vulnerable}")
+                print(
+                    f"    pqc_status: {old_status} -> {algo.pqc_status} (detailed: {detailed_status})"
+                )
+                print(
+                    f"    is_quantum_vulnerable: {old_qv} -> {algo.is_quantum_vulnerable}"
+                )
                 updated_count += 1
-                
+
                 # Also find and update corresponding findings for this asset & algorithm name
                 findings_result = await session.execute(
                     select(Finding)
@@ -121,22 +132,28 @@ async def run_fix():
                 for finding in findings:
                     old_f_status = finding.pqc_status
                     finding.pqc_status = detailed_status
-                    
+
                     # Recalculate risk score
                     old_score = finding.risk_score
                     finding.risk_score = calculate_risk_score(
                         asset=finding.asset,
                         pqc_status=detailed_status,
                         algorithm=finding.algorithm,
-                        key_size=finding.evidence.get("key_size") if finding.evidence else None,
+                        key_size=(
+                            finding.evidence.get("key_size")
+                            if finding.evidence
+                            else None
+                        ),
                         finding_type=finding.finding_type,
                     )
                     print(f"      Finding '{finding.title}':")
                     print(f"        pqc_status: {old_f_status} -> {finding.pqc_status}")
                     print(f"        risk_score: {old_score} -> {finding.risk_score}")
 
-        print(f"Re-classification completed. Updated {updated_count} algorithm record(s).")
-        
+        print(
+            f"Re-classification completed. Updated {updated_count} algorithm record(s)."
+        )
+
         print("Committing changes...")
         await session.commit()
         print("Database commit successful.")
@@ -160,6 +177,7 @@ async def run_fix():
                 print(f"Cleared {cleared} dashboard cache key(s).")
         except Exception as exc:
             print(f"WARNING: failed to clear dashboard cache: {exc}")
+
 
 if __name__ == "__main__":
     asyncio.run(run_fix())

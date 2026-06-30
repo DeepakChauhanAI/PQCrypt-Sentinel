@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import MagicMock
 from app.services.risk_service import (
     calculate_risk_score,
@@ -147,6 +146,7 @@ def test_risk_score_to_percent():
 
 def test_weights_5dim_sum_to_one():
     from app.services.risk_service import RISK_WEIGHTS_5DIM
+
     assert abs(sum(RISK_WEIGHTS_5DIM.values()) - 1.0) < 1e-9
     assert "replaceability" in RISK_WEIGHTS_5DIM
     assert "business_criticality" not in RISK_WEIGHTS_5DIM
@@ -154,6 +154,7 @@ def test_weights_5dim_sum_to_one():
 
 def test_replaceability_hsm_is_hard():
     from app.services.risk_service import derive_replaceability
+
     a = MagicMock()
     a.asset_type = "hsm"
     a.environment = "production"
@@ -168,6 +169,7 @@ def test_replaceability_hsm_is_hard():
 
 def test_replaceability_dev_is_low():
     from app.services.risk_service import derive_replaceability
+
     a = MagicMock()
     a.asset_type = "server"
     a.environment = "development"
@@ -179,6 +181,7 @@ def test_replaceability_dev_is_low():
 
 def test_replaceability_ssh_kex_is_medium():
     from app.services.risk_service import derive_replaceability
+
     assert derive_replaceability(finding_type="ssh_weak_kex") == "medium"
     assert derive_replaceability(finding_type="vpn_weak_ike") == "medium"
     assert derive_replaceability(finding_type="tls_weak_kex") == "medium"
@@ -207,13 +210,18 @@ def test_5dim_risk_includes_replaceability():
 def test_5dim_risk_business_criticality_folds_into_exposure():
     """Legacy tier_0/tier_1 must still produce internet/dmz exposure."""
     from app.services.risk_service import calculate_risk_score
+
     a = calculate_risk_score(
-        pqc_status="safe", hndl_exposure="low",
-        business_criticality="tier_0", years_to_deadline=10,
+        pqc_status="safe",
+        hndl_exposure="low",
+        business_criticality="tier_0",
+        years_to_deadline=10,
     )
     b = calculate_risk_score(
-        pqc_status="safe", hndl_exposure="low",
-        business_criticality="tier_3", years_to_deadline=10,
+        pqc_status="safe",
+        hndl_exposure="low",
+        business_criticality="tier_3",
+        years_to_deadline=10,
     )
     assert a > b
     # tier_0 -> internet (5) vs tier_3 -> internal (1), so delta = 4

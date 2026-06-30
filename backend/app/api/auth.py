@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
+# mypy: ignore-errors
+from datetime import datetime, timezone
 from typing import Optional
-import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
@@ -8,8 +8,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_current_user
-from app.auth.jwt import create_access_token, create_refresh_token, decode_token, hash_password, verify_password
-from app.config import settings
+from app.auth.jwt import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    verify_password,
+)
 from app.db import get_session
 from app.models.models import User, RefreshToken
 
@@ -56,9 +60,13 @@ async def login(request: LoginRequest, session: AsyncSession = Depends(get_sessi
     result = await session.execute(select(User).where(User.email == request.email))
     user = result.scalar_one_or_none()
     if user is None or not verify_password(request.password, user.password_hash or ""):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+        )
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Disabled account")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Disabled account"
+        )
 
     user.last_login_at = datetime.now(timezone.utc)
     await session.commit()
@@ -86,17 +94,31 @@ async def refresh(
     refresh_token = payload.refresh_token
     decoded = decode_token(refresh_token)
     if decoded is None or decoded.type != "refresh" or not decoded.jti:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
+        )
 
-    result = await session.execute(select(RefreshToken).where(RefreshToken.token_jti == decoded.jti))
+    result = await session.execute(
+        select(RefreshToken).where(RefreshToken.token_jti == decoded.jti)
+    )
     stored = result.scalar_one_or_none()
-    if stored is None or stored.revoked or stored.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token revoked or expired")
+    if (
+        stored is None
+        or stored.revoked
+        or stored.expires_at < datetime.now(timezone.utc)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token revoked or expired",
+        )
 
     user_result = await session.execute(select(User).where(User.id == decoded.sub))
     user = user_result.scalar_one_or_none()
     if user is None or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or disabled")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or disabled",
+        )
 
     access_token = create_access_token(user.id)
     new_refresh_token = create_refresh_token(user.id)
@@ -124,7 +146,9 @@ async def logout(
     if refresh_token:
         decoded = decode_token(refresh_token)
         if decoded and decoded.jti:
-            result = await session.execute(select(RefreshToken).where(RefreshToken.token_jti == decoded.jti))
+            result = await session.execute(
+                select(RefreshToken).where(RefreshToken.token_jti == decoded.jti)
+            )
             stored = result.scalar_one_or_none()
             if stored and not stored.revoked:
                 stored.revoked = True

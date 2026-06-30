@@ -1,8 +1,6 @@
-import pytest
 from app.utils.target_classifier import (
     classify_target,
     suggest_group_name,
-    TargetClassification,
     _looks_like_cidr,
     _looks_like_ip,
     _looks_like_fqdn,

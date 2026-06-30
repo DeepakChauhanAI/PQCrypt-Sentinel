@@ -1,5 +1,4 @@
 import json
-import os
 import re
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -81,9 +80,11 @@ CLASSICAL_KEX_OIDS = {
 # --- Dynamic Registry Loading ---
 REGISTRY_DATA: Dict[str, Any] = {}
 
+
 def load_registry_file() -> Dict[str, Any]:
     possible_paths = [
-        Path(__file__).resolve().parent.parent.parent.parent / "pqc_algorithm_registry.json",
+        Path(__file__).resolve().parent.parent.parent.parent
+        / "pqc_algorithm_registry.json",
         Path(__file__).resolve().parent.parent.parent / "pqc_algorithm_registry.json",
         Path.cwd() / "pqc_algorithm_registry.json",
         Path.cwd().parent / "pqc_algorithm_registry.json",
@@ -98,7 +99,9 @@ def load_registry_file() -> Dict[str, Any]:
                 pass
     return {}
 
+
 REGISTRY_DATA = load_registry_file()
+
 
 def update_mappings_from_registry():
     if not REGISTRY_DATA:
@@ -143,9 +146,17 @@ def update_mappings_from_registry():
         elif status == "hybrid":
             clean_name = name.split(" (")[0]
             HYBRID_SIGNATURE_OIDS[oid] = clean_name
-        elif status == "vulnerable" and any(kw in name.upper() for kw in ["ED25519", "ED448"]):
+        elif status == "vulnerable" and any(
+            kw in name.upper() for kw in ["ED25519", "ED448"]
+        ):
             CLASSICAL_EDDSA_OIDS[oid] = name
-        elif status in ("vulnerable", "disallowed_now", "deprecated_now", "safe_until_2030", "safe_until_2035"):
+        elif status in (
+            "vulnerable",
+            "disallowed_now",
+            "deprecated_now",
+            "safe_until_2030",
+            "safe_until_2035",
+        ):
             CLASSICAL_SIGNATURE_OIDS[oid] = name
 
     # 4. Update KEX OIDs
@@ -153,10 +164,19 @@ def update_mappings_from_registry():
     for oid, details in kex_oids.items():
         name = details.get("name")
         status = details.get("status")
-        if status == "vulnerable" and any(kw in name.upper() for kw in ["X25519", "X448"]):
+        if status == "vulnerable" and any(
+            kw in name.upper() for kw in ["X25519", "X448"]
+        ):
             CLASSICAL_X_OIDS[oid] = name
-        elif status in ("vulnerable", "disallowed_now", "deprecated_now", "safe_until_2030", "safe_until_2035"):
+        elif status in (
+            "vulnerable",
+            "disallowed_now",
+            "deprecated_now",
+            "safe_until_2030",
+            "safe_until_2035",
+        ):
             CLASSICAL_KEX_OIDS[oid] = name
+
 
 update_mappings_from_registry()
 
@@ -235,7 +255,9 @@ def _classify_cipher_suite(name: str, normalized_name: str) -> Optional[Dict[str
     upper = normalized_name
 
     # TLS 1.3 suites: symmetric-only names.
-    if upper.startswith("TLS_") and any(upper.startswith(p) for p in ("TLS_AES_", "TLS_CHACHA20_")):
+    if upper.startswith("TLS_") and any(
+        upper.startswith(p) for p in ("TLS_AES_", "TLS_CHACHA20_")
+    ):
         return {
             "pqc_status": "safe",
             "is_quantum_vulnerable": False,
@@ -264,13 +286,28 @@ def _classify_cipher_suite(name: str, normalized_name: str) -> Optional[Dict[str
 
     # Any suite-like name that contains both a classical key-exchange/auth
     # primitive and a symmetric/MAC primitive is treated as vulnerable.
-    has_key_exchange_or_auth = any(kw in upper for kw in [
-        "_WITH_", "ECDHE", "DHE", "ECDH", "DH", "RSA", "ECDSA", "DSA"
-    ])
-    has_symmetric_or_mac = any(kw in upper for kw in [
-        "AES", "CHACHA20", "3DES", "TRIPLEDES", "DES", "RC4",
-        "CAMELLIA", "ARIA", "GCM", "CCM", "CBC", "SHA", "MD5",
-    ])
+    has_key_exchange_or_auth = any(
+        kw in upper
+        for kw in ["_WITH_", "ECDHE", "DHE", "ECDH", "DH", "RSA", "ECDSA", "DSA"]
+    )
+    has_symmetric_or_mac = any(
+        kw in upper
+        for kw in [
+            "AES",
+            "CHACHA20",
+            "3DES",
+            "TRIPLEDES",
+            "DES",
+            "RC4",
+            "CAMELLIA",
+            "ARIA",
+            "GCM",
+            "CCM",
+            "CBC",
+            "SHA",
+            "MD5",
+        ]
+    )
 
     if has_key_exchange_or_auth and has_symmetric_or_mac:
         # TLS 1.2 suites rely on classical key exchange / authentication.
@@ -323,7 +360,9 @@ def classify_algorithm(
                 if m:
                     key_size = int(m.group(1))
                 else:
-                    m = re.search(r"\b(512|1024|2048|3072|4096|8192)\b", normalized_name)
+                    m = re.search(
+                        r"\b(512|1024|2048|3072|4096|8192)\b", normalized_name
+                    )
                     if m:
                         key_size = int(m.group(1))
 
@@ -343,7 +382,11 @@ def classify_algorithm(
             curve_val = "Ed448"
 
     # Map key_size to standard curves for ECC if curve not found
-    if curve_val is None and key_size is not None and any(kw in normalized_name for kw in ("ECDSA", "ECDH", "EC")):
+    if (
+        curve_val is None
+        and key_size is not None
+        and any(kw in normalized_name for kw in ("ECDSA", "ECDH", "EC"))
+    ):
         if key_size == 192:
             curve_val = "P-192"
         elif key_size == 224:
@@ -359,23 +402,31 @@ def classify_algorithm(
     if kex_group_id is not None:
         tls_groups = REGISTRY_DATA.get("tls_iana_groups", {}).get("groups", {})
         ike_groups = REGISTRY_DATA.get("ikev2_groups", {}).get("groups", {})
-        
+
         group_details = None
         hex_key = f"0x{kex_group_id:04X}"
         if hex_key in tls_groups:
             group_details = tls_groups[hex_key]
         elif str(kex_group_id) in ike_groups:
             group_details = ike_groups[str(kex_group_id)]
-            
+
         if group_details:
             name_val = group_details.get("name")
             status = group_details.get("status", "unknown")
             gtype = group_details.get("type", "")
-            
-            is_pqc = status in ("pqc_ready", "pqc_candidate", "hybrid") or gtype == "hybrid"
+
+            is_pqc = (
+                status in ("pqc_ready", "pqc_candidate", "hybrid") or gtype == "hybrid"
+            )
             is_hybrid = status == "hybrid" or gtype == "hybrid"
-            is_qv = status in ("vulnerable", "deprecated_now", "disallowed_now", "safe_until_2030", "safe_until_2035")
-            
+            is_qv = status in (
+                "vulnerable",
+                "deprecated_now",
+                "disallowed_now",
+                "safe_until_2030",
+                "safe_until_2035",
+            )
+
             return {
                 "pqc_status": status,
                 "is_quantum_vulnerable": is_qv,
@@ -383,7 +434,7 @@ def classify_algorithm(
                 "is_hybrid": is_hybrid,
                 "variant": name_val,
             }
-            
+
         # Fallback to hardcoded groups
         if kex_group_id in PQC_KEX_GROUPS:
             is_hybrid = kex_group_id in HYBRID_KEX_GROUPS
@@ -399,15 +450,21 @@ def classify_algorithm(
     if oid:
         sig_oids = REGISTRY_DATA.get("signature_oids", {})
         kex_oids = REGISTRY_DATA.get("kex_oids", {})
-        
+
         oid_details = sig_oids.get(oid) or kex_oids.get(oid)
         if oid_details:
             name_val = oid_details.get("name")
             status = oid_details.get("status", "unknown")
             is_pqc = status in ("pqc_ready", "pqc_candidate", "hybrid")
             is_hybrid = status == "hybrid"
-            is_qv = status in ("vulnerable", "deprecated_now", "disallowed_now", "safe_until_2030", "safe_until_2035")
-            
+            is_qv = status in (
+                "vulnerable",
+                "deprecated_now",
+                "disallowed_now",
+                "safe_until_2030",
+                "safe_until_2035",
+            )
+
             return {
                 "pqc_status": status,
                 "is_quantum_vulnerable": is_qv,
@@ -415,11 +472,23 @@ def classify_algorithm(
                 "is_hybrid": is_hybrid,
                 "variant": name_val,
             }
-            
+
         # Fallback to hardcoded OID lookups
         if oid in PQC_SIGNATURE_OIDS:
             name_val = PQC_SIGNATURE_OIDS[oid]
-            is_candidate = any(kw in name_val.upper() for kw in ["FALCON", "FN-DSA", "HQC", "BIKE", "MCELIECE", "FRODO", "NTRU", "SNTRUP761"])
+            is_candidate = any(
+                kw in name_val.upper()
+                for kw in [
+                    "FALCON",
+                    "FN-DSA",
+                    "HQC",
+                    "BIKE",
+                    "MCELIECE",
+                    "FRODO",
+                    "NTRU",
+                    "SNTRUP761",
+                ]
+            )
             return {
                 "pqc_status": "pqc_candidate" if is_candidate else "pqc_ready",
                 "is_quantum_vulnerable": False,
@@ -477,13 +546,23 @@ def classify_algorithm(
 
     # --- 3. Check common_misclassifications ---
     if normalized_name:
-        for entry in REGISTRY_DATA.get("common_misclassifications", {}).get("entries", []):
+        for entry in REGISTRY_DATA.get("common_misclassifications", {}).get(
+            "entries", []
+        ):
             algo_entry = entry.get("algorithm", "").upper()
-            if normalized_name == algo_entry or normalized_name.replace("-", "") == algo_entry.replace("-", ""):
+            if normalized_name == algo_entry or normalized_name.replace(
+                "-", ""
+            ) == algo_entry.replace("-", ""):
                 status = entry.get("correct_classification", "unknown")
                 is_pqc = status in ("pqc_ready", "pqc_candidate", "hybrid")
                 is_hybrid = status == "hybrid"
-                is_qv = status in ("vulnerable", "deprecated_now", "disallowed_now", "safe_until_2030", "safe_until_2035")
+                is_qv = status in (
+                    "vulnerable",
+                    "deprecated_now",
+                    "disallowed_now",
+                    "safe_until_2030",
+                    "safe_until_2035",
+                )
                 return {
                     "pqc_status": status,
                     "is_quantum_vulnerable": is_qv,
@@ -494,14 +573,25 @@ def classify_algorithm(
 
     # --- 4. Check OID registry names ---
     if normalized_name:
-        for oid_map in (REGISTRY_DATA.get("signature_oids", {}), REGISTRY_DATA.get("kex_oids", {})):
+        for oid_map in (
+            REGISTRY_DATA.get("signature_oids", {}),
+            REGISTRY_DATA.get("kex_oids", {}),
+        ):
             for oid_key, details in oid_map.items():
                 name_val = details.get("name", "")
-                if normalized_name == name_val.upper() or normalized_name.replace("-", "") == name_val.upper().replace("-", ""):
+                if normalized_name == name_val.upper() or normalized_name.replace(
+                    "-", ""
+                ) == name_val.upper().replace("-", ""):
                     status = details.get("status", "unknown")
                     is_pqc = status in ("pqc_ready", "pqc_candidate", "hybrid")
                     is_hybrid = status == "hybrid"
-                    is_qv = status in ("vulnerable", "deprecated_now", "disallowed_now", "safe_until_2030", "safe_until_2035")
+                    is_qv = status in (
+                        "vulnerable",
+                        "deprecated_now",
+                        "disallowed_now",
+                        "safe_until_2030",
+                        "safe_until_2035",
+                    )
                     return {
                         "pqc_status": status,
                         "is_quantum_vulnerable": is_qv,
@@ -517,42 +607,87 @@ def classify_algorithm(
             for algo in cat_data.get("algorithms", []):
                 algo_name = algo.get("name", "")
                 aliases = [a.upper() for a in algo.get("also_known_as", [])]
-                
+
                 match_found = False
                 if normalized_name == algo_name.upper():
                     match_found = True
-                elif normalized_name.replace("-", "") == algo_name.upper().replace("-", ""):
+                elif normalized_name.replace("-", "") == algo_name.upper().replace(
+                    "-", ""
+                ):
                     match_found = True
                 elif normalized_name in aliases:
                     match_found = True
                 elif algo_name.upper() in normalized_name:
-                    if algo_name.upper() in ("RSA", "ECDSA", "ECDH", "DSA", "DH", "AES", "SHA", "CAMELLIA", "ARIA", "HMAC"):
+                    if algo_name.upper() in (
+                        "RSA",
+                        "ECDSA",
+                        "ECDH",
+                        "DSA",
+                        "DH",
+                        "AES",
+                        "SHA",
+                        "CAMELLIA",
+                        "ARIA",
+                        "HMAC",
+                    ):
                         # Avoid mis-matching DSA for ECDSA or DH for ECDH
-                        if algo_name.upper() == "DSA" and any(kw in normalized_name for kw in ("ECDSA", "ML-DSA", "SLH-DSA", "MLDSA", "SLHDSA", "FN-DSA", "FNDSA")):
+                        if algo_name.upper() == "DSA" and any(
+                            kw in normalized_name
+                            for kw in (
+                                "ECDSA",
+                                "ML-DSA",
+                                "SLH-DSA",
+                                "MLDSA",
+                                "SLHDSA",
+                                "FN-DSA",
+                                "FNDSA",
+                            )
+                        ):
                             pass
                         elif algo_name.upper() == "DH" and "ECDH" in normalized_name:
                             pass
                         else:
                             match_found = True
-                        
+
                 if match_found:
                     status_details = None
                     if "key_sizes" in algo and key_size is not None:
-                        status_details = resolve_key_size_status(algo["key_sizes"], key_size)
+                        status_details = resolve_key_size_status(
+                            algo["key_sizes"], key_size
+                        )
                     elif "curves" in algo and curve_val is not None:
                         status_details = resolve_curve_status(algo["curves"], curve_val)
-                        
+
                     target_details = status_details if status_details else algo
                     status = target_details.get("status", "unknown")
-                    
+
                     # Default generic public-key algorithms to "vulnerable" if not specified/resolved
-                    if (status == "unknown" or not status) and algo_name.upper() in ("RSA", "ECDSA", "ECDH", "DH"):
+                    if (status == "unknown" or not status) and algo_name.upper() in (
+                        "RSA",
+                        "ECDSA",
+                        "ECDH",
+                        "DH",
+                    ):
                         status = "vulnerable"
-                        
-                    is_pqc = cat_name in ("post_quantum_key_encapsulation", "post_quantum_signatures", "hybrids") or "pqc" in status
+
+                    is_pqc = (
+                        cat_name
+                        in (
+                            "post_quantum_key_encapsulation",
+                            "post_quantum_signatures",
+                            "hybrids",
+                        )
+                        or "pqc" in status
+                    )
                     is_hybrid = cat_name == "hybrids" or status == "hybrid"
-                    is_qv = status in ("vulnerable", "deprecated_now", "disallowed_now", "safe_until_2030", "safe_until_2035")
-                    
+                    is_qv = status in (
+                        "vulnerable",
+                        "deprecated_now",
+                        "disallowed_now",
+                        "safe_until_2030",
+                        "safe_until_2035",
+                    )
+
                     variant_val = algo_name
                     if key_size:
                         variant_val = f"{algo_name}-{key_size}"
@@ -562,7 +697,9 @@ def classify_algorithm(
                         variant_val = name
 
                     # Normalize variant names to match standard CBOM / test conventions
-                    variant_upper = variant_val.upper().replace("-", "").replace("_", "")
+                    variant_upper = (
+                        variant_val.upper().replace("-", "").replace("_", "")
+                    )
                     if "AES" in variant_upper:
                         m = re.search(r"AES[_\-]?(\d{3})", variant_val.upper())
                         if m:
@@ -571,9 +708,12 @@ def classify_algorithm(
                         variant_val = f"ECDSA-{curve_val.replace('-', '')}"
                     elif "ECDH" in variant_upper and curve_val:
                         variant_val = f"ECDH-{curve_val.replace('-', '')}"
-                    elif any(kw in variant_upper for kw in ("3DES", "TRIPLEDES", "DESEDE", "TDEA")):
+                    elif any(
+                        kw in variant_upper
+                        for kw in ("3DES", "TRIPLEDES", "DESEDE", "TDEA")
+                    ):
                         variant_val = "3DES"
-                        
+
                     return {
                         "pqc_status": status,
                         "is_quantum_vulnerable": is_qv,
@@ -583,17 +723,40 @@ def classify_algorithm(
                     }
 
     # --- 5. Fallback to hardcoded / original classification logic ---
-    pqc_keywords = ["ML-KEM", "KYBER", "ML-DSA", "DILITHIUM", "FALCON", "SLH-DSA", "SPHINCS", "FN-DSA", "HQC", "BIKE", "MCELIECE", "FRODO", "NTRU", "SNTRUP"]
+    pqc_keywords = [
+        "ML-KEM",
+        "KYBER",
+        "ML-DSA",
+        "DILITHIUM",
+        "FALCON",
+        "SLH-DSA",
+        "SPHINCS",
+        "FN-DSA",
+        "HQC",
+        "BIKE",
+        "MCELIECE",
+        "FRODO",
+        "NTRU",
+        "SNTRUP",
+    ]
     is_pqc = any(kw in normalized_name for kw in pqc_keywords)
     is_hybrid = False
-    
+
     if is_pqc:
-        if "X25519" in normalized_name or "SECP" in normalized_name or "P256" in normalized_name or "P384" in normalized_name:
+        if (
+            "X25519" in normalized_name
+            or "SECP" in normalized_name
+            or "P256" in normalized_name
+            or "P384" in normalized_name
+        ):
             is_hybrid = True
         elif "+" in name or "COMPOSITE" in normalized_name:
             is_hybrid = True
 
-    if any(group in normalized_name for group in ["X25519MLKEM768", "SECP256R1MLKEM768", "SECP384R1MLKEM1024"]):
+    if any(
+        group in normalized_name
+        for group in ["X25519MLKEM768", "SECP256R1MLKEM768", "SECP384R1MLKEM1024"]
+    ):
         is_pqc = True
         is_hybrid = True
 
@@ -606,7 +769,19 @@ def classify_algorithm(
             "variant": name,
         }
     elif is_pqc:
-        is_candidate = any(kw in normalized_name for kw in ["FALCON", "FN-DSA", "HQC", "BIKE", "MCELIECE", "FRODO", "NTRU", "SNTRUP761"])
+        is_candidate = any(
+            kw in normalized_name
+            for kw in [
+                "FALCON",
+                "FN-DSA",
+                "HQC",
+                "BIKE",
+                "MCELIECE",
+                "FRODO",
+                "NTRU",
+                "SNTRUP761",
+            ]
+        )
         return {
             "pqc_status": "pqc_candidate" if is_candidate else "pqc_ready",
             "is_quantum_vulnerable": False,
@@ -615,7 +790,10 @@ def classify_algorithm(
             "variant": name,
         }
 
-    if any(kw in normalized_name for kw in ["3DES", "TRIPLEDES", "TRIPLE-DES", "DES-EDE", "DES_EDE"]):
+    if any(
+        kw in normalized_name
+        for kw in ["3DES", "TRIPLEDES", "TRIPLE-DES", "DES-EDE", "DES_EDE"]
+    ):
         return {
             "pqc_status": "disallowed_now",
             "is_quantum_vulnerable": True,
@@ -668,8 +846,14 @@ def classify_algorithm(
             "variant": name if "ED25519" in normalized_name else "Ed448",
         }
 
-    if any(kw in normalized_name for kw in ["X25519", "X448", "CURVE25519", "CURVE448"]):
-        variant = "X25519" if ("X25519" in normalized_name or "CURVE25519" in normalized_name) else "X448"
+    if any(
+        kw in normalized_name for kw in ["X25519", "X448", "CURVE25519", "CURVE448"]
+    ):
+        variant = (
+            "X25519"
+            if ("X25519" in normalized_name or "CURVE25519" in normalized_name)
+            else "X448"
+        )
         return {
             "pqc_status": "vulnerable",
             "is_quantum_vulnerable": True,
@@ -680,14 +864,20 @@ def classify_algorithm(
 
     is_vulnerable = False
     status_val = "vulnerable"
-    if any(kw in normalized_name for kw in ["RSA", "ECDSA", "ECDH", "DSA", "DH", "ELGAMAL", "GOST", "SM2", "SRP"]):
+    if any(
+        kw in normalized_name
+        for kw in ["RSA", "ECDSA", "ECDH", "DSA", "DH", "ELGAMAL", "GOST", "SM2", "SRP"]
+    ):
         is_vulnerable = True
         has_disallowed = (
-            "MD5" in normalized_name or
-            "SHA1" in normalized_name or
-            "SHA-1" in normalized_name or
-            ("DSA" in normalized_name and "ECDSA" not in normalized_name) or
-            ("RSA" in normalized_name and any(sz in normalized_name for sz in ["1024", "512"]))
+            "MD5" in normalized_name
+            or "SHA1" in normalized_name
+            or "SHA-1" in normalized_name
+            or ("DSA" in normalized_name and "ECDSA" not in normalized_name)
+            or (
+                "RSA" in normalized_name
+                and any(sz in normalized_name for sz in ["1024", "512"])
+            )
         )
         if has_disallowed:
             status_val = "disallowed_now"
@@ -724,49 +914,80 @@ def get_deprecation_deadline_year(name: str, key_size: Optional[int] = None) -> 
     # 1. Classify algorithm first
     classification = classify_algorithm(name, key_size=key_size)
     status = classification.get("pqc_status", "unknown")
-    
+
     # 2. Look up specific OID or name details in registry for a direct deadline_year
     normalized_name = name.upper().strip() if name else ""
-    
+
     if REGISTRY_DATA:
         all_categories = REGISTRY_DATA.get("algorithms", {})
         for cat_name, cat_data in all_categories.items():
             for algo in cat_data.get("algorithms", []):
                 algo_name = algo.get("name", "")
                 aliases = [a.upper() for a in algo.get("also_known_as", [])]
-                
+
                 match_found = False
                 if normalized_name == algo_name.upper():
                     match_found = True
-                elif normalized_name.replace("-", "") == algo_name.upper().replace("-", ""):
+                elif normalized_name.replace("-", "") == algo_name.upper().replace(
+                    "-", ""
+                ):
                     match_found = True
                 elif normalized_name in aliases:
                     match_found = True
                 elif algo_name.upper() in normalized_name:
-                    if algo_name.upper() in ("RSA", "ECDSA", "ECDH", "DSA", "DH", "AES", "SHA", "CAMELLIA", "ARIA", "HMAC"):
+                    if algo_name.upper() in (
+                        "RSA",
+                        "ECDSA",
+                        "ECDH",
+                        "DSA",
+                        "DH",
+                        "AES",
+                        "SHA",
+                        "CAMELLIA",
+                        "ARIA",
+                        "HMAC",
+                    ):
                         # Avoid mis-matching DSA for ECDSA or DH for ECDH
-                        if algo_name.upper() == "DSA" and any(kw in normalized_name for kw in ("ECDSA", "ML-DSA", "SLH-DSA", "MLDSA", "SLHDSA", "FN-DSA", "FNDSA")):
+                        if algo_name.upper() == "DSA" and any(
+                            kw in normalized_name
+                            for kw in (
+                                "ECDSA",
+                                "ML-DSA",
+                                "SLH-DSA",
+                                "MLDSA",
+                                "SLHDSA",
+                                "FN-DSA",
+                                "FNDSA",
+                            )
+                        ):
                             pass
                         elif algo_name.upper() == "DH" and "ECDH" in normalized_name:
                             pass
                         else:
                             match_found = True
-                        
+
                 if match_found:
                     status_details = None
                     if "key_sizes" in algo and key_size is not None:
-                        status_details = resolve_key_size_status(algo["key_sizes"], key_size)
+                        status_details = resolve_key_size_status(
+                            algo["key_sizes"], key_size
+                        )
                     elif "curves" in algo:
                         # Parse curve
                         curve_val_temp = None
                         m = re.search(r"(?:SECP|P)(?:-|_)?(\d{3})", normalized_name)
                         if m:
                             curve_val_temp = f"P-{m.group(1)}"
-                        elif "X25519" in normalized_name or "CURVE25519" in normalized_name:
+                        elif (
+                            "X25519" in normalized_name
+                            or "CURVE25519" in normalized_name
+                        ):
                             curve_val_temp = "X25519"
                         elif "X448" in normalized_name or "CURVE448" in normalized_name:
                             curve_val_temp = "X448"
-                        elif key_size is not None and any(kw in normalized_name for kw in ("ECDSA", "ECDH", "EC")):
+                        elif key_size is not None and any(
+                            kw in normalized_name for kw in ("ECDSA", "ECDH", "EC")
+                        ):
                             if key_size == 192:
                                 curve_val_temp = "P-192"
                             elif key_size == 224:
@@ -777,10 +998,12 @@ def get_deprecation_deadline_year(name: str, key_size: Optional[int] = None) -> 
                                 curve_val_temp = "P-384"
                             elif key_size == 521:
                                 curve_val_temp = "P-521"
-                        
+
                         if curve_val_temp:
-                            status_details = resolve_curve_status(algo["curves"], curve_val_temp)
-                            
+                            status_details = resolve_curve_status(
+                                algo["curves"], curve_val_temp
+                            )
+
                     if status_details and "deadline_year" in status_details:
                         return status_details["deadline_year"]
                     if "deadline_year" in algo:
@@ -796,7 +1019,15 @@ def get_deprecation_deadline_year(name: str, key_size: Optional[int] = None) -> 
 
     # 4. Fallback to original hardcoded timeline
     name_upper = name.upper() if name else ""
-    pqc_keywords = ["ML-KEM", "KYBER", "ML-DSA", "DILITHIUM", "FALCON", "SLH-DSA", "SPHINCS"]
+    pqc_keywords = [
+        "ML-KEM",
+        "KYBER",
+        "ML-DSA",
+        "DILITHIUM",
+        "FALCON",
+        "SLH-DSA",
+        "SPHINCS",
+    ]
     if any(kw in name_upper for kw in pqc_keywords):
         return 2099
 

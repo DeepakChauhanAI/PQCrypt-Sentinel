@@ -1,4 +1,5 @@
 """Tests for the TSA scanner skeleton."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -37,6 +38,7 @@ def tsa_cert():
 @pytest.mark.asyncio
 async def test_scan_tsa_authority_success(tsa_cert):
     from unittest.mock import MagicMock
+
     mock_resp = AsyncMock()
     mock_resp.text = tsa_cert
     mock_resp.raise_for_status = MagicMock()
@@ -45,8 +47,12 @@ async def test_scan_tsa_authority_success(tsa_cert):
     mock_client.__aexit__ = AsyncMock(return_value=None)
     mock_client.get = AsyncMock(return_value=mock_resp)
 
-    with patch("app.scanners.tsa_scanner.httpx.AsyncClient", return_value=mock_client), \
-         patch("app.scanners.tsa_scanner.resolve_safely", new=AsyncMock(return_value=["1.2.3.4"])):
+    with patch(
+        "app.scanners.tsa_scanner.httpx.AsyncClient", return_value=mock_client
+    ), patch(
+        "app.scanners.tsa_scanner.resolve_safely",
+        new=AsyncMock(return_value=["1.2.3.4"]),
+    ):
         result = await scan_tsa_authority("https://tsa.example.com")
 
     assert result.success is True
@@ -58,6 +64,7 @@ async def test_scan_tsa_authority_success(tsa_cert):
 @pytest.mark.asyncio
 async def test_scan_tsa_authority_dict_success(tsa_cert):
     from unittest.mock import MagicMock
+
     mock_resp = AsyncMock()
     mock_resp.text = tsa_cert
     mock_resp.raise_for_status = MagicMock()
@@ -66,8 +73,12 @@ async def test_scan_tsa_authority_dict_success(tsa_cert):
     mock_client.__aexit__ = AsyncMock(return_value=None)
     mock_client.get = AsyncMock(return_value=mock_resp)
 
-    with patch("app.scanners.tsa_scanner.httpx.AsyncClient", return_value=mock_client), \
-         patch("app.scanners.tsa_scanner.resolve_safely", new=AsyncMock(return_value=["1.2.3.4"])):
+    with patch(
+        "app.scanners.tsa_scanner.httpx.AsyncClient", return_value=mock_client
+    ), patch(
+        "app.scanners.tsa_scanner.resolve_safely",
+        new=AsyncMock(return_value=["1.2.3.4"]),
+    ):
         data = await scan_tsa_authority_dict("https://tsa.example.com")
 
     assert data["status"] == "success"
@@ -78,6 +89,7 @@ async def test_scan_tsa_authority_dict_success(tsa_cert):
 @pytest.mark.asyncio
 async def test_scan_tsa_authority_no_certs():
     from unittest.mock import MagicMock
+
     mock_resp = AsyncMock()
     mock_resp.text = "no certificates here"
     mock_resp.raise_for_status = MagicMock()
@@ -86,8 +98,12 @@ async def test_scan_tsa_authority_no_certs():
     mock_client.__aexit__ = AsyncMock(return_value=None)
     mock_client.get = AsyncMock(return_value=mock_resp)
 
-    with patch("app.scanners.tsa_scanner.httpx.AsyncClient", return_value=mock_client), \
-         patch("app.scanners.tsa_scanner.resolve_safely", new=AsyncMock(return_value=["1.2.3.4"])):
+    with patch(
+        "app.scanners.tsa_scanner.httpx.AsyncClient", return_value=mock_client
+    ), patch(
+        "app.scanners.tsa_scanner.resolve_safely",
+        new=AsyncMock(return_value=["1.2.3.4"]),
+    ):
         result = await scan_tsa_authority("https://tsa.example.com")
 
     assert result.success is False
@@ -108,8 +124,12 @@ async def test_scan_tsa_authority_network_error():
     mock_client.__aexit__ = AsyncMock(return_value=None)
     mock_client.get = AsyncMock(side_effect=Exception("connection refused"))
 
-    with patch("app.scanners.tsa_scanner.httpx.AsyncClient", return_value=mock_client), \
-         patch("app.scanners.tsa_scanner.resolve_safely", new=AsyncMock(return_value=["1.2.3.4"])):
+    with patch(
+        "app.scanners.tsa_scanner.httpx.AsyncClient", return_value=mock_client
+    ), patch(
+        "app.scanners.tsa_scanner.resolve_safely",
+        new=AsyncMock(return_value=["1.2.3.4"]),
+    ):
         result = await scan_tsa_authority("https://tsa.example.com")
 
     assert result.success is False

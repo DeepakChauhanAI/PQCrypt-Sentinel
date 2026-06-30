@@ -28,11 +28,12 @@ The service never raises. Probe outcomes that cannot be classified are
 skipped (returning a 0-count) so a single bad host never blocks the
 rest of the scan.
 """
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -169,7 +170,9 @@ class L1FindingService:
         result = await self.session.execute(select(Asset).where(Asset.id == asset_id))
         return result.scalar_one_or_none()
 
-    async def _resolve_l1_cert(self, asset_id: str) -> Optional[Certificate]:  # noqa: D401
+    async def _resolve_l1_cert(
+        self, asset_id: str
+    ) -> Optional[Certificate]:  # noqa: D401
         """Return the most recently issued leaf certificate for an asset, if any.
 
         Used to surface key_usage and cert metadata in the evidence JSONB
@@ -232,7 +235,12 @@ class L1FindingService:
         ev["mosca"]["data_longevity_years"] = data_longevity_years
         ev["mosca"]["quantum_timeline_year"] = quantum_timeline_year
         ev["mosca"]["replaceability"] = replaceability
-        return ev, str(probe_payload.get("pqc_status", "unknown")), risk_score, hndl_exposure
+        return (
+            ev,
+            str(probe_payload.get("pqc_status", "unknown")),
+            risk_score,
+            hndl_exposure,
+        )
 
     async def _add_revoked_finding(
         self,

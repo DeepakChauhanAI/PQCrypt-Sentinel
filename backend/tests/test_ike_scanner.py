@@ -9,13 +9,13 @@ above 80% by exercising:
   * `_DH_GROUP_POLICY` PQC status classification
   * `scan_ike_endpoint` happy path, error path, and skipped path
 """
+
 from __future__ import annotations
 
 import asyncio
 from typing import Any, Dict
 from unittest.mock import patch
 
-import pytest
 
 from app.scanners import ike_scanner as ike_mod
 from app.scanners.ike_scanner import (
@@ -40,7 +40,9 @@ def _transform(t_type: int, t_id: int) -> bytes:
       byte 5:    reserved
       bytes 6-7: transform id (DH group, cipher id, etc.)
     """
-    return bytes([0x00, 0x00, 0x00, 0x08, t_type, 0x00, (t_id >> 8) & 0xFF, t_id & 0xFF])
+    return bytes(
+        [0x00, 0x00, 0x00, 0x08, t_type, 0x00, (t_id >> 8) & 0xFF, t_id & 0xFF]
+    )
 
 
 def _sa_payload(transforms: list[bytes]) -> bytes:
@@ -56,11 +58,11 @@ def _ikev2_packet(payload_type: int, payload: bytes) -> bytes:
     """Build a 28-byte IKEv2 header + the supplied payload."""
     total_len = 28 + len(payload)
     return (
-        b"\x3f\x5a\x2b\x1c\x0d\x9e\x8f\x7a"            # ISPI
-        + b"\x00" * 8                                  # RSPI
-        + bytes([payload_type, 0x20, 0x22, 0x08])      # next-payload, version, exch, flags
-        + b"\x00\x00\x00\x00"                          # msg id
-        + total_len.to_bytes(4, "big")                 # length
+        b"\x3f\x5a\x2b\x1c\x0d\x9e\x8f\x7a"  # ISPI
+        + b"\x00" * 8  # RSPI
+        + bytes([payload_type, 0x20, 0x22, 0x08])  # next-payload, version, exch, flags
+        + b"\x00\x00\x00\x00"  # msg id
+        + total_len.to_bytes(4, "big")  # length
         + payload
     )
 
@@ -127,7 +129,9 @@ def test_parse_ikev2_response_notify_invalid_ke_dh_19():
     # protocol_id=1, spi_size=0, msg_type=0x0011, pref_group=0x0013
     # (no SPI because spi_size=0)
     notify_body = bytes([0x01, 0x00, 0x00, 0x11, 0x00, 0x13])
-    payload = bytes([0x00, 0x00]) + (4 + len(notify_body)).to_bytes(2, "big") + notify_body
+    payload = (
+        bytes([0x00, 0x00]) + (4 + len(notify_body)).to_bytes(2, "big") + notify_body
+    )
     raw = _ikev2_packet(41, payload)
     result = _parse_ikev2_response(raw)
     assert "256-bit random ECP (NIST P-256)" in result["dh_groups"]
@@ -150,8 +154,10 @@ def test_parse_ikev2_response_truncated_payload():
 def test_parse_ike_group_from_line_standard():
     """Lines must look like '... group ... [NN]'."""
     assert _parse_ike_group_from_line("Oakley group 14 [14]") == "2048-bit MODP"
-    assert _parse_ike_group_from_line("Diffie-Hellman group: 19 [19]") == \
-        "256-bit random ECP (NIST P-256)"
+    assert (
+        _parse_ike_group_from_line("Diffie-Hellman group: 19 [19]")
+        == "256-bit random ECP (NIST P-256)"
+    )
 
 
 def test_parse_ike_group_from_line_returns_none_for_non_group_lines():
@@ -215,8 +221,10 @@ def test_scan_ike_endpoint_response_too_short():
 
 def test_scan_ike_endpoint_exception_in_executor():
     """When _do_ike_probe raises, scan_ike_endpoint captures the exception."""
+
     def boom(*a, **kw):
         raise ConnectionError("socket failure")
+
     with patch.object(ike_mod, "_do_ike_probe", side_effect=boom):
         result = asyncio.run(scan_ike_endpoint("host.example.com"))
     assert result.success is False
@@ -242,8 +250,14 @@ def test_dh_group_policy_all_groups_classification():
     for gid, policy in _DH_GROUP_POLICY.items():
         val = int(gid)
         if val <= 35:
-            assert policy["pqc_status"] == "vulnerable", f"Group {gid} status was {policy['pqc_status']}"
+            assert (
+                policy["pqc_status"] == "vulnerable"
+            ), f"Group {gid} status was {policy['pqc_status']}"
         elif val in (36, 37):
-            assert policy["pqc_status"] == "hybrid", f"Group {gid} status was {policy['pqc_status']}"
+            assert (
+                policy["pqc_status"] == "hybrid"
+            ), f"Group {gid} status was {policy['pqc_status']}"
         elif val in (38, 39, 40):
-            assert policy["pqc_status"] == "pqc_ready", f"Group {gid} status was {policy['pqc_status']}"
+            assert (
+                policy["pqc_status"] == "pqc_ready"
+            ), f"Group {gid} status was {policy['pqc_status']}"

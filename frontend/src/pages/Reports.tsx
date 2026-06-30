@@ -96,7 +96,6 @@ export default function Reports() {
     }, 4000);
 
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleGenerateReport = async (e: React.FormEvent) => {

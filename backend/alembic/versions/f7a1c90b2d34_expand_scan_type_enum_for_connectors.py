@@ -16,6 +16,7 @@ column with a CHECK constraint. This migration replaces that CHECK
 constraint with one covering the full value set. On SQLite (tests) the
 column/constraint is rebuilt from create_all, so this is a no-op.
 """
+
 from alembic import op
 
 
@@ -28,15 +29,36 @@ depends_on = None
 # Complete, current set of allowed scan_type values. Kept in sync with
 # Scan.scan_type in app/models/models.py.
 ALL_SCAN_TYPES = [
-    "full", "tls_only", "ssh_only", "targeted", "ct_monitor",
-    "ca_sync", "cloud_sync", "cmdb_sync", "passive",
-    "winrm", "kubernetes", "oracle_tde", "sqlserver_tde",
-    "pkcs11_hsm", "kmip_kms", "adcs_ldap", "jwt_audit", "windows_cert_store",
+    "full",
+    "tls_only",
+    "ssh_only",
+    "targeted",
+    "ct_monitor",
+    "ca_sync",
+    "cloud_sync",
+    "cmdb_sync",
+    "passive",
+    "winrm",
+    "kubernetes",
+    "oracle_tde",
+    "sqlserver_tde",
+    "pkcs11_hsm",
+    "kmip_kms",
+    "adcs_ldap",
+    "jwt_audit",
+    "windows_cert_store",
 ]
 
 ORIGINAL_SCAN_TYPES = [
-    "full", "tls_only", "ssh_only", "targeted", "ct_monitor",
-    "ca_sync", "cloud_sync", "cmdb_sync", "passive",
+    "full",
+    "tls_only",
+    "ssh_only",
+    "targeted",
+    "ct_monitor",
+    "ca_sync",
+    "cloud_sync",
+    "cmdb_sync",
+    "passive",
 ]
 
 
@@ -52,6 +74,7 @@ def upgrade() -> None:
         return
 
     from sqlalchemy import inspect as sa_inspect
+
     inspector = sa_inspect(bind)
 
     # Drop every existing CHECK constraint that gates scan_type, whether it
@@ -74,6 +97,7 @@ def downgrade() -> None:
         return
 
     from sqlalchemy import inspect as sa_inspect
+
     inspector = sa_inspect(bind)
     for ck in inspector.get_check_constraints("scans"):
         sqltext = (ck.get("sqltext") or "").lower()

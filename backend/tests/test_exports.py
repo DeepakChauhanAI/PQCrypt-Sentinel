@@ -1,6 +1,3 @@
-import csv
-import json
-import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,13 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def test_generate_csv_findings_export(tmp_path):
     """CSV export should write header + one row per finding with proper fields."""
     from app.services.report_service import generate_csv_findings_export
-    from app.models.models import Asset, Finding, User
+    from app.models.models import Asset, Finding
     from datetime import datetime, timezone
 
     # Patch reports dir to a tmp path
-    with patch("app.services.report_service.os.path.dirname") as mock_dirname, \
-         patch("app.services.report_service.os.makedirs") as mock_makedirs, \
-         patch("builtins.open", create=True) as mock_open:
+    with patch("app.services.report_service.os.path.dirname") as mock_dirname, patch(
+        "app.services.report_service.os.makedirs"
+    ) as mock_makedirs, patch("builtins.open", create=True) as mock_open:
 
         mock_dirname.return_value = str(tmp_path)
         mock_file = MagicMock()
@@ -57,7 +54,9 @@ async def test_generate_csv_findings_export(tmp_path):
         result.all.return_value = [(finding, asset)]
         session.execute.return_value = result
 
-        file_path = await generate_csv_findings_export(session, "report-123", scope_filters={})
+        file_path = await generate_csv_findings_export(
+            session, "report-123", scope_filters={}
+        )
 
         assert file_path.endswith("findings_report-123.csv")
         mock_open.assert_called()
@@ -68,9 +67,9 @@ async def test_generate_sarif_report_with_no_scan_ids(tmp_path):
     """SARIF with empty scan_ids should still produce a valid SARIF doc."""
     from app.services.report_service import generate_sarif_report
 
-    with patch("app.services.report_service.os.path.dirname") as mock_dirname, \
-         patch("app.services.report_service.os.makedirs") as mock_makedirs, \
-         patch("builtins.open", create=True) as mock_open:
+    with patch("app.services.report_service.os.path.dirname") as mock_dirname, patch(
+        "app.services.report_service.os.makedirs"
+    ) as mock_makedirs, patch("builtins.open", create=True) as mock_open:
 
         mock_dirname.return_value = str(tmp_path)
         mock_file = MagicMock()
@@ -102,6 +101,7 @@ def test_report_create_accepts_csv_format():
 
 def test_report_create_with_scan_ids():
     from app.api.reports import ReportCreate
+
     p = ReportCreate(
         report_type="sast",
         format="sarif",

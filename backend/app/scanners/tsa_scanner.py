@@ -8,9 +8,9 @@ This is intentionally a skeleton: it performs network discovery and
 certificate parsing but does not yet send a full TimeStampReq or verify
 an actual timestamp token signature.
 """
+
 from __future__ import annotations
 
-import asyncio
 import logging
 import re
 from typing import Any, Dict, List, Optional
@@ -53,7 +53,13 @@ class TSAResult:
                 statuses.append(status)
 
         worst = "unknown"
-        for candidate in ("disallowed_now", "vulnerable", "hybrid", "pqc_ready", "safe"):
+        for candidate in (
+            "disallowed_now",
+            "vulnerable",
+            "hybrid",
+            "pqc_ready",
+            "safe",
+        ):
             if candidate in statuses:
                 worst = candidate
                 break
@@ -101,12 +107,16 @@ async def scan_tsa_authority(
     """
     parsed = urlparse(cert_url or url)
     if not parsed.hostname:
-        return TSAResult(url=url, success=False, error_message="URL must include a hostname")
+        return TSAResult(
+            url=url, success=False, error_message="URL must include a hostname"
+        )
 
     try:
         await resolve_safely(parsed.hostname)
     except Exception as exc:
-        return TSAResult(url=url, success=False, error_message=f"SSRF check failed: {exc}")
+        return TSAResult(
+            url=url, success=False, error_message=f"SSRF check failed: {exc}"
+        )
 
     target = cert_url or url
     try:

@@ -28,7 +28,9 @@ def _sync_missing_columns(sync_engine) -> None:
             if "layer" not in existing:
                 conn.execute(text("ALTER TABLE findings ADD COLUMN layer VARCHAR(5)"))
             if "hndl_exposure" not in existing:
-                conn.execute(text("ALTER TABLE findings ADD COLUMN hndl_exposure VARCHAR(10)"))
+                conn.execute(
+                    text("ALTER TABLE findings ADD COLUMN hndl_exposure VARCHAR(10)")
+                )
 
         if "scans" in tables:
             existing = {c["name"] for c in inspector.get_columns("scans")}
@@ -38,9 +40,13 @@ def _sync_missing_columns(sync_engine) -> None:
             if "scan_group_id" not in existing:
                 conn.execute(text("ALTER TABLE scans ADD COLUMN scan_group_id UUID"))
             if "target_label" not in existing:
-                conn.execute(text("ALTER TABLE scans ADD COLUMN target_label VARCHAR(255)"))
+                conn.execute(
+                    text("ALTER TABLE scans ADD COLUMN target_label VARCHAR(255)")
+                )
             if "target_kind" not in existing:
-                conn.execute(text("ALTER TABLE scans ADD COLUMN target_kind VARCHAR(30)"))
+                conn.execute(
+                    text("ALTER TABLE scans ADD COLUMN target_kind VARCHAR(30)")
+                )
 
         if "algorithms" in tables:
             existing = {c["name"] for c in inspector.get_columns("algorithms")}
@@ -94,6 +100,7 @@ def create_app() -> FastAPI:
     )
 
     from app.middleware.rate_limit import RateLimitMiddleware
+
     application.add_middleware(RateLimitMiddleware)
 
     @application.get("/health", include_in_schema=False)

@@ -14,6 +14,7 @@ via the orchestrator's network discovery) was indistinguishable from a
 single-host scan at the data layer, and the resulting findings/assets had
 no way to be associated with a parent group.
 """
+
 from __future__ import annotations
 
 import ipaddress
@@ -24,24 +25,41 @@ from typing import NamedTuple, Optional
 # Mirrors app.models.models.Scan.target_kind enum. Duplicated here so
 # app.utils stays import-cheap (no SQLAlchemy dependency).
 _VALID_KINDS = {
-    "host", "cloud_account", "code_repo", "domain",
-    "saas_tenant", "network_range", "interface", "other",
+    "host",
+    "cloud_account",
+    "code_repo",
+    "domain",
+    "saas_tenant",
+    "network_range",
+    "interface",
+    "other",
 }
 
 
 class TargetClassification(NamedTuple):
     """Result of classifying a free-form scan target string."""
-    kind: str           # one of scan_target_kind_enum values
-    label: str          # human-readable label (usually the cleaned target)
+
+    kind: str  # one of scan_target_kind_enum values
+    label: str  # human-readable label (usually the cleaned target)
     is_groupable: bool  # True if the scan should be auto-wrapped in a ScanGroup
 
 
 # Connector-style prefixes we recognise. The scan_orchestrator treats these
 # as single-endpoint, so the kind is always "host".
 _CONNECTOR_PREFIXES = (
-    "ssh:", "winrm:", "kubernetes:", "oracle_tde:", "sqlserver_tde:",
-    "pkcs11:", "kmip:", "adcs:", "jwt:", "windows_cert_store:",
-    "aws:", "azure:", "gcp:",
+    "ssh:",
+    "winrm:",
+    "kubernetes:",
+    "oracle_tde:",
+    "sqlserver_tde:",
+    "pkcs11:",
+    "kmip:",
+    "adcs:",
+    "jwt:",
+    "windows_cert_store:",
+    "aws:",
+    "azure:",
+    "gcp:",
 )
 
 

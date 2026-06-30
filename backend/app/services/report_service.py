@@ -1,7 +1,7 @@
+# mypy: ignore-errors
 import csv
 import io
 import os
-import uuid
 import logging
 import json
 import asyncio
@@ -12,10 +12,9 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from cyclonedx.model.bom import Bom, Tool, Property
 from cyclonedx.model.component import Component, ComponentType
-from cyclonedx.schema import SchemaVersion
 from cyclonedx.output.json import JsonV1Dot7
 
-from app.models.models import Asset, Certificate, Algorithm, Finding, Report
+from app.models.models import Asset, Algorithm, Finding, Report
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +75,7 @@ def _reorder_crypto_properties(data: dict) -> None:
 
     Mutates `data` in place; the function returns nothing.
     """
+
     def visit(obj: Any):
         if isinstance(obj, dict):
             if "cryptoProperties" in obj and isinstance(obj["cryptoProperties"], dict):
@@ -93,6 +93,7 @@ def _reorder_crypto_properties(data: dict) -> None:
         elif isinstance(obj, list):
             for item in obj:
                 visit(item)
+
     visit(data)
 
 
@@ -147,7 +148,7 @@ def post_process_cbom(json_str: str, assets_map: dict) -> str:
                 else:
                     pqc_status = "vulnerable"
 
-                pqc_safe = (pqc_status in ["pqc_ready", "safe"])
+                pqc_safe = pqc_status in ["pqc_ready", "safe"]
 
                 primitive = "signature"
                 variant = "ess"
@@ -157,13 +158,21 @@ def post_process_cbom(json_str: str, assets_map: dict) -> str:
                     if "pss" in sig_algo:
                         variant = f"RSA-PSS-{key_size}" if key_size else "RSA-PSS"
                     else:
-                        variant = f"RSASSA-PKCS1-v1_5-{key_size}" if key_size else "RSASSA-PKCS1-v1_5"
+                        variant = (
+                            f"RSASSA-PKCS1-v1_5-{key_size}"
+                            if key_size
+                            else "RSASSA-PKCS1-v1_5"
+                        )
                 elif "ecdsa" in sig_algo or "ec" in pub_algo:
                     if curve.startswith("secp521") or key_size >= 521:
                         variant = "ECDSA-P521"
                     elif curve.startswith("secp384") or key_size >= 384:
                         variant = "ECDSA-P384"
-                    elif curve.startswith("secp256") or curve == "prime256v1" or key_size >= 256:
+                    elif (
+                        curve.startswith("secp256")
+                        or curve == "prime256v1"
+                        or key_size >= 256
+                    ):
                         variant = "ECDSA-P256"
                     else:
                         variant = f"ECDSA-{key_size}" if key_size else "ECDSA"
@@ -229,7 +238,9 @@ def post_process_cbom(json_str: str, assets_map: dict) -> str:
 
                 # Add key reference for certificate
                 key_ref = f"key-{cert_id}"
-                algo_props["relatedCryptoMaterial"] = [{"ref": key_ref, "relationship": "subjectPublicKeyRef"}]
+                algo_props["relatedCryptoMaterial"] = [
+                    {"ref": key_ref, "relationship": "subjectPublicKeyRef"}
+                ]
 
                 cert_props = crypto_props.setdefault("certificateProperties", {})
                 cert_props["subjectName"] = getattr(cert_obj, "subject", "")
@@ -250,10 +261,12 @@ def post_process_cbom(json_str: str, assets_map: dict) -> str:
             if algo_obj:
                 crypto_props = comp.setdefault("cryptoProperties", {})
                 algo_type = getattr(algo_obj, "algorithm_type", "").lower()
-                crypto_props["assetType"] = _CYCLONEDX_ASSET_TYPE_MAP.get(algo_type, "algorithm")
+                crypto_props["assetType"] = _CYCLONEDX_ASSET_TYPE_MAP.get(
+                    algo_type, "algorithm"
+                )
 
                 pqc_status = getattr(algo_obj, "pqc_status", "vulnerable")
-                pqc_safe = (pqc_status in ["pqc_ready", "safe"])
+                pqc_safe = pqc_status in ["pqc_ready", "safe"]
 
                 algo_type = getattr(algo_obj, "algorithm_type", "").lower()
                 primitive = "signature"
@@ -358,11 +371,19 @@ def post_process_cbom(json_str: str, assets_map: dict) -> str:
                     "state": "active",
                     "size": cert_obj.pub_key_size,
                     "algorithmRef": f"algo-{cert_id}",
-                    "creationDate": cert_obj.not_before.isoformat() if getattr(cert_obj, "not_before", None) else datetime.now(timezone.utc).isoformat(),
-                    "expirationDate": cert_obj.not_after.isoformat() if getattr(cert_obj, "not_after", None) else "",
+                    "creationDate": (
+                        cert_obj.not_before.isoformat()
+                        if getattr(cert_obj, "not_before", None)
+                        else datetime.now(timezone.utc).isoformat()
+                    ),
+                    "expirationDate": (
+                        cert_obj.not_after.isoformat()
+                        if getattr(cert_obj, "not_after", None)
+                        else ""
+                    ),
                     "secured": True,
                     "format": "raw",
-                }
+                },
             }
             data.setdefault("components", []).append(key_comp)
             key_by_cert[cert_id] = key_ref
@@ -378,7 +399,10 @@ def post_process_cbom(json_str: str, assets_map: dict) -> str:
         proto_ref = f"protocol-{cert_id}"
         if not any(c.get("bom-ref") == proto_ref for c in data.get("components", [])):
             try:
-                if cert_obj and getattr(cert_obj, "temp_asset_metadata", None) is not None:
+                if (
+                    cert_obj
+                    and getattr(cert_obj, "temp_asset_metadata", None) is not None
+                ):
                     meta = cert_obj.temp_asset_metadata
                 elif cert_obj and getattr(cert_obj, "asset", None):
                     meta = cert_obj.asset.asset_metadata or {}
@@ -406,8 +430,8 @@ def post_process_cbom(json_str: str, assets_map: dict) -> str:
             proto_comp = {
                 "bom-ref": proto_ref,
                 "type": "cryptographicAsset",
-                "name": f"TLS Connection",
-                "cryptoProperties": crypto_props
+                "name": "TLS Connection",
+                "cryptoProperties": crypto_props,
             }
             data.setdefault("components", []).append(proto_comp)
             protocol_refs.append(proto_ref)
@@ -434,11 +458,9 @@ def post_process_cbom(json_str: str, assets_map: dict) -> str:
                     dep_type = "required"
                     provides = ["protocol"]
 
-                new_depends_on.append({
-                    "ref": child,
-                    "provides": provides,
-                    "dependencyType": dep_type
-                })
+                new_depends_on.append(
+                    {"ref": child, "provides": provides, "dependencyType": dep_type}
+                )
             else:
                 new_depends_on.append(child)
         dep["dependsOn"] = new_depends_on
@@ -466,7 +488,9 @@ async def generate_cbom(session: AsyncSession, report_id: str) -> str:
 
     scope_filters = report.scope_filters or {}
 
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    base_dir = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
     reports_dir = os.path.join(base_dir, "static", "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
@@ -486,16 +510,26 @@ async def generate_cbom(session: AsyncSession, report_id: str) -> str:
             asset_stmt = select(Asset).where(Asset.deleted_at.is_(None))
 
             if scope_filters.get("environment"):
-                asset_stmt = asset_stmt.where(Asset.environment == scope_filters["environment"])
+                asset_stmt = asset_stmt.where(
+                    Asset.environment == scope_filters["environment"]
+                )
             if scope_filters.get("business_service"):
-                asset_stmt = asset_stmt.where(Asset.business_service == scope_filters["business_service"])
+                asset_stmt = asset_stmt.where(
+                    Asset.business_service == scope_filters["business_service"]
+                )
             if scope_filters.get("owner_id"):
-                asset_stmt = asset_stmt.where(Asset.owner_id == scope_filters["owner_id"])
+                asset_stmt = asset_stmt.where(
+                    Asset.owner_id == scope_filters["owner_id"]
+                )
 
-            asset_stmt = asset_stmt.options(
-                selectinload(Asset.certificates),
-                selectinload(Asset.algorithms),
-            ).limit(batch_size).offset(offset)
+            asset_stmt = (
+                asset_stmt.options(
+                    selectinload(Asset.certificates),
+                    selectinload(Asset.algorithms),
+                )
+                .limit(batch_size)
+                .offset(offset)
+            )
 
             asset_res = await session.execute(asset_stmt)
             assets = asset_res.scalars().all()
@@ -509,10 +543,18 @@ async def generate_cbom(session: AsyncSession, report_id: str) -> str:
                     type=ComponentType.APPLICATION,
                     bom_ref=f"asset-{asset.id}",
                 )
-                asset_comp.properties.add(Property(name="pqc:asset_type", value=asset.asset_type))
-                asset_comp.properties.add(Property(name="pqc:environment", value=asset.environment))
-                asset_comp.properties.add(Property(name="pqc:ip_address", value=asset.ip_address or ""))
-                asset_comp.properties.add(Property(name="pqc:fqdn", value=asset.fqdn or ""))
+                asset_comp.properties.add(
+                    Property(name="pqc:asset_type", value=asset.asset_type)
+                )
+                asset_comp.properties.add(
+                    Property(name="pqc:environment", value=asset.environment)
+                )
+                asset_comp.properties.add(
+                    Property(name="pqc:ip_address", value=asset.ip_address or "")
+                )
+                asset_comp.properties.add(
+                    Property(name="pqc:fqdn", value=asset.fqdn or "")
+                )
                 bom.components.add(asset_comp)
 
                 cert_deps: List[Component] = []
@@ -522,8 +564,14 @@ async def generate_cbom(session: AsyncSession, report_id: str) -> str:
                         type=ComponentType.CRYPTOGRAPHIC_ASSET,
                         bom_ref=f"cert-{cert.id}",
                     )
-                    cert_comp.properties.add(Property(name="pqc:algorithm", value=cert.sig_algorithm))
-                    cert_comp.properties.add(Property(name="pqc:key_size", value=str(cert.pub_key_size or "")))
+                    cert_comp.properties.add(
+                        Property(name="pqc:algorithm", value=cert.sig_algorithm)
+                    )
+                    cert_comp.properties.add(
+                        Property(
+                            name="pqc:key_size", value=str(cert.pub_key_size or "")
+                        )
+                    )
                     cert_comp.properties.add(
                         Property(
                             name="pqc:pqc_status",
@@ -531,11 +579,18 @@ async def generate_cbom(session: AsyncSession, report_id: str) -> str:
                         )
                     )
                     cert_comp.properties.add(
-                        Property(name="pqc:not_after", value=cert.not_after.isoformat() if cert.not_after else "")
+                        Property(
+                            name="pqc:not_after",
+                            value=cert.not_after.isoformat() if cert.not_after else "",
+                        )
                     )
                     bom.components.add(cert_comp)
                     cert_deps.append(cert_comp)
-                    setattr(cert, "temp_asset_metadata", getattr(asset, "asset_metadata", None))
+                    setattr(
+                        cert,
+                        "temp_asset_metadata",
+                        getattr(asset, "asset_metadata", None),
+                    )
                     assets_map[f"cert-{cert.id}"] = cert
 
                 algo_deps: List[Component] = []
@@ -545,9 +600,15 @@ async def generate_cbom(session: AsyncSession, report_id: str) -> str:
                         type=ComponentType.CRYPTOGRAPHIC_ASSET,
                         bom_ref=f"algo-{algo.id}",
                     )
-                    algo_comp.properties.add(Property(name="pqc:algorithm_name", value=algo.algorithm_name))
-                    algo_comp.properties.add(Property(name="pqc:algorithm_type", value=algo.algorithm_type))
-                    algo_comp.properties.add(Property(name="pqc:pqc_status", value=algo.pqc_status))
+                    algo_comp.properties.add(
+                        Property(name="pqc:algorithm_name", value=algo.algorithm_name)
+                    )
+                    algo_comp.properties.add(
+                        Property(name="pqc:algorithm_type", value=algo.algorithm_type)
+                    )
+                    algo_comp.properties.add(
+                        Property(name="pqc:pqc_status", value=algo.pqc_status)
+                    )
                     bom.components.add(algo_comp)
                     algo_deps.append(algo_comp)
                     assets_map[f"algo-{algo.id}"] = algo
@@ -629,13 +690,15 @@ def generate_sarif_for_sast_findings(
         nonlocal rule_index
         if rule_id not in rule_map:
             rule_map[rule_id] = rule_index
-            sarif["runs"][0]["tool"]["driver"]["rules"].append({
-                "id": rule_id,
-                "name": name,
-                "shortDescription": {"text": description},
-                "fullDescription": {"text": description},
-                "defaultConfiguration": {"level": severity.lower()},
-            })
+            sarif["runs"][0]["tool"]["driver"]["rules"].append(
+                {
+                    "id": rule_id,
+                    "name": name,
+                    "shortDescription": {"text": description},
+                    "fullDescription": {"text": description},
+                    "defaultConfiguration": {"level": severity.lower()},
+                }
+            )
             rule_index += 1
         return rule_map[rule_id]
 
@@ -648,7 +711,7 @@ def generate_sarif_for_sast_findings(
             line = finding.get("line", 1)
             message = finding.get("message", "")
             severity = finding.get("severity", "warning")
-            
+
             rule_idx = add_rule(
                 rule_id=rule_id,
                 name=f"Semgrep: {rule_id}",
@@ -656,18 +719,22 @@ def generate_sarif_for_sast_findings(
                 severity=severity,
             )
 
-            sarif["runs"][0]["results"].append({
-                "ruleId": rule_id,
-                "ruleIndex": rule_idx,
-                "level": severity.lower(),
-                "message": {"text": message},
-                "locations": [{
-                    "physicalLocation": {
-                        "artifactLocation": {"uri": file_path},
-                        "region": {"startLine": line},
-                    }
-                }],
-            })
+            sarif["runs"][0]["results"].append(
+                {
+                    "ruleId": rule_id,
+                    "ruleIndex": rule_idx,
+                    "level": severity.lower(),
+                    "message": {"text": message},
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {"uri": file_path},
+                                "region": {"startLine": line},
+                            }
+                        }
+                    ],
+                }
+            )
 
     # Process Trivy findings
     if trivy_results and trivy_results.get("success"):
@@ -675,7 +742,7 @@ def generate_sarif_for_sast_findings(
         for finding in findings:
             if not isinstance(finding, dict):
                 continue
-            
+
             # Extract relevant info from Trivy result
             target = finding.get("Target", "unknown")
             vuln_id = finding.get("VulnerabilityID", "trivy-unknown")
@@ -684,11 +751,15 @@ def generate_sarif_for_sast_findings(
             fixed_version = finding.get("FixedVersion", "")
             severity = finding.get("Severity", "UNKNOWN")
             title = finding.get("Title", "")
-            
+
             rule_id = f"trivy-{vuln_id}"
             file_path = target
-            message = f"{pkg_name} {installed_version} -> {fixed_version}: {title}" if pkg_name else vuln_id
-            
+            message = (
+                f"{pkg_name} {installed_version} -> {fixed_version}: {title}"
+                if pkg_name
+                else vuln_id
+            )
+
             severity_map = {
                 "CRITICAL": "error",
                 "HIGH": "error",
@@ -697,7 +768,7 @@ def generate_sarif_for_sast_findings(
                 "UNKNOWN": "note",
             }
             sarif_severity = severity_map.get(severity.upper(), "note")
-            
+
             rule_idx = add_rule(
                 rule_id=rule_id,
                 name=f"Trivy: {vuln_id}",
@@ -705,18 +776,22 @@ def generate_sarif_for_sast_findings(
                 severity=sarif_severity,
             )
 
-            sarif["runs"][0]["results"].append({
-                "ruleId": rule_id,
-                "ruleIndex": rule_idx,
-                "level": sarif_severity,
-                "message": {"text": message},
-                "locations": [{
-                    "physicalLocation": {
-                        "artifactLocation": {"uri": file_path},
-                        "region": {"startLine": 1},
-                    }
-                }],
-            })
+            sarif["runs"][0]["results"].append(
+                {
+                    "ruleId": rule_id,
+                    "ruleIndex": rule_idx,
+                    "level": sarif_severity,
+                    "message": {"text": message},
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {"uri": file_path},
+                                "region": {"startLine": 1},
+                            }
+                        }
+                    ],
+                }
+            )
 
     return sarif
 
@@ -731,7 +806,9 @@ async def generate_sarif_report(
     Queries the database for findings with finding_type 'code_weak_crypto' or
     'sbom_vulnerable_lib' within the given scan_ids and converts them to SARIF.
     """
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    base_dir = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
     reports_dir = os.path.join(base_dir, "static", "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
@@ -775,13 +852,15 @@ async def generate_sarif_report(
         nonlocal rule_index
         if rule_id not in rule_map:
             rule_map[rule_id] = rule_index
-            sarif["runs"][0]["tool"]["driver"]["rules"].append({
-                "id": rule_id,
-                "name": name,
-                "shortDescription": {"text": description},
-                "fullDescription": {"text": description},
-                "defaultConfiguration": {"level": severity.lower()},
-            })
+            sarif["runs"][0]["tool"]["driver"]["rules"].append(
+                {
+                    "id": rule_id,
+                    "name": name,
+                    "shortDescription": {"text": description},
+                    "fullDescription": {"text": description},
+                    "defaultConfiguration": {"level": severity.lower()},
+                }
+            )
             rule_index += 1
         return rule_map[rule_id]
 
@@ -809,28 +888,36 @@ async def generate_sarif_report(
         line = evidence.get("line", evidence.get("start_line", 1)) or 1
         message = finding.description or finding.title or ""
 
-        sarif["runs"][0]["results"].append({
-            "ruleId": rule_id,
-            "ruleIndex": rule_idx,
-            "level": severity,
-            "message": {"text": message},
-            "locations": [{
-                "physicalLocation": {
-                    "artifactLocation": {"uri": str(file_uri)},
-                    "region": {"startLine": int(line) if str(line).isdigit() else 1},
-                }
-            }],
-            "properties": {
-                "pqc:algorithm": finding.algorithm or "",
-                "pqc:status": finding.pqc_status or "",
-                "pqc:finding_id": str(finding.id),
-            },
-        })
+        sarif["runs"][0]["results"].append(
+            {
+                "ruleId": rule_id,
+                "ruleIndex": rule_idx,
+                "level": severity,
+                "message": {"text": message},
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {"uri": str(file_uri)},
+                            "region": {
+                                "startLine": int(line) if str(line).isdigit() else 1
+                            },
+                        }
+                    }
+                ],
+                "properties": {
+                    "pqc:algorithm": finding.algorithm or "",
+                    "pqc:status": finding.pqc_status or "",
+                    "pqc:finding_id": str(finding.id),
+                },
+            }
+        )
 
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(sarif, f, indent=2)
 
-    logger.info(f"SARIF report {report_id} generated at {file_path} with {len(findings_res)} findings")
+    logger.info(
+        f"SARIF report {report_id} generated at {file_path} with {len(findings_res)} findings"
+    )
     return file_path
 
 
@@ -843,7 +930,9 @@ async def generate_csv_findings_export(
     Export the current finding queue to a CSV file. Used for spreadsheet
     analysis, ticket import, and executive review.
     """
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    base_dir = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
     reports_dir = os.path.join(base_dir, "static", "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
@@ -858,12 +947,16 @@ async def generate_csv_findings_export(
         if scope_filters.get("environment"):
             stmt = stmt.where(Asset.environment == scope_filters["environment"])
         if scope_filters.get("business_service"):
-            stmt = stmt.where(Asset.business_service == scope_filters["business_service"])
+            stmt = stmt.where(
+                Asset.business_service == scope_filters["business_service"]
+            )
         if scope_filters.get("owner_id"):
             stmt = stmt.where(Asset.owner_id == scope_filters["owner_id"])
 
     stmt = stmt.options(selectinload(Finding.asset))
-    stmt = stmt.order_by(Finding.risk_score.desc().nullslast(), Finding.first_detected_at.desc())
+    stmt = stmt.order_by(
+        Finding.risk_score.desc().nullslast(), Finding.first_detected_at.desc()
+    )
 
     result = await session.execute(stmt)
     rows = result.all()
@@ -903,33 +996,37 @@ async def generate_csv_findings_export(
         return str(value)
 
     for finding, asset in rows:
-        writer.writerow({
-            "finding_id": _fmt(finding.id),
-            "asset_id": _fmt(finding.asset_id),
-            "asset_name": _fmt(asset.name) if asset else "",
-            "asset_type": _fmt(asset.asset_type) if asset else "",
-            "environment": _fmt(asset.environment) if asset else "",
-            "fqdn": _fmt(asset.fqdn) if asset else "",
-            "ip_address": _fmt(asset.ip_address) if asset else "",
-            "finding_type": _fmt(finding.finding_type),
-            "severity": _fmt(finding.severity),
-            "title": _fmt(finding.title),
-            "description": _fmt(finding.description),
-            "algorithm": _fmt(finding.algorithm),
-            "pqc_status": _fmt(finding.pqc_status),
-            "hndl_exposure": _fmt(finding.hndl_exposure),
-            "risk_score": _fmt(finding.risk_score),
-            "status": _fmt(finding.status),
-            "first_detected_at": _fmt(finding.first_detected_at),
-            "last_verified_at": _fmt(finding.last_verified_at),
-            "remediation": _fmt(finding.remediation),
-            "recommended_algorithm": _fmt(finding.recommended_algorithm),
-        })
+        writer.writerow(
+            {
+                "finding_id": _fmt(finding.id),
+                "asset_id": _fmt(finding.asset_id),
+                "asset_name": _fmt(asset.name) if asset else "",
+                "asset_type": _fmt(asset.asset_type) if asset else "",
+                "environment": _fmt(asset.environment) if asset else "",
+                "fqdn": _fmt(asset.fqdn) if asset else "",
+                "ip_address": _fmt(asset.ip_address) if asset else "",
+                "finding_type": _fmt(finding.finding_type),
+                "severity": _fmt(finding.severity),
+                "title": _fmt(finding.title),
+                "description": _fmt(finding.description),
+                "algorithm": _fmt(finding.algorithm),
+                "pqc_status": _fmt(finding.pqc_status),
+                "hndl_exposure": _fmt(finding.hndl_exposure),
+                "risk_score": _fmt(finding.risk_score),
+                "status": _fmt(finding.status),
+                "first_detected_at": _fmt(finding.first_detected_at),
+                "last_verified_at": _fmt(finding.last_verified_at),
+                "remediation": _fmt(finding.remediation),
+                "recommended_algorithm": _fmt(finding.recommended_algorithm),
+            }
+        )
 
     with open(file_path, "w", encoding="utf-8", newline="") as f:
         f.write(buffer.getvalue())
 
-    logger.info(f"CSV findings export {report_id} generated at {file_path} with {len(rows)} rows")
+    logger.info(
+        f"CSV findings export {report_id} generated at {file_path} with {len(rows)} rows"
+    )
     return file_path
 
 
@@ -948,7 +1045,9 @@ async def generate_pdf_executive_report(
     Includes: total assets, findings by severity, PQC readiness percentage,
     top vulnerable assets, and average risk score.
     """
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    base_dir = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
     reports_dir = os.path.join(base_dir, "static", "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
@@ -966,14 +1065,24 @@ async def generate_pdf_executive_report(
     )
     if scope_filters:
         if scope_filters.get("environment"):
-            asset_stmt = asset_stmt.where(Asset.environment == scope_filters["environment"])
-            finding_stmt = finding_stmt.join(Asset).where(Asset.environment == scope_filters["environment"])
+            asset_stmt = asset_stmt.where(
+                Asset.environment == scope_filters["environment"]
+            )
+            finding_stmt = finding_stmt.join(Asset).where(
+                Asset.environment == scope_filters["environment"]
+            )
         if scope_filters.get("business_service"):
-            asset_stmt = asset_stmt.where(Asset.business_service == scope_filters["business_service"])
-            finding_stmt = finding_stmt.join(Asset).where(Asset.business_service == scope_filters["business_service"])
+            asset_stmt = asset_stmt.where(
+                Asset.business_service == scope_filters["business_service"]
+            )
+            finding_stmt = finding_stmt.join(Asset).where(
+                Asset.business_service == scope_filters["business_service"]
+            )
         if scope_filters.get("owner_id"):
             asset_stmt = asset_stmt.where(Asset.owner_id == scope_filters["owner_id"])
-            finding_stmt = finding_stmt.join(Asset).where(Asset.owner_id == scope_filters["owner_id"])
+            finding_stmt = finding_stmt.join(Asset).where(
+                Asset.owner_id == scope_filters["owner_id"]
+            )
 
     assets = (await session.execute(asset_stmt)).scalars().all()
     findings = (await session.execute(finding_stmt)).scalars().all()
@@ -986,14 +1095,19 @@ async def generate_pdf_executive_report(
 
     # Algorithm roll-up
     algo_res = await session.execute(
-        select(Algorithm.pqc_status, Algorithm.id).join(Asset, Asset.id == Algorithm.asset_id)
+        select(Algorithm.pqc_status, Algorithm.id)
+        .join(Asset, Asset.id == Algorithm.asset_id)
         .where(Asset.deleted_at.is_(None))
     )
     algo_status_counts: Dict[str, int] = {}
     for status, _ in algo_res.all():
         algo_status_counts[status] = algo_status_counts.get(status, 0) + 1
 
-    pqc_ready_total = algo_status_counts.get("pqc_ready", 0) + algo_status_counts.get("hybrid", 0) + algo_status_counts.get("safe", 0)
+    pqc_ready_total = (
+        algo_status_counts.get("pqc_ready", 0)
+        + algo_status_counts.get("hybrid", 0)
+        + algo_status_counts.get("safe", 0)
+    )
     readiness_pct = (pqc_ready_total / total_assets * 100) if total_assets else 0
 
     # Average risk score across open findings
@@ -1013,13 +1127,16 @@ async def generate_pdf_executive_report(
     for f in findings:
         aid = str(f.asset_id)
         asset_name = asset_map[aid].name if aid in asset_map else "Unknown"
-        entry = asset_finding_stats.setdefault(aid, {
-            "asset_id": aid,
-            "asset_name": asset_name,
-            "open_findings": 0,
-            "max_risk": 0,
-            "total_risk": 0,
-        })
+        entry = asset_finding_stats.setdefault(
+            aid,
+            {
+                "asset_id": aid,
+                "asset_name": asset_name,
+                "open_findings": 0,
+                "max_risk": 0,
+                "total_risk": 0,
+            },
+        )
         entry["open_findings"] += 1
         score = f.risk_score or 0
         entry["total_risk"] += score
@@ -1036,27 +1153,31 @@ async def generate_pdf_executive_report(
     def _esc(text: Any) -> str:
         if text is None:
             return ""
-        return (
-            str(text)
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
+        return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    rows_html = (
+        "\n".join(
+            f"<tr><td>{_esc(f.title)}</td><td>{_esc(f.severity)}</td><td>{_esc(f.algorithm or '-')}</td><td>{_esc(f.hndl_exposure or '-')}</td><td>{_esc(f.risk_score)}</td></tr>"
+            for f in top_findings
         )
+        or "<tr><td colspan='5'>No open findings</td></tr>"
+    )
 
-    rows_html = "\n".join(
-        f"<tr><td>{_esc(f.title)}</td><td>{_esc(f.severity)}</td><td>{_esc(f.algorithm or '-')}</td><td>{_esc(f.hndl_exposure or '-')}</td><td>{_esc(f.risk_score)}</td></tr>"
-        for f in top_findings
-    ) or "<tr><td colspan='5'>No open findings</td></tr>"
+    vulnerable_asset_rows = (
+        "\n".join(
+            f"<tr><td>{_esc(a['asset_name'])}</td><td>{_esc(a['open_findings'])}</td><td>{_esc(a['max_risk'])}</td><td>{_esc(a['total_risk'])}</td></tr>"
+            for a in top_vulnerable_assets
+        )
+        or "<tr><td colspan='4'>No vulnerable assets recorded</td></tr>"
+    )
 
-    vulnerable_asset_rows = "\n".join(
-        f"<tr><td>{_esc(a['asset_name'])}</td><td>{_esc(a['open_findings'])}</td><td>{_esc(a['max_risk'])}</td><td>{_esc(a['total_risk'])}</td></tr>"
-        for a in top_vulnerable_assets
-    ) or "<tr><td colspan='4'>No vulnerable assets recorded</td></tr>"
-
-    algo_rows = "\n".join(
-        f"<tr><td>{_esc(k)}</td><td>{_esc(v)}</td></tr>"
-        for k, v in sorted(algo_status_counts.items(), key=lambda x: -x[1])
-    ) or "<tr><td colspan='2'>No algorithms recorded</td></tr>"
+    algo_rows = (
+        "\n".join(
+            f"<tr><td>{_esc(k)}</td><td>{_esc(v)}</td></tr>"
+            for k, v in sorted(algo_status_counts.items(), key=lambda x: -x[1])
+        )
+        or "<tr><td colspan='2'>No algorithms recorded</td></tr>"
+    )
 
     html = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
@@ -1120,6 +1241,7 @@ async def generate_pdf_executive_report(
 
     try:
         from weasyprint import HTML  # type: ignore
+
         await asyncio.to_thread(
             lambda: HTML(string=html, base_url=base_dir).write_pdf(file_path)
         )
@@ -1128,7 +1250,9 @@ async def generate_pdf_executive_report(
         logger.warning("WeasyPrint not installed; serving HTML report at %s", html_path)
         return html_path
     except Exception as e:  # noqa: BLE001
-        logger.warning("WeasyPrint render failed (%s); falling back to HTML at %s", e, html_path)
+        logger.warning(
+            "WeasyPrint render failed (%s); falling back to HTML at %s", e, html_path
+        )
         return html_path
 
     return file_path
@@ -1152,7 +1276,9 @@ async def generate_compliance_report(
     Groups findings by asset, computes PQC readiness per asset, and renders
     remediation status broken down by lifecycle state.
     """
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    base_dir = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
     reports_dir = os.path.join(base_dir, "static", "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
@@ -1195,50 +1321,83 @@ async def generate_compliance_report(
         asset_algo_counts[str(aid)][status] += 1
 
     total_assets = len(assets)
-    findings_by_severity: Dict[str, int] = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
-    remediation_counts: Dict[str, int] = {"open": 0, "in_progress": 0, "resolved": 0, "accepted": 0, "false_positive": 0}
+    findings_by_severity: Dict[str, int] = {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "info": 0,
+    }
+    remediation_counts: Dict[str, int] = {
+        "open": 0,
+        "in_progress": 0,
+        "resolved": 0,
+        "accepted": 0,
+        "false_positive": 0,
+    }
 
     findings_by_asset: Dict[str, Dict[str, Any]] = {}
     for finding, asset in rows:
         sev = (finding.severity or "info").lower()
         findings_by_severity[sev] = findings_by_severity.get(sev, 0) + 1
-        remediation_counts[finding.status] = remediation_counts.get(finding.status, 0) + 1
+        remediation_counts[finding.status] = (
+            remediation_counts.get(finding.status, 0) + 1
+        )
 
         aid = str(asset.id)
-        entry = findings_by_asset.setdefault(aid, {
-            "asset_id": aid,
-            "asset_name": asset.name,
-            "asset_type": asset.asset_type,
-            "environment": asset.environment,
-            "fqdn": asset.fqdn,
-            "ip_address": asset.ip_address,
-            "business_service": asset.business_service,
-            "owner_id": str(asset.owner_id) if asset.owner_id else None,
-            "algo_summary": asset_algo_counts.get(aid, {}),
-            "pqc_readiness_pct": 0.0,
-            "findings": [],
-        })
-        entry["findings"].append({
-            "finding_id": str(finding.id),
-            "finding_type": finding.finding_type,
-            "severity": finding.severity,
-            "title": finding.title,
-            "description": finding.description,
-            "algorithm": finding.algorithm,
-            "pqc_status": finding.pqc_status,
-            "hndl_exposure": finding.hndl_exposure,
-            "risk_score": finding.risk_score,
-            "status": finding.status,
-            "priority_queue": finding.priority_queue,
-            "remediation": finding.remediation,
-            "recommended_algorithm": finding.recommended_algorithm,
-            "first_detected_at": finding.first_detected_at.isoformat() if finding.first_detected_at else None,
-            "last_verified_at": finding.last_verified_at.isoformat() if finding.last_verified_at else None,
-            "resolved_at": finding.resolved_at.isoformat() if finding.resolved_at else None,
-            "nist_control": _finding_type_to_nist_control(finding.finding_type),
-        })
+        entry = findings_by_asset.setdefault(
+            aid,
+            {
+                "asset_id": aid,
+                "asset_name": asset.name,
+                "asset_type": asset.asset_type,
+                "environment": asset.environment,
+                "fqdn": asset.fqdn,
+                "ip_address": asset.ip_address,
+                "business_service": asset.business_service,
+                "owner_id": str(asset.owner_id) if asset.owner_id else None,
+                "algo_summary": asset_algo_counts.get(aid, {}),
+                "pqc_readiness_pct": 0.0,
+                "findings": [],
+            },
+        )
+        entry["findings"].append(
+            {
+                "finding_id": str(finding.id),
+                "finding_type": finding.finding_type,
+                "severity": finding.severity,
+                "title": finding.title,
+                "description": finding.description,
+                "algorithm": finding.algorithm,
+                "pqc_status": finding.pqc_status,
+                "hndl_exposure": finding.hndl_exposure,
+                "risk_score": finding.risk_score,
+                "status": finding.status,
+                "priority_queue": finding.priority_queue,
+                "remediation": finding.remediation,
+                "recommended_algorithm": finding.recommended_algorithm,
+                "first_detected_at": (
+                    finding.first_detected_at.isoformat()
+                    if finding.first_detected_at
+                    else None
+                ),
+                "last_verified_at": (
+                    finding.last_verified_at.isoformat()
+                    if finding.last_verified_at
+                    else None
+                ),
+                "resolved_at": (
+                    finding.resolved_at.isoformat() if finding.resolved_at else None
+                ),
+                "nist_control": _finding_type_to_nist_control(finding.finding_type),
+            }
+        )
 
-    pqc_ready_algos = algo_counts.get("pqc_ready", 0) + algo_counts.get("hybrid", 0) + algo_counts.get("safe", 0)
+    pqc_ready_algos = (
+        algo_counts.get("pqc_ready", 0)
+        + algo_counts.get("hybrid", 0)
+        + algo_counts.get("safe", 0)
+    )
     overall_readiness = (pqc_ready_algos / total_assets * 100) if total_assets else 0.0
 
     for aid, entry in findings_by_asset.items():
@@ -1261,7 +1420,9 @@ async def generate_compliance_report(
             "overall_pqc_readiness_pct": round(overall_readiness, 1),
             "findings_by_severity": findings_by_severity,
             "remediation_status": remediation_counts,
-            "algorithm_distribution": dict(sorted(algo_counts.items(), key=lambda x: -x[1])),
+            "algorithm_distribution": dict(
+                sorted(algo_counts.items(), key=lambda x: -x[1])
+            ),
         },
         "findings_by_asset": list(findings_by_asset.values()),
         "compliance_mapping": _build_compliance_mapping(findings_by_asset),
@@ -1274,10 +1435,20 @@ async def generate_compliance_report(
         html = _render_compliance_html(report)
         with open(html_path, "w", encoding="utf-8") as f:
             f.write(html)
-        logger.info("Compliance HTML report %s generated at %s with %d assets", report_id, html_path, total_assets)
+        logger.info(
+            "Compliance HTML report %s generated at %s with %d assets",
+            report_id,
+            html_path,
+            total_assets,
+        )
         return html_path
 
-    logger.info("Compliance report %s generated at %s with %d assets", report_id, json_path, total_assets)
+    logger.info(
+        "Compliance report %s generated at %s with %d assets",
+        report_id,
+        json_path,
+        total_assets,
+    )
     return json_path
 
 
@@ -1311,17 +1482,19 @@ def _build_compliance_mapping(findings_by_asset: Dict[str, Dict[str, Any]]) -> l
     mapping: list = []
     for aid, entry in findings_by_asset.items():
         for f in entry.get("findings", []):
-            mapping.append({
-                "asset_name": entry["asset_name"],
-                "environment": entry["environment"],
-                "finding_id": f["finding_id"],
-                "finding_type": f["finding_type"],
-                "nist_control": f["nist_control"],
-                "risk_score": f["risk_score"],
-                "remediation": f["remediation"],
-                "status": f["status"],
-                "recommended_algorithm": f["recommended_algorithm"],
-            })
+            mapping.append(
+                {
+                    "asset_name": entry["asset_name"],
+                    "environment": entry["environment"],
+                    "finding_id": f["finding_id"],
+                    "finding_type": f["finding_type"],
+                    "nist_control": f["nist_control"],
+                    "risk_score": f["risk_score"],
+                    "remediation": f["remediation"],
+                    "status": f["status"],
+                    "recommended_algorithm": f["recommended_algorithm"],
+                }
+            )
     mapping.sort(key=lambda x: -(x.get("risk_score") or 0))
     return mapping
 
@@ -1332,12 +1505,7 @@ def _render_compliance_html(report: Dict[str, Any]) -> str:
     def _esc(text: Any) -> str:
         if text is None:
             return ""
-        return (
-            str(text)
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-        )
+        return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     meta = report.get("report_metadata", {})
     summary = report.get("executive_summary", {})
@@ -1362,21 +1530,28 @@ def _render_compliance_html(report: Dict[str, Any]) -> str:
     """
 
     # Remediation status rows
-    remediation_rows = "\n".join(
-        f"<tr><td>{_esc(status)}</td><td>{_esc(count)}</td></tr>"
-        for status, count in sorted(remediation.items(), key=lambda x: -x[1])
-    ) or "<tr><td colspan='2'>No remediation data</td></tr>"
+    remediation_rows = (
+        "\n".join(
+            f"<tr><td>{_esc(status)}</td><td>{_esc(count)}</td></tr>"
+            for status, count in sorted(remediation.items(), key=lambda x: -x[1])
+        )
+        or "<tr><td colspan='2'>No remediation data</td></tr>"
+    )
 
     # Algorithm distribution rows
-    algo_rows = "\n".join(
-        f"<tr><td>{_esc(status)}</td><td>{_esc(count)}</td></tr>"
-        for status, count in sorted(algo_dist.items(), key=lambda x: -x[1])
-    ) or "<tr><td colspan='2'>No algorithms recorded</td></tr>"
+    algo_rows = (
+        "\n".join(
+            f"<tr><td>{_esc(status)}</td><td>{_esc(count)}</td></tr>"
+            for status, count in sorted(algo_dist.items(), key=lambda x: -x[1])
+        )
+        or "<tr><td colspan='2'>No algorithms recorded</td></tr>"
+    )
 
     # Asset inventory rows
     asset_entries = report.get("findings_by_asset", [])
-    inventory_rows = "\n".join(
-        f"""<tr>
+    inventory_rows = (
+        "\n".join(
+            f"""<tr>
           <td>{_esc(a.get('asset_name'))}</td>
           <td>{_esc(a.get('asset_type'))}</td>
           <td>{_esc(a.get('environment'))}</td>
@@ -1385,8 +1560,10 @@ def _render_compliance_html(report: Dict[str, Any]) -> str:
           <td>{_esc(a.get('pqc_readiness_pct'))}%</td>
           <td>{_esc(len(a.get('findings', [])))}</td>
         </tr>"""
-        for a in asset_entries
-    ) or "<tr><td colspan='7'>No assets in scope</td></tr>"
+            for a in asset_entries
+        )
+        or "<tr><td colspan='7'>No assets in scope</td></tr>"
+    )
 
     # Findings rows across all assets
     all_findings: List[Dict[str, Any]] = []
@@ -1397,8 +1574,9 @@ def _render_compliance_html(report: Dict[str, Any]) -> str:
             all_findings.append(f)
     all_findings.sort(key=lambda x: -(x.get("risk_score") or 0))
 
-    findings_rows = "\n".join(
-        f"""<tr>
+    findings_rows = (
+        "\n".join(
+            f"""<tr>
           <td>{_esc(f.get('_asset_name'))}</td>
           <td>{_esc(f.get('finding_type'))}</td>
           <td class="{_esc(f.get('severity'))}">{_esc(f.get('severity'))}</td>
@@ -1408,12 +1586,15 @@ def _render_compliance_html(report: Dict[str, Any]) -> str:
           <td>{_esc(f.get('remediation') or '-')}</td>
           <td>{_esc(f.get('nist_control'))}</td>
         </tr>"""
-        for f in all_findings
-    ) or "<tr><td colspan='8'>No findings recorded</td></tr>"
+            for f in all_findings
+        )
+        or "<tr><td colspan='8'>No findings recorded</td></tr>"
+    )
 
     # Compliance mapping rows
-    mapping_rows = "\n".join(
-        f"""<tr>
+    mapping_rows = (
+        "\n".join(
+            f"""<tr>
           <td>{_esc(m.get('asset_name'))}</td>
           <td>{_esc(m.get('finding_type'))}</td>
           <td>{_esc(m.get('nist_control'))}</td>
@@ -1422,8 +1603,10 @@ def _render_compliance_html(report: Dict[str, Any]) -> str:
           <td>{_esc(m.get('recommended_algorithm') or '-')}</td>
           <td>{_esc(m.get('remediation') or '-')}</td>
         </tr>"""
-        for m in report.get("compliance_mapping", [])
-    ) or "<tr><td colspan='7'>No compliance mapping data</td></tr>"
+            for m in report.get("compliance_mapping", [])
+        )
+        or "<tr><td colspan='7'>No compliance mapping data</td></tr>"
+    )
 
     scope_items = ", ".join(f"{_esc(k)}={_esc(v)}" for k, v in scope.items()) or "None"
 
@@ -1515,15 +1698,23 @@ async def generate_report(
         if report_type == "cbom" and fmt == "json":
             file_path = await generate_cbom(session, report_id)
         elif report_type == "findings" and fmt == "csv":
-            file_path = await generate_csv_findings_export(session, report_id, scope_filters)
+            file_path = await generate_csv_findings_export(
+                session, report_id, scope_filters
+            )
         elif report_type == "executive" and fmt in ("pdf", "html"):
-            file_path = await generate_pdf_executive_report(session, report_id, scope_filters, fmt=fmt)
+            file_path = await generate_pdf_executive_report(
+                session, report_id, scope_filters, fmt=fmt
+            )
         elif report_type == "compliance" and fmt in ("json", "html"):
-            file_path = await generate_compliance_report(session, report_id, scope_filters, fmt=fmt)
+            file_path = await generate_compliance_report(
+                session, report_id, scope_filters, fmt=fmt
+            )
         elif report_type == "sast" and fmt == "sarif":
             file_path = await generate_sarif_report(session, report_id, scan_ids or [])
         else:
-            raise ValueError(f"Unsupported report_type/format combination: {report_type}/{fmt}")
+            raise ValueError(
+                f"Unsupported report_type/format combination: {report_type}/{fmt}"
+            )
 
         report.status = "ready"
         report.file_path = file_path

@@ -3,12 +3,12 @@ Extended tests for `app.analysis.algo_classifier` to cover remaining
 uncovered branches: registry loading, update_mappings, resolve_key_size_status,
 resolve_curve_status, classify_cipher_suite edge cases, and fallback paths.
 """
+
 from __future__ import annotations
 
 import contextlib
 import pytest
-from unittest.mock import patch, MagicMock
-from pathlib import Path
+from unittest.mock import patch
 
 from app.analysis.algo_classifier import (
     classify_algorithm,
@@ -23,14 +23,13 @@ from app.analysis.algo_classifier import (
     HYBRID_KEX_GROUPS,
     PQC_SIGNATURE_OIDS,
     HYBRID_SIGNATURE_OIDS,
-    CLASSICAL_EDDSA_OIDS,
     CLASSICAL_SIGNATURE_OIDS,
     CLASSICAL_KEX_OIDS,
-    CLASSICAL_X_OIDS,
 )
 
 
 # --- resolve_key_size_status edge cases ---
+
 
 def test_resolve_key_size_less_than_match():
     d = {"<2048": {"status": "vulnerable"}, "2048-4096": {"status": "safe_until_2030"}}
@@ -79,6 +78,7 @@ def test_resolve_key_size_invalid_exact():
 
 # --- resolve_curve_status edge cases ---
 
+
 def test_resolve_curve_status_match_p256():
     d = {"P-256": {"status": "vulnerable"}}
     assert resolve_curve_status(d, "secp256r1")["status"] == "vulnerable"
@@ -101,8 +101,11 @@ def test_resolve_curve_status_no_match():
 
 # --- _classify_cipher_suite edge cases ---
 
+
 def test_classify_cipher_suite_chacha20_tls13():
-    result = _classify_cipher_suite("TLS_CHACHA20_POLY1305_SHA256", "TLS_CHACHA20_POLY1305_SHA256")
+    result = _classify_cipher_suite(
+        "TLS_CHACHA20_POLY1305_SHA256", "TLS_CHACHA20_POLY1305_SHA256"
+    )
     assert result["pqc_status"] == "safe"
 
 
@@ -117,7 +120,9 @@ def test_classify_cipher_suite_short_aes_cbc():
 
 
 def test_classify_cipher_suite_short_chacha20():
-    result = _classify_cipher_suite("CHACHA20-POLY1305-SHA256", "CHACHA20-POLY1305-SHA256")
+    result = _classify_cipher_suite(
+        "CHACHA20-POLY1305-SHA256", "CHACHA20-POLY1305-SHA256"
+    )
     assert result["pqc_status"] == "vulnerable"
 
 
@@ -131,6 +136,7 @@ def test_classify_cipher_suite_no_match():
 
 
 # --- classify_algorithm: more fallback paths ---
+
 
 def test_classify_algorithm_3des():
     result = classify_algorithm("3DES-EDE-CBC")
@@ -246,6 +252,7 @@ def test_classify_algorithm_gost():
 
 # --- classify_algorithm: registry-based paths with key_sizes ---
 
+
 def test_classify_algorithm_registry_key_sizes():
     """When REGISTRY_DATA has key_sizes, resolve_key_size_status is called."""
     if not REGISTRY_DATA:
@@ -278,6 +285,7 @@ def test_classify_algorithm_registry_key_sizes():
 
 
 # --- classify_algorithm: registry-based KEX group ID lookup ---
+
 
 def test_classify_algorithm_registry_kex_group_tls():
     """KEX group ID found in tls_iana_groups registry."""
@@ -317,6 +325,7 @@ def test_classify_algorithm_registry_kex_group_ike():
 
 # --- classify_algorithm: registry-based OID lookup ---
 
+
 def test_classify_algorithm_registry_oid_signature():
     """OID found in signature_oids registry."""
     if not REGISTRY_DATA:
@@ -330,6 +339,7 @@ def test_classify_algorithm_registry_oid_signature():
 
 
 # --- classify_algorithm: registry-based name matching ---
+
 
 def test_classify_algorithm_registry_name_match_exact():
     """Exact name match in registry."""
@@ -364,6 +374,7 @@ def test_classify_algorithm_registry_name_alias_match():
 
 
 # --- classify_algorithm: ECC curve parsing from name ---
+
 
 def test_classify_algorithm_parse_curve_secp256():
     result = classify_algorithm("ECDSA-SECP256R1")
@@ -417,6 +428,7 @@ def test_classify_algorithm_ecc_key_size_to_curve_521():
 
 # --- classify_algorithm: variant normalization ---
 
+
 def test_classify_algorithm_variant_3des_normalization():
     result = classify_algorithm("TRIPLEDES")
     assert result["variant"] == "3DES"
@@ -435,6 +447,7 @@ def test_classify_algorithm_variant_ecdsa_curve_normalization():
 
 # --- classify_algorithm: DSA vs ECDSA disambiguation ---
 
+
 def test_classify_algorithm_dsa_not_misclassified_for_ecdsa():
     """DSA substring must not match ECDSA."""
     result = classify_algorithm("ECDSA-P256")
@@ -450,6 +463,7 @@ def test_classify_algorithm_dh_not_misclassified_for_ecdh():
 
 # --- classify_algorithm: registry name matching with key_sizes ---
 
+
 def test_classify_algorithm_registry_name_with_key_size():
     """Registry name match that resolves via key_sizes."""
     if not REGISTRY_DATA:
@@ -459,7 +473,15 @@ def test_classify_algorithm_registry_name_with_key_size():
         for algo in cat_data.get("algorithms", []):
             if "key_sizes" in algo:
                 name = algo.get("name", "")
-                if name and name.upper() not in ("RSA", "ECDSA", "ECDH", "DH", "DSA", "AES", "SHA"):
+                if name and name.upper() not in (
+                    "RSA",
+                    "ECDSA",
+                    "ECDH",
+                    "DH",
+                    "DSA",
+                    "AES",
+                    "SHA",
+                ):
                     # Try a key size that would match
                     for k in algo["key_sizes"]:
                         if k.startswith("<"):
@@ -483,6 +505,7 @@ def test_classify_algorithm_registry_name_with_key_size():
 
 # --- classify_algorithm: registry name matching with curves ---
 
+
 def test_classify_algorithm_registry_name_with_curve():
     """Registry name match that resolves via curves."""
     if not REGISTRY_DATA:
@@ -492,7 +515,15 @@ def test_classify_algorithm_registry_name_with_curve():
         for algo in cat_data.get("algorithms", []):
             if "curves" in algo:
                 name = algo.get("name", "")
-                if name and name.upper() not in ("RSA", "ECDSA", "ECDH", "DH", "DSA", "AES", "SHA"):
+                if name and name.upper() not in (
+                    "RSA",
+                    "ECDSA",
+                    "ECDH",
+                    "DH",
+                    "DSA",
+                    "AES",
+                    "SHA",
+                ):
                     result = classify_algorithm(name + "-P256")
                     if result["pqc_status"] != "unknown":
                         return
@@ -500,6 +531,7 @@ def test_classify_algorithm_registry_name_with_curve():
 
 
 # --- classify_algorithm: AES fallback without key size ---
+
 
 def test_classify_algorithm_aes_no_key_size_fallback():
     """AES without parseable key size returns safe (256 default for AES-GCM)."""
@@ -509,6 +541,7 @@ def test_classify_algorithm_aes_no_key_size_fallback():
 
 
 # --- classify_algorithm: DH key size parsing ---
+
 
 def test_classify_algorithm_dh_key_size_from_name():
     result = classify_algorithm("DH-2048")
@@ -522,6 +555,7 @@ def test_classify_algorithm_dh_key_size_from_name_4096():
 
 # --- classify_algorithm: numeric key size in name ---
 
+
 def test_classify_algorithm_numeric_key_size_2048():
     result = classify_algorithm("RSA-2048")
     assert result["pqc_status"] == "vulnerable"
@@ -533,6 +567,7 @@ def test_classify_algorithm_numeric_key_size_4096():
 
 
 # --- get_deprecation_deadline_year: registry paths ---
+
 
 def test_get_deprecation_deadline_year_registry_status_defs():
     """When registry has status_definitions with deadline_year."""
@@ -579,7 +614,15 @@ def test_get_deprecation_deadline_year_registry_curve_resolution():
         for algo in cat_data.get("algorithms", []):
             if "curves" in algo:
                 name = algo.get("name", "")
-                if name and name.upper() not in ("RSA", "ECDSA", "ECDH", "DH", "DSA", "AES", "SHA"):
+                if name and name.upper() not in (
+                    "RSA",
+                    "ECDSA",
+                    "ECDH",
+                    "DH",
+                    "DSA",
+                    "AES",
+                    "SHA",
+                ):
                     result = get_deprecation_deadline_year(name + "-P256")
                     assert isinstance(result, int)
                     return
@@ -587,6 +630,7 @@ def test_get_deprecation_deadline_year_registry_curve_resolution():
 
 
 # --- get_deprecation_deadline_year: DSA/ECDH/DH/FFDH paths ---
+
 
 def test_get_deprecation_deadline_year_dh_1024():
     assert get_deprecation_deadline_year("DH", key_size=1024) == 2026
@@ -650,6 +694,7 @@ def test_get_deprecation_deadline_year_empty_name():
 
 # --- classify_algorithm: SECP384R1MLKEM1024 hybrid ---
 
+
 def test_classify_algorithm_secp384r1mlkem1024():
     result = classify_algorithm("SECP384R1MLKEM1024")
     assert result["pqc_status"] == "hybrid"
@@ -657,6 +702,7 @@ def test_classify_algorithm_secp384r1mlkem1024():
 
 
 # --- classify_algorithm: composite with non-PQC ---
+
 
 def test_classify_algorithm_composite_without_pqc():
     """COMPOSITE without PQC keyword -> not hybrid."""
@@ -667,13 +713,20 @@ def test_classify_algorithm_composite_without_pqc():
 
 # --- classify_algorithm: KEX group in hardcoded but not registry ---
 
+
 def test_classify_algorithm_kex_group_hardcoded_fallback():
     """KEX group ID found in hardcoded PQC_KEX_GROUPS but not in registry."""
     # Find a group in PQC_KEX_GROUPS that's not in the registry
     if not PQC_KEX_GROUPS:
         pytest.skip("No PQC_KEX_GROUPS")
-    tls_groups = REGISTRY_DATA.get("tls_iana_groups", {}).get("groups", {}) if REGISTRY_DATA else {}
-    ike_groups = REGISTRY_DATA.get("ikev2_groups", {}).get("groups", {}) if REGISTRY_DATA else {}
+    tls_groups = (
+        REGISTRY_DATA.get("tls_iana_groups", {}).get("groups", {})
+        if REGISTRY_DATA
+        else {}
+    )
+    ike_groups = (
+        REGISTRY_DATA.get("ikev2_groups", {}).get("groups", {}) if REGISTRY_DATA else {}
+    )
     for kid in PQC_KEX_GROUPS:
         hex_key = f"0x{kid:04X}"
         if hex_key not in tls_groups and str(kid) not in ike_groups:
@@ -685,6 +738,7 @@ def test_classify_algorithm_kex_group_hardcoded_fallback():
 
 # --- classify_algorithm: KEX group unknown ---
 
+
 def test_classify_algorithm_kex_group_unknown():
     """Unknown KEX group ID -> falls through to name-based classification."""
     result = classify_algorithm("RSA", kex_group_id=99999)
@@ -693,6 +747,7 @@ def test_classify_algorithm_kex_group_unknown():
 
 
 # --- classify_algorithm: OID in hardcoded but not registry ---
+
 
 def test_classify_algorithm_oid_hardcoded_fallback():
     """OID found in hardcoded dicts but not in registry."""
@@ -709,6 +764,7 @@ def test_classify_algorithm_oid_hardcoded_fallback():
 
 # --- classify_algorithm: OID unknown falls through ---
 
+
 def test_classify_algorithm_oid_unknown_falls_to_name():
     """Unknown OID falls through to name-based classification."""
     result = classify_algorithm("ML-KEM-768", oid="9.9.9.9.9.9")
@@ -718,12 +774,14 @@ def test_classify_algorithm_oid_unknown_falls_to_name():
 
 # --- load_registry_file edge cases ---
 
+
 def test_load_registry_file_returns_dict():
     result = load_registry_file()
     assert isinstance(result, dict)
 
 
 # --- update_mappings_from_registry edge cases ---
+
 
 def test_update_mappings_from_registry_no_data():
     """When REGISTRY_DATA is empty, function returns without error."""
@@ -741,6 +799,7 @@ def test_update_mappings_from_registry_with_data():
 
 # --- classify_algorithm: AES key size parsing from name ---
 
+
 def test_classify_algorithm_aes_key_size_parsed_from_name():
     result = classify_algorithm("AES_128_CBC")
     assert result["pqc_status"] == "safe_until_2030"
@@ -753,12 +812,14 @@ def test_classify_algorithm_aes_key_size_256_parsed():
 
 # --- classify_algorithm: DH key size parsed from name ---
 
+
 def test_classify_algorithm_dh_key_size_parsed():
     result = classify_algorithm("DH_4096")
     assert result["pqc_status"] == "vulnerable"
 
 
 # --- classify_algorithm: generic numeric key size ---
+
 
 def test_classify_algorithm_generic_numeric_512():
     result = classify_algorithm("UNKNOWN-512")
@@ -773,6 +834,7 @@ def test_classify_algorithm_generic_numeric_8192():
 
 # --- classify_algorithm: X25519+ML-KEM hybrid with plus ---
 
+
 def test_classify_algorithm_plus_hybrid_ml_kem():
     result = classify_algorithm("X25519+ML-KEM-768")
     assert result["is_hybrid"] is True
@@ -781,12 +843,14 @@ def test_classify_algorithm_plus_hybrid_ml_kem():
 
 # --- classify_algorithm: FRODO ---
 
+
 def test_classify_algorithm_frodo():
     result = classify_algorithm("FRODO-640-SHAKE")
     assert result["pqc_status"] == "pqc_candidate"
 
 
 # --- classify_algorithm: MCELIECE ---
+
 
 def test_classify_algorithm_mceliece():
     result = classify_algorithm("MCELIECE-348864")
@@ -795,12 +859,14 @@ def test_classify_algorithm_mceliece():
 
 # --- classify_algorithm: NTRU ---
 
+
 def test_classify_algorithm_ntru():
     result = classify_algorithm("NTRU-HPS-2048-509")
     assert result["pqc_status"] == "pqc_candidate"
 
 
 # --- classify_algorithm: SM2 ---
+
 
 def test_classify_algorithm_sm2():
     result = classify_algorithm("SM2")
@@ -809,6 +875,7 @@ def test_classify_algorithm_sm2():
 
 # --- classify_algorithm: SRP ---
 
+
 def test_classify_algorithm_srp():
     result = classify_algorithm("SRP-2048")
     assert result["pqc_status"] == "vulnerable"
@@ -816,12 +883,14 @@ def test_classify_algorithm_srp():
 
 # --- get_deprecation_deadline_year: DSA path ---
 
+
 def test_get_deprecation_deadline_year_dsa():
     result = get_deprecation_deadline_year("DSA", key_size=2048)
     assert isinstance(result, int)
 
 
 # --- get_deprecation_deadline_year: registry name match with DSA disambiguation ---
+
 
 def test_get_deprecation_deadline_year_registry_dsa_not_ecdsa():
     """DSA should not match ECDSA in registry lookup."""
@@ -834,6 +903,7 @@ def test_get_deprecation_deadline_year_registry_dsa_not_ecdsa():
 
 # --- get_deprecation_deadline_year: registry name match with DH disambiguation ---
 
+
 def test_get_deprecation_deadline_year_registry_dh_not_ecdh():
     """DH should not match ECDH in registry lookup."""
     if not REGISTRY_DATA:
@@ -843,6 +913,7 @@ def test_get_deprecation_deadline_year_registry_dh_not_ecdh():
 
 
 # --- get_deprecation_deadline_year: registry alias match ---
+
 
 def test_get_deprecation_deadline_year_registry_alias():
     """get_deprecation_deadline_year with alias name."""
@@ -860,6 +931,7 @@ def test_get_deprecation_deadline_year_registry_alias():
 
 
 # --- Coverage improvement tests for remaining gaps ---
+
 
 def test_load_registry_file_json_error():
     """load_registry_file catches JSON errors and returns {}."""
@@ -893,25 +965,25 @@ def test_update_mappings_from_registry_invalid_and_hybrid_entries():
     }
     with patch("app.analysis.algo_classifier.REGISTRY_DATA", registry):
         with contextlib.ExitStack() as stack:
-                for target in (
-                    "app.analysis.algo_classifier.PQC_KEX_GROUPS",
-                    "app.analysis.algo_classifier.HYBRID_KEX_GROUPS",
-                    "app.analysis.algo_classifier.PQC_SIGNATURE_OIDS",
-                    "app.analysis.algo_classifier.HYBRID_SIGNATURE_OIDS",
-                    "app.analysis.algo_classifier.CLASSICAL_EDDSA_OIDS",
-                    "app.analysis.algo_classifier.CLASSICAL_SIGNATURE_OIDS",
-                    "app.analysis.algo_classifier.CLASSICAL_KEX_OIDS",
-                    "app.analysis.algo_classifier.CLASSICAL_X_OIDS",
-                ):
-                    stack.enter_context(patch.dict(target, {}, clear=True))
-                update_mappings_from_registry()
-                assert PQC_KEX_GROUPS[1] == "good"
-                assert HYBRID_KEX_GROUPS[1] == "good"
-                assert PQC_KEX_GROUPS[2] == "good2"
-                assert HYBRID_KEX_GROUPS[2] == "good2"
-                assert CLASSICAL_SIGNATURE_OIDS["1.2.4"] == "EdDSA"
-                assert HYBRID_SIGNATURE_OIDS["1.2.3"] == "Hybrid Sig"
-                assert CLASSICAL_KEX_OIDS["1.2.5"] == "X"
+            for target in (
+                "app.analysis.algo_classifier.PQC_KEX_GROUPS",
+                "app.analysis.algo_classifier.HYBRID_KEX_GROUPS",
+                "app.analysis.algo_classifier.PQC_SIGNATURE_OIDS",
+                "app.analysis.algo_classifier.HYBRID_SIGNATURE_OIDS",
+                "app.analysis.algo_classifier.CLASSICAL_EDDSA_OIDS",
+                "app.analysis.algo_classifier.CLASSICAL_SIGNATURE_OIDS",
+                "app.analysis.algo_classifier.CLASSICAL_KEX_OIDS",
+                "app.analysis.algo_classifier.CLASSICAL_X_OIDS",
+            ):
+                stack.enter_context(patch.dict(target, {}, clear=True))
+            update_mappings_from_registry()
+            assert PQC_KEX_GROUPS[1] == "good"
+            assert HYBRID_KEX_GROUPS[1] == "good"
+            assert PQC_KEX_GROUPS[2] == "good2"
+            assert HYBRID_KEX_GROUPS[2] == "good2"
+            assert CLASSICAL_SIGNATURE_OIDS["1.2.4"] == "EdDSA"
+            assert HYBRID_SIGNATURE_OIDS["1.2.3"] == "Hybrid Sig"
+            assert CLASSICAL_KEX_OIDS["1.2.5"] == "X"
 
 
 # --- classify_algorithm: OID fallback branches (registry empty) ---
@@ -1130,6 +1202,7 @@ def test_get_deprecation_deadline_year_fallback_ec_sizes():
 
 # --- resolve_curve_status: SECP* variants (lines 208, 210, 212) ---
 
+
 def test_resolve_curve_status_secp256_variant():
     d = {"P-256": {"status": "vulnerable"}}
     assert resolve_curve_status(d, "secp256r1")["status"] == "vulnerable"
@@ -1147,6 +1220,7 @@ def test_resolve_curve_status_secp521_variant():
 
 # --- classify_algorithm: DH substring with ECDH disambiguation (line 534) ---
 
+
 def test_classify_algorithm_ecdh_contains_dh():
     """Names containing 'DH' but also 'ECDH' must not match a bare DH entry."""
     result = classify_algorithm("ECDH-P256")
@@ -1155,6 +1229,7 @@ def test_classify_algorithm_ecdh_contains_dh():
 
 
 # --- classify_algorithm: explicit hybrid KEX groups (lines 597-598) ---
+
 
 def test_classify_algorithm_hybrid_x25519_mlkem768():
     result = classify_algorithm("X25519MLKEM768")

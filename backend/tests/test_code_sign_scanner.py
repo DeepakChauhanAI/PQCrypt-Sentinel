@@ -1,4 +1,5 @@
 """Tests for the code-signing verification skeleton."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -15,7 +16,9 @@ from app.scanners.code_sign_scanner import verify_code_signature
 
 def _self_signed_cert_pem() -> bytes:
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    subject = issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Test Signer")])
+    subject = issuer = x509.Name(
+        [x509.NameAttribute(NameOID.COMMON_NAME, "Test Signer")]
+    )
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
@@ -64,6 +67,7 @@ def test_verify_no_signature(tmp_path: Path):
 def test_find_pkcs7_blob_short_data():
     """_find_pkcs7_blob returns the trailing bytes when data is too short for length read."""
     from app.scanners.code_sign_scanner import _find_pkcs7_blob
+
     signed_data_oid = bytes.fromhex("06 09 2A 86 48 86 F7 0D 01 07 02".replace(" ", ""))
     result = _find_pkcs7_blob(b"\x30\x82" + signed_data_oid)
     assert result is not None
@@ -84,7 +88,12 @@ def test_find_pkcs7_blob_with_sequence_prefix(tmp_path: Path):
     signed_data_oid = bytes.fromhex("06 09 2A 86 48 86 F7 0D 01 07 02".replace(" ", ""))
     # SEQUENCE (0x30 0x82 <2-byte length>) + OID + padding
     length = 32
-    seq = bytes([0x30, 0x82]) + length.to_bytes(2, "big") + signed_data_oid + b"\x00" * (length - len(signed_data_oid))
+    seq = (
+        bytes([0x30, 0x82])
+        + length.to_bytes(2, "big")
+        + signed_data_oid
+        + b"\x00" * (length - len(signed_data_oid))
+    )
     data = b"MZ" + seq + b"\x00" * 16
     path = tmp_path / "with_seq.bin"
     path.write_bytes(data)
@@ -110,7 +119,11 @@ def test_verify_pem_with_invalid_block(tmp_path: Path):
 def test_verify_partial_status_on_cert_parse_error(tmp_path: Path, cert_file: Path):
     """If one cert parses and another fails, status is partial."""
     from unittest.mock import patch
-    with patch("app.scanners.code_sign_scanner.parse_certificate", side_effect=[Exception("bad cert"), {}]):
+
+    with patch(
+        "app.scanners.code_sign_scanner.parse_certificate",
+        side_effect=[Exception("bad cert"), {}],
+    ):
         # Need two certs; use two copies of the same cert file concatenated
         pem_bytes = cert_file.read_bytes()
         path = tmp_path / "two.pem"

@@ -28,11 +28,24 @@ class CSVCMDBConnector(BaseConnector):
         reader.fieldnames = [f.strip().lower() for f in reader.fieldnames]
 
         valid_asset_types = {
-            "server", "endpoint", "network_device", "load_balancer",
-            "vpn_gateway", "database", "web_app", "api",
-            "container", "kubernetes_cluster", "cloud_resource",
-            "hsm", "kms", "certificate_authority", "smart_card",
-            "firmware", "saas", "other",
+            "server",
+            "endpoint",
+            "network_device",
+            "load_balancer",
+            "vpn_gateway",
+            "database",
+            "web_app",
+            "api",
+            "container",
+            "kubernetes_cluster",
+            "cloud_resource",
+            "hsm",
+            "kms",
+            "certificate_authority",
+            "smart_card",
+            "firmware",
+            "saas",
+            "other",
         }
         valid_envs = {"production", "staging", "development", "testing", "unknown"}
 
@@ -88,7 +101,9 @@ class CSVCMDBConnector(BaseConnector):
             cmdb_ci_id = cmdb_ci_id.strip() if cmdb_ci_id else None
 
             try:
-                stmt = select(Asset).where(Asset.name == name, Asset.deleted_at.is_(None))
+                stmt = select(Asset).where(
+                    Asset.name == name, Asset.deleted_at.is_(None)
+                )
                 res = await session.execute(stmt)
                 existing_asset = res.scalar_one_or_none()
 

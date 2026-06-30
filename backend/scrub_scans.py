@@ -8,11 +8,20 @@ from app.db import AsyncSessionLocal
 from app.models.models import Scan, ScanLog, Finding, Asset
 from sqlalchemy import delete, update
 
+
 async def scrub():
     async with AsyncSessionLocal() as session:
         print("Nullifying scan FK references on assets...")
-        await session.execute(update(Asset).where(Asset.first_scan_id.is_not(None)).values(first_scan_id=None))
-        await session.execute(update(Asset).where(Asset.last_scan_id.is_not(None)).values(last_scan_id=None))
+        await session.execute(
+            update(Asset)
+            .where(Asset.first_scan_id.is_not(None))
+            .values(first_scan_id=None)
+        )
+        await session.execute(
+            update(Asset)
+            .where(Asset.last_scan_id.is_not(None))
+            .values(last_scan_id=None)
+        )
         await session.flush()
 
         print("Deleting scan logs...")
@@ -25,5 +34,5 @@ async def scrub():
         print("Committed. All scans, logs, and findings removed.")
         print("Assets remain intact with scan FK columns cleared.")
 
-asyncio.run(scrub())
 
+asyncio.run(scrub())

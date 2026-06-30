@@ -29,20 +29,50 @@ from app.analysis.mosca_model import calculate_hndl_exposure
 # CA/Browser Forum, or otherwise cryptographically broken).
 DISALLOWED_NOW_PATTERNS = {
     # Hash
-    "md5", "md-5", "md4", "md-4", "md2", "md-2",
-    "sha-1", "sha1", "ripemd", "whirlpool",
+    "md5",
+    "md-5",
+    "md4",
+    "md-4",
+    "md2",
+    "md-2",
+    "sha-1",
+    "sha1",
+    "ripemd",
+    "whirlpool",
     # Symmetric
-    "des", "3des", "triple-des", "tripledes", "rc2", "rc4", "rc5",
+    "des",
+    "3des",
+    "triple-des",
+    "tripledes",
+    "rc2",
+    "rc4",
+    "rc5",
     # Key exchange / asymmetric
-    "rsa-512", "rsa-768", "rsa-1024",
-    "dsa-512", "dsa-768", "dsa-1024",
-    "dh-768", "dh-1024",
+    "rsa-512",
+    "rsa-768",
+    "rsa-1024",
+    "dsa-512",
+    "dsa-768",
+    "dsa-1024",
+    "dh-768",
+    "dh-1024",
     # Signature
-    "ecdsa-sha1", "ecdsa-with-sha1",
+    "ecdsa-sha1",
+    "ecdsa-with-sha1",
     # Protocol
-    "ssl 2.0", "ssl 3.0", "tls 1.0", "tls 1.1",
-    "ssl 2-0", "ssl 3-0", "tls 1-0", "tls 1-1",
-    "sslv2", "sslv3", "tlsv1.0", "tlsv1.1", "tlsv1",
+    "ssl 2.0",
+    "ssl 3.0",
+    "tls 1.0",
+    "tls 1.1",
+    "ssl 2-0",
+    "ssl 3-0",
+    "tls 1-0",
+    "tls 1-1",
+    "sslv2",
+    "sslv3",
+    "tlsv1.0",
+    "tlsv1.1",
+    "tlsv1",
 }
 
 
@@ -69,6 +99,7 @@ def is_disallowed_now(algorithm: str) -> bool:
     upper = algorithm.upper()
     if "RSA" in upper:
         import re
+
         m = re.search(r"RSA[_\-\.]?(\d{3,5})", upper)
         if m and int(m.group(1)) < 2048:
             return True
@@ -311,9 +342,9 @@ def calculate_risk_score(
 
     # 4. Replaceability (1-5) - 15% (NEW)
     replaceability_scores = {
-        "low": 1,        # drop-in library swap
-        "medium": 3,     # service restart / rekey
-        "hard": 5,       # HSM firmware uplift, CA re-issuance
+        "low": 1,  # drop-in library swap
+        "medium": 3,  # service restart / rekey
+        "hard": 5,  # HSM firmware uplift, CA re-issuance
     }
     replaceability_score = replaceability_scores.get(replaceability.lower(), 3)
 
@@ -331,11 +362,7 @@ def calculate_risk_score(
 
     # Sum of subscores 5-25; expose the raw value.
     total_score = (
-        hndl_score
-        + exposure_score
-        + algo_score
-        + replaceability_score
-        + deadline_score
+        hndl_score + exposure_score + algo_score + replaceability_score + deadline_score
     )
     return int(total_score)
 

@@ -1,6 +1,4 @@
 import logging
-import socket
-import ssl
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
 
@@ -8,7 +6,9 @@ from app.scanners.cert_parser import parse_certificate
 
 logger = logging.getLogger(__name__)
 
-_SSLYZE_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="sslyze_scanner")
+_SSLYZE_EXECUTOR = ThreadPoolExecutor(
+    max_workers=4, thread_name_prefix="sslyze_scanner"
+)
 
 
 class SSLyzeScanResult:
@@ -100,7 +100,11 @@ def _run_sslyze_sync(host: str, port: int, timeout: int = 30) -> Dict[str, Any]:
     if cert_info_raw and getattr(cert_info_raw, "certificate_deployments", None):
         try:
             leaf = cert_info_raw.certificate_deployments[0]
-            pem = leaf.received_certificate_chain[0].certificate.public_bytes_pem().decode("utf-8")
+            pem = (
+                leaf.received_certificate_chain[0]
+                .certificate.public_bytes_pem()
+                .decode("utf-8")
+            )
             cert_data = parse_certificate(pem)
         except Exception as exc:
             logger.warning("sslyze cert parse failed: %s", exc)
@@ -114,11 +118,15 @@ def _run_sslyze_sync(host: str, port: int, timeout: int = 30) -> Dict[str, Any]:
     }
 
 
-async def scan_endpoint_with_sslyze(host: str, port: int = 443, timeout: int = 30) -> SSLyzeScanResult:
+async def scan_endpoint_with_sslyze(
+    host: str, port: int = 443, timeout: int = 30
+) -> SSLyzeScanResult:
     try:
         loop = __import__("asyncio").get_event_loop()
         result = await __import__("asyncio").wait_for(
-            loop.run_in_executor(_SSLYZE_EXECUTOR, _run_sslyze_sync, host, port, timeout),
+            loop.run_in_executor(
+                _SSLYZE_EXECUTOR, _run_sslyze_sync, host, port, timeout
+            ),
             timeout=timeout + 10,
         )
         if not result.get("success"):
@@ -134,4 +142,6 @@ async def scan_endpoint_with_sslyze(host: str, port: int = 443, timeout: int = 3
             supported_versions=result.get("supported_versions", []),
         )
     except Exception as exc:
-        return SSLyzeScanResult(host=host, port=port, success=False, error_message=str(exc))
+        return SSLyzeScanResult(
+            host=host, port=port, success=False, error_message=str(exc)
+        )

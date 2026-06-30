@@ -2,18 +2,12 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
-from sqlalchemy import select, text, func
-from sqlalchemy.exc import IntegrityError, DBAPIError, ProgrammingError
+from typing import Optional
+from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError, DBAPIError
 
 from app.db import AsyncSessionLocal
 from app.models.models import Scan, ScanLog, Asset, Certificate, Algorithm, Finding
-from app.scanners.tls_scanner import scan_tls_endpoint
-from app.scanners.ssh_scanner import scan_ssh_endpoint
-from app.scanners.ike_scanner import scan_ike_endpoint
-from app.scanners.mail_scanner import scan_mail_endpoint
-from app.scanners.ct_log_scanner import scan_ct_logs_for_domain
-from app.services.finding_service import generate_findings
 from app.config import settings
 
 
@@ -21,7 +15,24 @@ logger = logging.getLogger(__name__)
 
 
 # Extra ports observed on this dev PC that should be probed during full scans
-_LOCAL_TLS_PORTS = [443, 8443, 9080, 8883, 636, 993, 995, 500, 4500, 25, 465, 587, 1001, 4096, 6432, 27017]
+_LOCAL_TLS_PORTS = [
+    443,
+    8443,
+    9080,
+    8883,
+    636,
+    993,
+    995,
+    500,
+    4500,
+    25,
+    465,
+    587,
+    1001,
+    4096,
+    6432,
+    27017,
+]
 _LOCAL_SSH_PORTS = [22, 1001, 4096]
 
 
@@ -64,7 +75,24 @@ async def _gather_with_limit(coros, limit: int = MAX_CONCURRENT_PORT_PROBES):
 
 
 # Local TLS-level ports probed during full / tls_only scans
-_LOCAL_TLS_PORTS = [443, 8443, 9080, 8883, 636, 993, 995, 500, 4500, 25, 465, 587, 1001, 4096, 6432, 27017]
+_LOCAL_TLS_PORTS = [
+    443,
+    8443,
+    9080,
+    8883,
+    636,
+    993,
+    995,
+    500,
+    4500,
+    25,
+    465,
+    587,
+    1001,
+    4096,
+    6432,
+    27017,
+]
 # Locally found SSH-like ports
 _LOCAL_SSH_PORTS = [22, 1001, 4096]
 
@@ -208,7 +236,9 @@ async def _run_advanced_scanners(
             )
 
             existing_asset = await session.execute(
-                select(Asset).where(Asset.name == f"{host}:443 (sslyze)", Asset.deleted_at.is_(None))
+                select(Asset).where(
+                    Asset.name == f"{host}:443 (sslyze)", Asset.deleted_at.is_(None)
+                )
             )
             asset = existing_asset.scalar_one_or_none()
             # Resolve ip/fqdn from the *host* we are scanning. Previously this
@@ -220,6 +250,7 @@ async def _run_advanced_scanners(
             fqdn_val = None
             try:
                 import ipaddress
+
                 ipaddress.ip_address(host)
                 ip_addr = host
             except ValueError:
@@ -233,7 +264,11 @@ async def _run_advanced_scanners(
                     fqdn=fqdn_val,
                     port=443,
                     protocol="tcp",
-                    environment="development" if ("test" in host or "local" in host) else "production",
+                    environment=(
+                        "development"
+                        if ("test" in host or "local" in host)
+                        else "production"
+                    ),
                     discovery_source="sslyze",
                     first_scan_id=scan.id,
                     first_discovered_at=datetime.now(timezone.utc),
@@ -380,7 +415,9 @@ class ScanOrchestrator:
                 logger.warning(f"Scan {scan_id} is already running. Exiting.")
                 return
             if scan.status in {"completed", "failed", "cancelled"}:
-                logger.info(f"Scan {scan_id} already in terminal state {scan.status}. Exiting.")
+                logger.info(
+                    f"Scan {scan_id} already in terminal state {scan.status}. Exiting."
+                )
                 return
 
             now = datetime.now(timezone.utc)
@@ -390,7 +427,9 @@ class ScanOrchestrator:
             await session.commit()  # <── LOCK HELD AND STATE PERSISTED BEFORE ANY IO
 
             # ── 2. Helper: log_event uses flush (no per-entry commit) ────────────
-            async def log_event(level: str, phase: str, message: str, details: Optional[dict] = None):
+            async def log_event(
+                level: str, phase: str, message: str, details: Optional[dict] = None
+            ):
                 session.add(
                     ScanLog(
                         scan_id=scan.id,
@@ -412,7 +451,11 @@ class ScanOrchestrator:
             strict_tls = False
             try:
                 if scan.config:
-                    cfg = json.loads(scan.config) if isinstance(scan.config, str) else scan.config
+                    cfg = (
+                        json.loads(scan.config)
+                        if isinstance(scan.config, str)
+                        else scan.config
+                    )
                     if isinstance(cfg, dict):
                         strict_tls = bool(cfg.get("strict_tls", False))
             except Exception:
@@ -426,7 +469,9 @@ class ScanOrchestrator:
 
             # ── 3. Parse targets ─────────────────────────────────────────────────
             target_str = scan.target or ""
-            parsed_targets = [h.strip() for h in target_str.replace(";", ",").split(",") if h.strip()]
+            parsed_targets = [
+                h.strip() for h in target_str.replace(";", ",").split(",") if h.strip()
+            ]
 
             raw_targets: list[str] = []
             for t in parsed_targets:
@@ -478,7 +523,7 @@ class ScanOrchestrator:
                     ALLOW_LINK_LOCAL,
                     ALLOW_MULTICAST,
                 )
-                
+
                 # Check if it's a CIDR range
                 if "/" in target:
                     try:
@@ -486,22 +531,37 @@ class ScanOrchestrator:
                         if network.is_loopback and not ALLOW_LOOPBACK:
                             return False, f"CIDR {target} contains loopback addresses"
                         if network.is_private and not ALLOW_PRIVATE_RANGES:
-                            return False, f"CIDR {target} resolves to restricted private network range"
+                            return (
+                                False,
+                                f"CIDR {target} resolves to restricted private network range",
+                            )
                         if network.is_link_local and not ALLOW_LINK_LOCAL:
-                            return False, f"CIDR {target} resolves to restricted link-local network range"
+                            return (
+                                False,
+                                f"CIDR {target} resolves to restricted link-local network range",
+                            )
                         if network.is_multicast and not ALLOW_MULTICAST:
-                            return False, f"CIDR {target} resolves to restricted multicast network range"
+                            return (
+                                False,
+                                f"CIDR {target} resolves to restricted multicast network range",
+                            )
                         if network.is_unspecified:
-                            return False, f"CIDR {target} contains unspecified network range"
+                            return (
+                                False,
+                                f"CIDR {target} contains unspecified network range",
+                            )
                         # Block metadata endpoint range (169.254.169.254/32)
                         if network.version == 4 and not ALLOW_PRIVATE_RANGES:
                             metadata_ip = ipaddress.IPv4Address("169.254.169.254")
                             if metadata_ip in network:
-                                return False, f"CIDR {target} includes metadata endpoint 169.254.169.254"
+                                return (
+                                    False,
+                                    f"CIDR {target} includes metadata endpoint 169.254.169.254",
+                                )
                     except ValueError:
                         return False, f"Invalid CIDR notation: {target}"
                     return True, ""
-                
+
                 # Try parsing as IP address
                 try:
                     ip = ipaddress.ip_address(target)
@@ -522,7 +582,7 @@ class ScanOrchestrator:
                 except ValueError:
                     # Not an IP, treat as hostname - will be validated after DNS resolution
                     pass
-                
+
                 return True, ""
 
             # Validate all raw targets
@@ -541,7 +601,9 @@ class ScanOrchestrator:
             raw_targets = safe_raw_targets
             if not raw_targets:
                 scan.status = "failed"
-                scan.error_message = "All specified targets were blocked by SSRF protection."
+                scan.error_message = (
+                    "All specified targets were blocked by SSRF protection."
+                )
                 scan.completed_at = datetime.now(timezone.utc)
                 scan.updated_at = scan.completed_at
                 await session.commit()
@@ -563,6 +625,7 @@ class ScanOrchestrator:
                     )
                     try:
                         from app.scanners.network_discovery import discover_tls_hosts
+
                         discovered = await discover_tls_hosts(target)
 
                         await log_event(
@@ -599,7 +662,11 @@ class ScanOrchestrator:
                         )
                         return
 
-                elif any(c.isalpha() for c in target) and not target.startswith("fe80") and ":" not in target:
+                elif (
+                    any(c.isalpha() for c in target)
+                    and not target.startswith("fe80")
+                    and ":" not in target
+                ):
                     # Domain/hostname target (exclude raw IPv6 here — handled above)
                     await log_event(
                         level="info",
@@ -608,6 +675,7 @@ class ScanOrchestrator:
                     )
                     try:
                         from app.scanners.network_discovery import enumerate_dns_targets
+
                         dns_res = enumerate_dns_targets(target)
 
                         await log_event(
@@ -661,7 +729,9 @@ class ScanOrchestrator:
                             if target not in expanded_hosts:
                                 expanded_hosts.append(target)
                     except (RuntimeError, OSError) as e:
-                        logger.warning(f"DNS enumeration failed for {target}: {e}. Scanning target directly.")
+                        logger.warning(
+                            f"DNS enumeration failed for {target}: {e}. Scanning target directly."
+                        )
                         if target not in expanded_hosts:
                             expanded_hosts.append(target)
                 else:
@@ -670,7 +740,6 @@ class ScanOrchestrator:
 
             # Final SSRF safety net for any remaining hosts (e.g., hostnames not yet resolved)
             import ipaddress
-            import socket
 
             def is_hostname_ssrf_safe(host: str) -> bool:
                 """Final safety check for hostnames that haven't been resolved yet."""
@@ -682,6 +751,7 @@ class ScanOrchestrator:
                     ALLOW_LINK_LOCAL,
                     ALLOW_MULTICAST,
                 )
+
                 try:
                     ip = ipaddress.ip_address(host)
                     if ip.is_loopback and not ALLOW_LOOPBACK:
@@ -738,7 +808,11 @@ class ScanOrchestrator:
                     duration_seconds = 60
                     try:
                         if scan.config:
-                            cfg = json.loads(scan.config) if isinstance(scan.config, str) else scan.config
+                            cfg = (
+                                json.loads(scan.config)
+                                if isinstance(scan.config, str)
+                                else scan.config
+                            )
                             if isinstance(cfg, dict):
                                 duration_seconds = int(cfg.get("duration_seconds", 60))
                     except Exception:
@@ -755,7 +829,9 @@ class ScanOrchestrator:
                     from app.services.finding_service import generate_findings
 
                     try:
-                        handshakes = await capture_all_handshakes(interface=interface, duration_seconds=duration_seconds)
+                        handshakes = await capture_all_handshakes(
+                            interface=interface, duration_seconds=duration_seconds
+                        )
                     except Exception as sniff_exc:
                         await log_event(
                             level="error",
@@ -775,7 +851,7 @@ class ScanOrchestrator:
                         port = None
                         proto = "tcp"
                         h_type = entry.get("type")
-                        
+
                         if h_type == "ClientHello":
                             server_ip = entry.get("dst_ip")
                             port = int(entry.get("dst_port") or 443)
@@ -790,9 +866,15 @@ class ScanOrchestrator:
                             continue
 
                         # Create/Get Asset
-                        asset_name = f"{server_ip}:{port}" if h_type != "SSH_KEXINIT" else f"{server_ip}:{port} (SSH)"
+                        asset_name = (
+                            f"{server_ip}:{port}"
+                            if h_type != "SSH_KEXINIT"
+                            else f"{server_ip}:{port} (SSH)"
+                        )
                         asset_res = await session.execute(
-                            select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+                            select(Asset).where(
+                                Asset.name == asset_name, Asset.deleted_at.is_(None)
+                            )
                         )
                         asset = asset_res.scalar_one_or_none()
                         if not asset:
@@ -802,7 +884,15 @@ class ScanOrchestrator:
                                 ip_address=server_ip,
                                 port=port,
                                 protocol=proto,
-                                environment="development" if ("test" in server_ip or "local" in server_ip or server_ip == "127.0.0.1") else "production",
+                                environment=(
+                                    "development"
+                                    if (
+                                        "test" in server_ip
+                                        or "local" in server_ip
+                                        or server_ip == "127.0.0.1"
+                                    )
+                                    else "production"
+                                ),
                                 discovery_source="passive_sniff",
                                 first_scan_id=scan.id,
                                 first_discovered_at=datetime.now(timezone.utc),
@@ -835,14 +925,18 @@ class ScanOrchestrator:
                                     )
                                 )
                                 if not existing_algo.scalar_one_or_none():
-                                    cls_res = classify_algorithm(cipher, algorithm_type="symmetric")
+                                    cls_res = classify_algorithm(
+                                        cipher, algorithm_type="symmetric"
+                                    )
                                     algo = Algorithm(
                                         asset_id=asset.id,
                                         scan_id=scan.id,
                                         algorithm_name=cipher,
                                         algorithm_type="symmetric",
                                         pqc_status=cls_res["pqc_status"],
-                                        is_quantum_vulnerable=cls_res["is_quantum_vulnerable"],
+                                        is_quantum_vulnerable=cls_res[
+                                            "is_quantum_vulnerable"
+                                        ],
                                     )
                                     session.add(algo)
 
@@ -859,7 +953,9 @@ class ScanOrchestrator:
                                 group_id = None
                                 group_name = str(group_val)
                                 try:
-                                    if isinstance(group_val, str) and group_val.lower().startswith("0x"):
+                                    if isinstance(
+                                        group_val, str
+                                    ) and group_val.lower().startswith("0x"):
                                         group_id = int(group_val, 16)
                                     else:
                                         group_id = int(group_val)
@@ -874,18 +970,33 @@ class ScanOrchestrator:
                                     )
                                 )
                                 if not existing_algo.scalar_one_or_none():
-                                    cls_res = classify_algorithm(group_name, kex_group_id=group_id, algorithm_type="key_exchange")
+                                    cls_res = classify_algorithm(
+                                        group_name,
+                                        kex_group_id=group_id,
+                                        algorithm_type="key_exchange",
+                                    )
                                     algo = Algorithm(
                                         asset_id=asset.id,
                                         scan_id=scan.id,
                                         algorithm_name=group_name,
                                         algorithm_type="key_exchange",
                                         pqc_status=cls_res["pqc_status"],
-                                        is_quantum_vulnerable=cls_res["is_quantum_vulnerable"],
+                                        is_quantum_vulnerable=cls_res[
+                                            "is_quantum_vulnerable"
+                                        ],
                                     )
                                     session.add(algo)
 
-                            pqc_group_ids = {0x01FC, 0x01FD, 0x0200, 0x2B92, 0x2B93, 0x2B94, 0xFE30, 0x639A}
+                            pqc_group_ids = {
+                                0x01FC,
+                                0x01FD,
+                                0x0200,
+                                0x2B92,
+                                0x2B93,
+                                0x2B94,
+                                0xFE30,
+                                0x639A,
+                            }
                             is_pqc = False
                             if h_type == "ClientHello":
                                 is_pqc = entry.get("has_pqc", False)
@@ -893,7 +1004,11 @@ class ScanOrchestrator:
                                 selected_group_raw = entry.get("selected_group")
                                 if selected_group_raw:
                                     try:
-                                        if isinstance(selected_group_raw, str) and selected_group_raw.lower().startswith("0x"):
+                                        if isinstance(
+                                            selected_group_raw, str
+                                        ) and selected_group_raw.lower().startswith(
+                                            "0x"
+                                        ):
                                             sg_id = int(selected_group_raw, 16)
                                         else:
                                             sg_id = int(selected_group_raw)
@@ -910,8 +1025,12 @@ class ScanOrchestrator:
                                     )
                                 )
                                 if not existing_finding.scalar_one_or_none():
-                                    from app.services.layer_service import layer_for_finding
-                                    from app.services.risk_service import calculate_risk_score
+                                    from app.services.layer_service import (
+                                        layer_for_finding,
+                                    )
+                                    from app.services.risk_service import (
+                                        calculate_risk_score,
+                                    )
 
                                     risk_score = calculate_risk_score(
                                         hndl_exposure="high",
@@ -920,7 +1039,7 @@ class ScanOrchestrator:
                                         replaceability="medium",
                                         years_to_deadline=10,
                                     )
-                                    
+
                                     desc = "The SSL/TLS client handshake does not advertise support for any post-quantum key exchange groups."
                                     if h_type == "ServerHello":
                                         desc = f"The SSL/TLS server completed handshake using a classical key exchange group ({entry.get('selected_group') or 'classical'}), which is vulnerable to decryption by future quantum computers."
@@ -930,12 +1049,20 @@ class ScanOrchestrator:
                                         scan_id=scan.id,
                                         finding_type="pqc_not_supported",
                                         severity="high",
-                                        title="SSL/TLS Client Lacks Post-Quantum Support" if h_type == "ClientHello" else "SSL/TLS Negotiation Settled on Classical Key Exchange",
+                                        title=(
+                                            "SSL/TLS Client Lacks Post-Quantum Support"
+                                            if h_type == "ClientHello"
+                                            else "SSL/TLS Negotiation Settled on Classical Key Exchange"
+                                        ),
                                         description=desc,
-                                        algorithm=entry.get("selected_group") or "classical",
+                                        algorithm=entry.get("selected_group")
+                                        or "classical",
                                         pqc_status="vulnerable",
                                         risk_score=risk_score,
-                                        layer=layer_for_finding(finding_type="pqc_not_supported", asset=asset),
+                                        layer=layer_for_finding(
+                                            finding_type="pqc_not_supported",
+                                            asset=asset,
+                                        ),
                                         hndl_exposure="high",
                                         evidence=entry,
                                         remediation="Configure the server/client to support hybrid post-quantum groups like X25519MLKEM768.",
@@ -956,18 +1083,24 @@ class ScanOrchestrator:
                                     )
                                 )
                                 if not existing_algo.scalar_one_or_none():
-                                    cls_res = classify_algorithm(algo_name, algorithm_type="key_exchange")
+                                    cls_res = classify_algorithm(
+                                        algo_name, algorithm_type="key_exchange"
+                                    )
                                     algo = Algorithm(
                                         asset_id=asset.id,
                                         scan_id=scan.id,
                                         algorithm_name=algo_name,
                                         algorithm_type="key_exchange",
                                         pqc_status=cls_res["pqc_status"],
-                                        is_quantum_vulnerable=cls_res["is_quantum_vulnerable"],
+                                        is_quantum_vulnerable=cls_res[
+                                            "is_quantum_vulnerable"
+                                        ],
                                     )
                                     session.add(algo)
-                                    
-                            fc = await generate_findings(session, scan.id, asset.id, kex_algos=kex_algs)
+
+                            fc = await generate_findings(
+                                session, scan.id, asset.id, kex_algos=kex_algs
+                            )
                             findings_created_count += fc
 
                     await session.flush()
@@ -1001,10 +1134,11 @@ class ScanOrchestrator:
                     assets_found_count += host_agg["assets_total"]
                     findings_created_count += host_agg["findings_total"]
 
-
                 # ── 6. Final scan completion ──────────────────────────────────────
                 end_time = datetime.now(timezone.utc)
-                duration = int((end_time - started_at_fallback(scan.started_at)).total_seconds())
+                duration = int(
+                    (end_time - started_at_fallback(scan.started_at)).total_seconds()
+                )
 
                 # Recompute assets/findings counts from the database so the
                 # scan row is always consistent with the actual persisted
@@ -1039,6 +1173,7 @@ class ScanOrchestrator:
                 # Clear dashboard cache
                 try:
                     from app.api.dashboard import clear_dashboard_cache
+
                     await clear_dashboard_cache()
                 except Exception as cache_err:
                     logger.warning(f"Failed to clear dashboard cache: {cache_err}")
@@ -1062,6 +1197,7 @@ class ScanOrchestrator:
 
                 try:
                     from app.api.dashboard import clear_dashboard_cache
+
                     await clear_dashboard_cache()
                 except Exception as cache_err:
                     logger.warning(f"Failed to clear dashboard cache: {cache_err}")

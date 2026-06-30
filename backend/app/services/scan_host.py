@@ -10,9 +10,9 @@ This module never raises. Per-host exceptions are captured and
 returned as `(error_message)` so the orchestrator can log them
 without aborting the rest of the scan.
 """
+
 from __future__ import annotations
 
-import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Dict, Optional, Tuple
@@ -109,8 +109,11 @@ def _is_local_host(host: str) -> bool:
     return "test" in host or "local" in host
 
 
-async def _get_host_ip_and_fqdn(session: AsyncSession, scan_id: str, host: str) -> Tuple[Optional[str], Optional[str]]:
+async def _get_host_ip_and_fqdn(
+    session: AsyncSession, scan_id: str, host: str
+) -> Tuple[Optional[str], Optional[str]]:
     import ipaddress
+
     ip_addr = None
     fqdn_val = None
     try:
@@ -185,7 +188,9 @@ async def _scan_host_tls(
 
             asset_name = f"{host}:{tls_port}"
             asset_result = await session.execute(
-                select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+                select(Asset).where(
+                    Asset.name == asset_name, Asset.deleted_at.is_(None)
+                )
             )
             asset = asset_result.scalar_one_or_none()
             ip_addr, fqdn_val = await _get_host_ip_and_fqdn(session, scan_id, host)
@@ -267,12 +272,16 @@ async def _scan_host_tls(
                     scan_id=scan_id,
                     algorithm_name=cert_vals["sig_algorithm"],
                     algorithm_type="signature",
-                    pqc_status="pqc_ready" if cert_vals["pqc_capable"] else "vulnerable",
+                    pqc_status=(
+                        "pqc_ready" if cert_vals["pqc_capable"] else "vulnerable"
+                    ),
                     is_quantum_vulnerable=not cert_vals["pqc_capable"],
                 )
                 session.add(algo)
 
-            fc = await generate_findings(session, scan_id, asset.id, cert_data=cert_vals)
+            fc = await generate_findings(
+                session, scan_id, asset.id, cert_data=cert_vals
+            )
             findings_delta += fc
         except Exception as tls_exc:  # pragma: no cover - safety net
             await _log_outside_savepoint(
@@ -329,7 +338,9 @@ async def _scan_host_ssh(
             )
             asset_name = f"{host}:{ssh_port} (SSH)"
             asset_result = await session.execute(
-                select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+                select(Asset).where(
+                    Asset.name == asset_name, Asset.deleted_at.is_(None)
+                )
             )
             asset = asset_result.scalar_one_or_none()
             ip_addr, fqdn_val = await _get_host_ip_and_fqdn(session, scan_id, host)
@@ -416,7 +427,9 @@ async def _scan_host_targeted(
             )
             asset_name = f"{host}:500 (IKE)"
             asset_result = await session.execute(
-                select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+                select(Asset).where(
+                    Asset.name == asset_name, Asset.deleted_at.is_(None)
+                )
             )
             asset = asset_result.scalar_one_or_none()
             ip_addr, fqdn_val = await _get_host_ip_and_fqdn(session, scan_id, host)
@@ -469,7 +482,9 @@ async def _scan_host_targeted(
             )
             asset_name = f"{host}:{mail_port} (SMTP)"
             asset_result = await session.execute(
-                select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+                select(Asset).where(
+                    Asset.name == asset_name, Asset.deleted_at.is_(None)
+                )
             )
             asset = asset_result.scalar_one_or_none()
             ip_addr, fqdn_val = await _get_host_ip_and_fqdn(session, scan_id, host)
@@ -605,7 +620,9 @@ async def scan_host(
     """
     log_messages: list[str] = []
 
-    async def log(level: str, phase: str, message: str, details: Optional[Dict[str, Any]] = None) -> None:
+    async def log(
+        level: str, phase: str, message: str, details: Optional[Dict[str, Any]] = None
+    ) -> None:
         log_messages.append(f"[{level}/{phase}] {message}")
         await _host_log(session, scan_id, level, phase, message, details)
 
@@ -652,7 +669,11 @@ async def scan_host(
         if advanced_tools:
             is_active, assets_delta, findings_delta = await _run_advanced_scanners(
                 session,
-                type("S", (), {"id": scan_id, "scan_type": scan_type, "advanced_tools": True})(),
+                type(
+                    "S",
+                    (),
+                    {"id": scan_id, "scan_type": scan_type, "advanced_tools": True},
+                )(),
                 host,
                 is_active,
                 assets_delta,

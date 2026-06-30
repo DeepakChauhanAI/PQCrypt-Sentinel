@@ -34,8 +34,7 @@ class OracleTDEConnector(BaseConnector):
     async def _get_credentials(self) -> Dict[str, Any]:
         # Direct credentials dictionary fallback/override
         if isinstance(self.credentials_ref, dict) and (
-            "username" in self.credentials_ref
-            or "password" in self.credentials_ref
+            "username" in self.credentials_ref or "password" in self.credentials_ref
         ):
             return self.credentials_ref
 
@@ -53,7 +52,9 @@ class OracleTDEConnector(BaseConnector):
         try:
             import cx_Oracle
         except ImportError as exc:
-            raise RuntimeError("cx_Oracle is required for Oracle TDE connector") from exc
+            raise RuntimeError(
+                "cx_Oracle is required for Oracle TDE connector"
+            ) from exc
 
         creds = await self._get_credentials()
         username = creds.get("username")
@@ -61,15 +62,17 @@ class OracleTDEConnector(BaseConnector):
         wallet_location = creds.get("wallet_location")
 
         if not username or not password:
-            raise RuntimeError("Oracle TDE connector requires username/password from vault")
+            raise RuntimeError(
+                "Oracle TDE connector requires username/password from vault"
+            )
 
-        imported = 0
-        updated = 0
         errors: List[str] = []
 
         try:
-            dsn = cx_Oracle.makedsn(self.host, self.port, service_name=self.service_name)
-            
+            dsn = cx_Oracle.makedsn(
+                self.host, self.port, service_name=self.service_name
+            )
+
             if self.use_wallet and wallet_location:
                 connection = cx_Oracle.connect(
                     user=username,
@@ -88,10 +91,12 @@ class OracleTDEConnector(BaseConnector):
             cursor = connection.cursor()
 
             # 1. Check encryption wallet status
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT wrl_type, wrl_parameter, status, wallet_type
                 FROM v$encryption_wallet
-            """)
+            """
+            )
             wallet_info = cursor.fetchone()
             wallet_data = {}
             if wallet_info:
@@ -103,57 +108,71 @@ class OracleTDEConnector(BaseConnector):
                 }
 
             # 2. Get encrypted tablespaces
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT ts.name, ts.encryptedts, ts.encryptionalg
                 FROM v$tablespace ts
                 JOIN v$encrypted_tablespaces ets ON ts.ts# = ets.ts#
-            """)
+            """
+            )
             encrypted_tablespaces = []
             for row in cursor.fetchall():
-                encrypted_tablespaces.append({
-                    "tablespace_name": row[0],
-                    "encrypted": row[1] == "ENCRYPTED",
-                    "encryption_algorithm": row[2],
-                })
+                encrypted_tablespaces.append(
+                    {
+                        "tablespace_name": row[0],
+                        "encrypted": row[1] == "ENCRYPTED",
+                        "encryption_algorithm": row[2],
+                    }
+                )
 
             # 3. Get master encryption key info
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT key_id, key_version, tag, creation_time, activation_time
                 FROM v$encryption_keys
                 WHERE activated = 'YES'
-            """)
+            """
+            )
             master_keys = []
             for row in cursor.fetchall():
-                master_keys.append({
-                    "key_id": row[0],
-                    "key_version": row[1],
-                    "tag": row[2],
-                    "creation_time": str(row[3]) if row[3] else None,
-                    "activation_time": str(row[4]) if row[4] else None,
-                })
+                master_keys.append(
+                    {
+                        "key_id": row[0],
+                        "key_version": row[1],
+                        "tag": row[2],
+                        "creation_time": str(row[3]) if row[3] else None,
+                        "activation_time": str(row[4]) if row[4] else None,
+                    }
+                )
 
             # 4. Check for column encryption
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT owner, table_name, column_name, encryption_alg, salt, integrity_alg
                 FROM dba_encrypted_columns
-            """)
+            """
+            )
             encrypted_columns = []
             for row in cursor.fetchall():
-                encrypted_columns.append({
-                    "owner": row[0],
-                    "table_name": row[1],
-                    "column_name": row[2],
-                    "encryption_algorithm": row[3],
-                    "salt": row[4],
-                    "integrity_algorithm": row[5],
-                })
+                encrypted_columns.append(
+                    {
+                        "owner": row[0],
+                        "table_name": row[1],
+                        "column_name": row[2],
+                        "encryption_algorithm": row[3],
+                        "salt": row[4],
+                        "integrity_algorithm": row[5],
+                    }
+                )
 
             cursor.close()
             connection.close()
 
             # Create asset record
             asset_name = f"oracle-tde:{self.host}:{self.port}/{self.service_name}"
-            stmt = select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+            stmt = select(Asset).where(
+                Asset.name == asset_name, Asset.deleted_at.is_(None)
+            )
             res = await session.execute(stmt)
             existing = res.scalar_one_or_none()
 
@@ -172,7 +191,12 @@ class OracleTDEConnector(BaseConnector):
             if existing:
                 existing.asset_type = "database"
                 existing.asset_metadata = metadata
-                return {"status": "success", "updated": 1, "imported": 0, "errors": errors}
+                return {
+                    "status": "success",
+                    "updated": 1,
+                    "imported": 0,
+                    "errors": errors,
+                }
             else:
                 asset = Asset(
                     name=asset_name,
@@ -185,7 +209,12 @@ class OracleTDEConnector(BaseConnector):
                     asset_metadata=metadata,
                 )
                 session.add(asset)
-                return {"status": "success", "imported": 1, "updated": 0, "errors": errors}
+                return {
+                    "status": "success",
+                    "imported": 1,
+                    "updated": 0,
+                    "errors": errors,
+                }
 
         except Exception as exc:
             errors.append(f"Oracle TDE scan failed: {exc}")
@@ -217,8 +246,7 @@ class SQLServerTDEConnector(BaseConnector):
     async def _get_credentials(self) -> Dict[str, Any]:
         # Direct credentials dictionary fallback/override
         if isinstance(self.credentials_ref, dict) and (
-            "username" in self.credentials_ref
-            or "password" in self.credentials_ref
+            "username" in self.credentials_ref or "password" in self.credentials_ref
         ):
             return self.credentials_ref
 
@@ -236,17 +264,19 @@ class SQLServerTDEConnector(BaseConnector):
         try:
             import pyodbc
         except ImportError as exc:
-            raise RuntimeError("pyodbc is required for SQL Server TDE connector") from exc
+            raise RuntimeError(
+                "pyodbc is required for SQL Server TDE connector"
+            ) from exc
 
         creds = await self._get_credentials()
         username = creds.get("username")
         password = creds.get("password")
 
         if not username or not password:
-            raise RuntimeError("SQL Server TDE connector requires username/password from vault")
+            raise RuntimeError(
+                "SQL Server TDE connector requires username/password from vault"
+            )
 
-        imported = 0
-        updated = 0
         errors: List[str] = []
 
         conn_str = (
@@ -262,8 +292,9 @@ class SQLServerTDEConnector(BaseConnector):
             cursor = conn.cursor()
 
             # 1. Get database encryption keys status
-            cursor.execute("""
-                SELECT 
+            cursor.execute(
+                """
+                SELECT
                     db_name(database_id) AS database_name,
                     encryption_state,
                     key_algorithm,
@@ -272,7 +303,8 @@ class SQLServerTDEConnector(BaseConnector):
                     encryptor_thumbprint,
                     percent_complete
                 FROM sys.dm_database_encryption_keys
-            """)
+            """
+            )
             tde_databases = []
             for row in cursor.fetchall():
                 state_map = {
@@ -282,58 +314,71 @@ class SQLServerTDEConnector(BaseConnector):
                     3: "Encrypted",
                     4: "Key change in progress",
                     5: "Decryption in progress",
-                    6: "Protection change in progress"
+                    6: "Protection change in progress",
                 }
-                tde_databases.append({
-                    "database_name": row[0],
-                    "encryption_state": state_map.get(row[1], f"Unknown ({row[1]})"),
-                    "encryption_state_code": row[1],
-                    "key_algorithm": row[2],
-                    "key_length": row[3],
-                    "encryptor_type": row[4],
-                    "encryptor_thumbprint": row[5].hex() if row[5] else None,
-                    "percent_complete": row[6],
-                })
+                tde_databases.append(
+                    {
+                        "database_name": row[0],
+                        "encryption_state": state_map.get(
+                            row[1], f"Unknown ({row[1]})"
+                        ),
+                        "encryption_state_code": row[1],
+                        "key_algorithm": row[2],
+                        "key_length": row[3],
+                        "encryptor_type": row[4],
+                        "encryptor_thumbprint": row[5].hex() if row[5] else None,
+                        "percent_complete": row[6],
+                    }
+                )
 
             # 2. Get certificate info used for TDE
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT name, thumbprint, subject, expiry_date, start_date,
                        issuer_name, pvt_key_encryption_type_desc
                 FROM sys.certificates
                 WHERE pvt_key_encryption_type_desc IS NOT NULL
-            """)
+            """
+            )
             certificates = []
             for row in cursor.fetchall():
-                certificates.append({
-                    "name": row[0],
-                    "thumbprint": row[1].hex() if row[1] else None,
-                    "subject": row[2],
-                    "expiry_date": str(row[3]) if row[3] else None,
-                    "start_date": str(row[4]) if row[4] else None,
-                    "issuer_name": row[5],
-                    "key_encryption_type": row[6],
-                })
+                certificates.append(
+                    {
+                        "name": row[0],
+                        "thumbprint": row[1].hex() if row[1] else None,
+                        "subject": row[2],
+                        "expiry_date": str(row[3]) if row[3] else None,
+                        "start_date": str(row[4]) if row[4] else None,
+                        "issuer_name": row[5],
+                        "key_encryption_type": row[6],
+                    }
+                )
 
             # 3. Get symmetric keys
-            cursor.execute("""
-                SELECT name, key_algorithm, key_length, 
+            cursor.execute(
+                """
+                SELECT name, key_algorithm, key_length,
                        key_guid, create_date
                 FROM sys.symmetric_keys
                 WHERE key_algorithm IS NOT NULL
-            """)
+            """
+            )
             symmetric_keys = []
             for row in cursor.fetchall():
-                symmetric_keys.append({
-                    "name": row[0],
-                    "algorithm": row[1],
-                    "key_length": row[2],
-                    "key_guid": str(row[3]) if row[3] else None,
-                    "create_date": str(row[4]) if row[4] else None,
-                })
+                symmetric_keys.append(
+                    {
+                        "name": row[0],
+                        "algorithm": row[1],
+                        "key_length": row[2],
+                        "key_guid": str(row[3]) if row[3] else None,
+                        "create_date": str(row[4]) if row[4] else None,
+                    }
+                )
 
             # 4. Check Always Encrypted columns
-            cursor.execute("""
-                SELECT 
+            cursor.execute(
+                """
+                SELECT
                     OBJECT_SCHEMA_NAME(c.object_id) AS schema_name,
                     OBJECT_NAME(c.object_id) AS table_name,
                     c.name AS column_name,
@@ -342,30 +387,35 @@ class SQLServerTDEConnector(BaseConnector):
                     cm.name AS cmk_name,
                     cm.key_store_provider_name
                 FROM sys.columns c
-                JOIN sys.column_encryption_keys cek 
+                JOIN sys.column_encryption_keys cek
                     ON c.column_encryption_key_id = cek.column_encryption_key_id
                 JOIN sys.column_master_keys cm
                     ON cek.column_master_key_id = cm.column_master_key_id
                 WHERE c.encryption_type IS NOT NULL
-            """)
+            """
+            )
             encrypted_columns = []
             for row in cursor.fetchall():
-                encrypted_columns.append({
-                    "schema": row[0],
-                    "table": row[1],
-                    "column": row[2],
-                    "encryption_type": row[3],
-                    "encryption_algorithm": row[4],
-                    "cmk_name": row[5],
-                    "key_store_provider": row[6],
-                })
+                encrypted_columns.append(
+                    {
+                        "schema": row[0],
+                        "table": row[1],
+                        "column": row[2],
+                        "encryption_type": row[3],
+                        "encryption_algorithm": row[4],
+                        "cmk_name": row[5],
+                        "key_store_provider": row[6],
+                    }
+                )
 
             cursor.close()
             conn.close()
 
             # Create asset record
             asset_name = f"sqlserver-tde:{self.host}:{self.port}"
-            stmt = select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+            stmt = select(Asset).where(
+                Asset.name == asset_name, Asset.deleted_at.is_(None)
+            )
             res = await session.execute(stmt)
             existing = res.scalar_one_or_none()
 
@@ -378,13 +428,20 @@ class SQLServerTDEConnector(BaseConnector):
                 "certificates": certificates,
                 "symmetric_keys": symmetric_keys,
                 "encrypted_columns": encrypted_columns,
-                "tde_enabled": any(db["encryption_state_code"] == 3 for db in tde_databases),
+                "tde_enabled": any(
+                    db["encryption_state_code"] == 3 for db in tde_databases
+                ),
             }
 
             if existing:
                 existing.asset_type = "database"
                 existing.asset_metadata = metadata
-                return {"status": "success", "updated": 1, "imported": 0, "errors": errors}
+                return {
+                    "status": "success",
+                    "updated": 1,
+                    "imported": 0,
+                    "errors": errors,
+                }
             else:
                 asset = Asset(
                     name=asset_name,
@@ -397,7 +454,12 @@ class SQLServerTDEConnector(BaseConnector):
                     asset_metadata=metadata,
                 )
                 session.add(asset)
-                return {"status": "success", "imported": 1, "updated": 0, "errors": errors}
+                return {
+                    "status": "success",
+                    "imported": 1,
+                    "updated": 0,
+                    "errors": errors,
+                }
 
         except Exception as exc:
             errors.append(f"SQL Server TDE scan failed: {exc}")

@@ -80,6 +80,7 @@ def auth_user():
 @pytest.fixture
 def client(auth_user):
     from app.main import app
+
     with TestClient(app) as c:
         yield c
 

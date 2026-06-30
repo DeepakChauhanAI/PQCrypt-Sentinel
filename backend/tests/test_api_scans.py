@@ -1,6 +1,7 @@
 """
 Tests for `app.api.scans` - create / list / get / findings endpoints.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -12,6 +13,7 @@ from fastapi.testclient import TestClient
 
 
 # Helpers --------------------------------------------------------------------
+
 
 def _scan_row(
     scan_id: str = "33333333-3333-3333-3333-333333333333",
@@ -84,6 +86,7 @@ def auth_user():
 @pytest.fixture
 def client(auth_user):
     from app.main import app
+
     with TestClient(app) as c:
         yield c
 
@@ -93,6 +96,7 @@ def client(auth_user):
 
 def test_create_scan_basic(mock_db, client):
     """A fresh scan is queued and a Celery task is dispatched."""
+
     async def _refresh(obj):
         obj.id = "11111111-2222-3333-4444-555555555555"
         obj.status = "queued"
@@ -101,6 +105,7 @@ def test_create_scan_basic(mock_db, client):
         obj.findings_created = 0
         obj.created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
         obj.updated_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+
     mock_db.refresh = AsyncMock(side_effect=_refresh)
     mock_db.execute.return_value = _make_scalars_all([])
 
@@ -148,6 +153,7 @@ def test_create_scan_cidr_auto_creates_group(mock_db, client):
     The test inspects what was added to the mock session rather than
     patching the DB, so it pins the actual code path the user hits.
     """
+
     async def _refresh(obj):
         obj.id = "cidr-scan-id"
         obj.status = "queued"
@@ -156,6 +162,7 @@ def test_create_scan_cidr_auto_creates_group(mock_db, client):
         obj.findings_created = 0
         obj.created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
         obj.updated_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+
     mock_db.refresh = AsyncMock(side_effect=_refresh)
     mock_db.execute.return_value = _make_scalars_all([])  # no recent scans → no dedup
 
@@ -188,7 +195,8 @@ def test_create_scan_cidr_auto_creates_group(mock_db, client):
     assert len(added) == 2, f"expected ScanGroup + Scan, got {added!r}"
     group_obj, scan_obj = added[0], added[1]
     # Group is a ScanGroup
-    from app.models.models import ScanGroup, Scan
+    from app.models.models import ScanGroup
+
     assert isinstance(group_obj, ScanGroup)
     # The scan was linked to the group via scan_group_id
     assert scan_obj.scan_group_id == "group-uuid-from-flush"
@@ -209,6 +217,7 @@ def test_create_scan_single_host_does_not_create_group(mock_db, client):
     ``target_label = "10.0.0.1"`` from the classifier, but no group row
     is created.
     """
+
     async def _refresh(obj):
         obj.id = "single-host-scan"
         obj.status = "queued"
@@ -217,6 +226,7 @@ def test_create_scan_single_host_does_not_create_group(mock_db, client):
         obj.findings_created = 0
         obj.created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
         obj.updated_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+
     mock_db.refresh = AsyncMock(side_effect=_refresh)
     mock_db.execute.return_value = _make_scalars_all([])
 
@@ -241,6 +251,7 @@ def test_create_scan_explicit_scan_group_id_not_overridden(mock_db, client):
     """When the client supplies a scan_group_id in the payload, the
     auto-wrap must not create a new group. The user-supplied id wins.
     """
+
     async def _refresh(obj):
         obj.id = "explicit-group-scan"
         obj.status = "queued"
@@ -249,6 +260,7 @@ def test_create_scan_explicit_scan_group_id_not_overridden(mock_db, client):
         obj.findings_created = 0
         obj.created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
         obj.updated_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+
     mock_db.refresh = AsyncMock(side_effect=_refresh)
     mock_db.execute.return_value = _make_scalars_all([])
 
@@ -311,6 +323,7 @@ def test_list_scan_findings_not_found(mock_db, client):
 def test_list_scan_findings_no_filters(mock_db, client):
     """Findings list returns the list of Finding dicts."""
     from app.models.schemas import FindingOut
+
     scan = _scan_row()
     finding = FindingOut(
         id="f-1",

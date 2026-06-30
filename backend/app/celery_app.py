@@ -1,11 +1,12 @@
 from celery import Celery
+from celery.schedules import crontab
 from app.config import settings
 
 celery_app = Celery(
     "pqcrypt_sentinel",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.tasks"]
+    include=["app.tasks"],
 )
 
 celery_app.conf.update(
@@ -17,7 +18,6 @@ celery_app.conf.update(
 )
 
 # Configure Celery Beat schedule based on Settings.SCAN_SCHEDULE_CRON
-from celery.schedules import crontab
 cron_expr = settings.SCAN_SCHEDULE_CRON or "0 2 * * *"
 parts = cron_expr.split()
 if len(parts) == 5:
@@ -37,4 +37,3 @@ celery_app.conf.beat_schedule = {
         "schedule": beat_schedule,
     },
 }
-

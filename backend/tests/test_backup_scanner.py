@@ -1,4 +1,5 @@
 """Tests for the backup encryption scanner skeleton."""
+
 from __future__ import annotations
 
 from app.scanners.backup_scanner import (
@@ -26,7 +27,12 @@ def test_classify_unknown_algorithm():
 
 def test_scan_inventory_finds_unencrypted():
     records = [
-        {"source": "srv-01", "software": "Veeam", "encryption_enabled": False, "algorithm": None},
+        {
+            "source": "srv-01",
+            "software": "Veeam",
+            "encryption_enabled": False,
+            "algorithm": None,
+        },
     ]
     result = scan_backup_inventory(records)
     assert result["status"] == "success"
@@ -38,7 +44,12 @@ def test_scan_inventory_finds_unencrypted():
 
 def test_scan_inventory_finds_weak_encryption():
     records = [
-        {"source": "srv-02", "software": "Commvault", "encryption_enabled": True, "algorithm": "RC4"},
+        {
+            "source": "srv-02",
+            "software": "Commvault",
+            "encryption_enabled": True,
+            "algorithm": "RC4",
+        },
     ]
     result = scan_backup_inventory(records)
     assert result["findings_found"] == 1
@@ -47,7 +58,12 @@ def test_scan_inventory_finds_weak_encryption():
 
 def test_scan_inventory_strong_encryption():
     records = [
-        {"source": "srv-03", "software": "RMAN", "encryption_enabled": True, "algorithm": "AES-256-GCM"},
+        {
+            "source": "srv-03",
+            "software": "RMAN",
+            "encryption_enabled": True,
+            "algorithm": "AES-256-GCM",
+        },
     ]
     result = scan_backup_inventory(records)
     assert result["findings_found"] == 0

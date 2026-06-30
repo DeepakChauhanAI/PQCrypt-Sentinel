@@ -4,19 +4,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.models import Finding, Asset
-from app.analysis.algo_classifier import classify_algorithm
 from app.services.risk_service import calculate_risk_score
 
 
 def _serialize_evidence(value: Any) -> Any:
     """Recursively convert datetime objects to ISO 8601 strings so JSONB columns serialize cleanly."""
     if isinstance(value, datetime):
-        return value.astimezone(timezone.utc).isoformat() if value.tzinfo is None else value.isoformat()
+        return (
+            value.astimezone(timezone.utc).isoformat()
+            if value.tzinfo is None
+            else value.isoformat()
+        )
     if isinstance(value, dict):
         return {key: _serialize_evidence(val) for key, val in value.items()}
     if isinstance(value, list):
         return [_serialize_evidence(item) for item in value]
     return value
+
 
 async def generate_findings(
     session: AsyncSession,
@@ -84,7 +88,9 @@ async def generate_findings(
             kex_algos=kex_algos,
         )
         quantum_timeline_year = settings.QUANTUM_TIMELINE_YEAR
-        hndl_exposure = calculate_hndl_exposure(data_longevity_years, quantum_timeline_year)
+        hndl_exposure = calculate_hndl_exposure(
+            data_longevity_years, quantum_timeline_year
+        )
         replaceability = derive_replaceability(
             asset=asset,
             finding_type=finding_type,
@@ -93,10 +99,15 @@ async def generate_findings(
         )
 
         # Determine system exposure
-        system_exposure = "internet" if asset.asset_type in ["web_app", "api", "load_balancer"] else "internal"
+        system_exposure = (
+            "internet"
+            if asset.asset_type in ["web_app", "api", "load_balancer"]
+            else "internal"
+        )
 
         # Determine years_to_deadline
         from app.analysis.algo_classifier import get_deprecation_deadline_year
+
         deadline_year = get_deprecation_deadline_year(algorithm or "", key_size)
         years_to_deadline = max(0, deadline_year - now.year)
 
@@ -225,7 +236,9 @@ async def generate_findings(
     if kex_algos:
         # Check if SSH supports any PQC key exchange
         pqc_kex_keywords = ["mlkem", "sntrup", "kyber", "ntrup", "pqc"]
-        has_pqc_kex = any(any(kw in algo.lower() for kw in pqc_kex_keywords) for algo in kex_algos)
+        has_pqc_kex = any(
+            any(kw in algo.lower() for kw in pqc_kex_keywords) for algo in kex_algos
+        )
 
         if not has_pqc_kex:
             await add_finding(

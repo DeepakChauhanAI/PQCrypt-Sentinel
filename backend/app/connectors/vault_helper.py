@@ -8,10 +8,19 @@ logger = logging.getLogger(__name__)
 
 # Set of environment variable names that contain sensitive data
 SENSITIVE_ENV_KEYS = {
-    "AWS_ACCESS_KEY_ID", "AWS_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY", "AWS_SECRET_KEY",
-    "AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET", "AZURE_TENANT_ID",
-    "GCP_CREDENTIALS_JSON", "VAULT_TOKEN", "VAULT_PASSWORD",
-    "SECRET_KEY", "DATABASE_PASSWORD", "REDIS_PASSWORD",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_ACCESS_KEY",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_SECRET_KEY",
+    "AZURE_CLIENT_ID",
+    "AZURE_CLIENT_SECRET",
+    "AZURE_TENANT_ID",
+    "GCP_CREDENTIALS_JSON",
+    "VAULT_TOKEN",
+    "VAULT_PASSWORD",
+    "SECRET_KEY",
+    "DATABASE_PASSWORD",
+    "REDIS_PASSWORD",
 }
 
 
@@ -33,8 +42,10 @@ def _get_env_fallback() -> Dict[str, Any]:
     by default. The returned dict has no logging; presence is never logged.
     """
     fallback = {
-        "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID") or os.environ.get("AWS_ACCESS_KEY"),
-        "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY") or os.environ.get("AWS_SECRET_KEY"),
+        "aws_access_key_id": os.environ.get("AWS_ACCESS_KEY_ID")
+        or os.environ.get("AWS_ACCESS_KEY"),
+        "aws_secret_access_key": os.environ.get("AWS_SECRET_ACCESS_KEY")
+        or os.environ.get("AWS_SECRET_KEY"),
         "client_id": os.environ.get("AZURE_CLIENT_ID"),
         "client_secret": os.environ.get("AZURE_CLIENT_SECRET"),
         "tenant_id": os.environ.get("AZURE_TENANT_ID"),
@@ -43,7 +54,9 @@ def _get_env_fallback() -> Dict[str, Any]:
     return fallback
 
 
-async def get_vault_secret(vault_path: str, version: Optional[str] = None) -> Dict[str, Any]:
+async def get_vault_secret(
+    vault_path: str, version: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Retrieve a secret from HashiCorp Vault using KV engine.
     Supports KV v2 (try first) and KV v1 (fallback).
@@ -98,7 +111,7 @@ async def get_vault_secret(vault_path: str, version: Optional[str] = None) -> Di
                         if isinstance(secret_data, dict):
                             return secret_data
                         return inner_data
-            
+
             # Try KV v1
             v1_url = f"{vault_url.rstrip('/')}/v1/{vault_path.lstrip('/')}"
             resp = await client.get(v1_url, headers=headers)
@@ -107,6 +120,8 @@ async def get_vault_secret(vault_path: str, version: Optional[str] = None) -> Di
                 if isinstance(data, dict):
                     return data.get("data", {})
     except Exception as e:
-        logger.error(f"Error fetching secret from Vault path {vault_path}: {_redact_sensitive(str(e))}")
+        logger.error(
+            f"Error fetching secret from Vault path {vault_path}: {_redact_sensitive(str(e))}"
+        )
 
     return {}

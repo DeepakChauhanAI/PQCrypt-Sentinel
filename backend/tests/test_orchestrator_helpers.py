@@ -6,14 +6,13 @@ The big `run_scan` function is heavy; this file focuses on the
 helpers (`started_at_fallback`, `_run_host_tasks` aggregation) so we
 gain coverage without spinning up a full Postgres.
 """
+
 from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
-import pytest
 
 from app.services import scan_orchestrator as so
 from app.services.scan_orchestrator import (
@@ -53,8 +52,10 @@ def test_gather_with_limit_returns_all_results():
     async def main():
         async def one(n):
             return n * 2
+
         results = await _gather_with_limit([one(1), one(2), one(3)], limit=2)
         return results
+
     out = asyncio.run(main())
     assert sorted(out) == [2, 4, 6]
 
@@ -63,10 +64,13 @@ def test_gather_with_limit_captures_exceptions():
     async def main():
         async def good():
             return "ok"
+
         async def bad():
             raise RuntimeError("nope")
+
         results = await _gather_with_limit([good(), bad(), good()], limit=3)
         return results
+
     out = asyncio.run(main())
     # Index 1 should be the error tuple
     assert out[0] == "ok"
@@ -129,7 +133,13 @@ def test_run_host_tasks_aggregates_per_host_results():
 
 def test_run_host_tasks_collects_per_host_errors():
     fake_results = [
-        {"host": "h1", "assets": 1, "findings": 0, "logs": [], "error": "scan timed out"},
+        {
+            "host": "h1",
+            "assets": 1,
+            "findings": 0,
+            "logs": [],
+            "error": "scan timed out",
+        },
         {"host": "h2", "assets": 0, "findings": 0, "logs": [], "error": None},
     ]
     call_count = {"n": 0}
@@ -158,6 +168,7 @@ def test_run_host_tasks_collects_per_host_errors():
 
 def test_run_host_tasks_handles_executor_exception():
     """A host that raises (not a per-host `error` field) is captured as an error tuple."""
+
     async def raise_one(**kwargs):
         raise ConnectionError("boom")
 

@@ -10,7 +10,9 @@ from typing import Optional
 DEFAULT_QUANTUM_HORIZON_YEAR = 2034
 
 
-def calculate_hndl_exposure(data_longevity_years: int, quantum_timeline_year: Optional[int] = None) -> str:
+def calculate_hndl_exposure(
+    data_longevity_years: int, quantum_timeline_year: Optional[int] = None
+) -> str:
     """
     Calculate HNDL exposure based on Mosca's Theorem:
     data_longevity vs quantum_timeline vs migration window.

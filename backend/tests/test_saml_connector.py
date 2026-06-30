@@ -46,24 +46,30 @@ class TestSync:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
-        connector = SAMLMetadataConnector(metadata_url="https://idp.example.com/metadata")
+        connector = SAMLMetadataConnector(
+            metadata_url="https://idp.example.com/metadata"
+        )
         session = AsyncMock()
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         session.execute.return_value = mock_result
 
-        with patch("httpx.AsyncClient", return_value=mock_client), \
-             patch("app.scanners.safe_target.resolve_safely", new_callable=AsyncMock):
+        with patch("httpx.AsyncClient", return_value=mock_client), patch(
+            "app.scanners.safe_target.resolve_safely", new_callable=AsyncMock
+        ):
             result = await connector.sync(session)
         assert result["status"] in ("success", "partial")
 
     @pytest.mark.asyncio
     async def test_sync_url_fetch_failure(self):
-        connector = SAMLMetadataConnector(metadata_url="https://idp.example.com/metadata")
+        connector = SAMLMetadataConnector(
+            metadata_url="https://idp.example.com/metadata"
+        )
         session = AsyncMock()
 
-        with patch("app.scanners.safe_target.resolve_safely", new_callable=AsyncMock), \
-             patch("httpx.AsyncClient") as MockClient:
+        with patch(
+            "app.scanners.safe_target.resolve_safely", new_callable=AsyncMock
+        ), patch("httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(side_effect=Exception("Connection refused"))
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -100,11 +106,14 @@ class TestSync:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
-        connector = SAMLMetadataConnector(metadata_url="https://idp.example.com/metadata")
+        connector = SAMLMetadataConnector(
+            metadata_url="https://idp.example.com/metadata"
+        )
         session = AsyncMock()
 
-        with patch("httpx.AsyncClient", return_value=mock_client), \
-             patch("app.scanners.safe_target.resolve_safely", new_callable=AsyncMock):
+        with patch("httpx.AsyncClient", return_value=mock_client), patch(
+            "app.scanners.safe_target.resolve_safely", new_callable=AsyncMock
+        ):
             result = await connector.sync(session)
 
         assert result["status"] == "error"
@@ -159,7 +168,9 @@ class TestGetCredentials:
     @pytest.mark.asyncio
     async def test_dict_credentials_with_token(self):
         connector = SAMLMetadataConnector(credentials_ref={"token": "bearer-123"})
-        with patch("app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock) as mock_vault:
+        with patch(
+            "app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock
+        ) as mock_vault:
             mock_vault.return_value = {"token": "bearer-123"}
             result = await connector._get_credentials()
             assert result["token"] == "bearer-123"
@@ -167,7 +178,9 @@ class TestGetCredentials:
     @pytest.mark.asyncio
     async def test_dict_credentials_with_vault_path(self):
         connector = SAMLMetadataConnector(credentials_ref={"vault_path": "secret/saml"})
-        with patch("app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock) as mock_vault:
+        with patch(
+            "app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock
+        ) as mock_vault:
             mock_vault.return_value = {"api_key": "key-123"}
             result = await connector._get_credentials()
             mock_vault.assert_called_once_with("secret/saml", None)
@@ -178,7 +191,9 @@ class TestGetCredentials:
         ref.vault_path = "secret/saml"
         ref.version = "v2"
         connector = SAMLMetadataConnector(credentials_ref=ref)
-        with patch("app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock) as mock_vault:
+        with patch(
+            "app.connectors.vault_helper.get_vault_secret", new_callable=AsyncMock
+        ) as mock_vault:
             mock_vault.return_value = {"token": "tok"}
             result = await connector._get_credentials()
             mock_vault.assert_called_once_with("secret/saml", "v2")

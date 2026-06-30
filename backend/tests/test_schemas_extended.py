@@ -397,5 +397,3 @@ class TestCoerceUuidToStrPassthrough:
             updated_at=NOW,
         )
         assert obj.id == "group-1"
-
-

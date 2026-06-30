@@ -13,6 +13,7 @@ These tests pin:
   * the no-asset edge case (enrichment is a no-op),
   * the asset-without-scan-id case (no group lookup happens).
 """
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -23,6 +24,7 @@ from fastapi.testclient import TestClient
 
 
 # Helpers --------------------------------------------------------------------
+
 
 def _asset_row(
     asset_id: str = "a-1",
@@ -111,6 +113,7 @@ def auth_user():
 @pytest.fixture
 def client(auth_user):
     from app.main import app
+
     with TestClient(app) as c:
         yield c
 

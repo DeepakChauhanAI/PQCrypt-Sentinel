@@ -1,6 +1,5 @@
-from datetime import datetime, timezone
-import hashlib
-from typing import Any, Dict, List, Optional
+from datetime import timezone
+from typing import Any, Dict, List
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ec, ed25519, ed448
@@ -86,7 +85,9 @@ def classify_signature_algorithm(oid: str) -> Dict[str, Any]:
         return {
             "is_pqc": False,
             "is_hybrid": False,
-            "name": CLASSICAL_SIGNATURE_OIDS.get(oid, CLASSICAL_KEX_OIDS.get(oid, f"unknown ({oid})")),
+            "name": CLASSICAL_SIGNATURE_OIDS.get(
+                oid, CLASSICAL_KEX_OIDS.get(oid, f"unknown ({oid})")
+            ),
             "pqc_status": "vulnerable",
         }
     else:
@@ -175,7 +176,9 @@ def parse_certificate(pem_data: str) -> Dict[str, Any]:
     pub_key_info = analyze_public_key(cert.public_key())
 
     # Determine PQC-capable flag (signature OR pubkey is PQC)
-    pqc_capable: bool = bool(sig_classification.get("is_pqc") or pub_key_info.get("pqc_capable"))
+    pqc_capable: bool = bool(
+        sig_classification.get("is_pqc") or pub_key_info.get("pqc_capable")
+    )
 
     # pqc_status: take signature status, but allow the pubkey to lift it
     pqc_status: str = sig_classification["pqc_status"]
@@ -194,7 +197,9 @@ def parse_certificate(pem_data: str) -> Dict[str, Any]:
     san_dns: list[str] = []
     san_ip: list[str] = []
     try:
-        san_ext = cert.extensions.get_extension_for_oid(ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+        san_ext = cert.extensions.get_extension_for_oid(
+            ExtensionOID.SUBJECT_ALTERNATIVE_NAME
+        )
         for name in san_ext.value:  # type: ignore[attr-defined]
             if isinstance(name, x509.DNSName):
                 san_dns.append(name.value)

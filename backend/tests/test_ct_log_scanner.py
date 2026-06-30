@@ -22,7 +22,9 @@ class TestCTLogResult:
         assert result.certificates == certs
 
     def test_init_with_error(self):
-        result = CTLogResult(domain="example.com", success=False, error_message="timeout")
+        result = CTLogResult(
+            domain="example.com", success=False, error_message="timeout"
+        )
         assert result.success is False
         assert result.error_message == "timeout"
 
@@ -45,6 +47,7 @@ class TestFetchCtJson:
 
     def test_http_error(self):
         import httpx
+
         mock_resp = MagicMock()
         mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError(
             "Not Found", request=MagicMock(), response=mock_resp

@@ -33,13 +33,12 @@ class PKCS11Connector(BaseConnector):
         """Resolve vault credential reference."""
         # Direct credentials dictionary fallback/override
         if isinstance(self.credentials_ref, dict) and (
-            "pin" in self.credentials_ref
-            or "user_pin" in self.credentials_ref
+            "pin" in self.credentials_ref or "user_pin" in self.credentials_ref
         ):
             return self.credentials_ref
 
         from app.connectors.vault_helper import get_vault_secret
-        
+
         vault_path = ""
         version = None
         if isinstance(self.credentials_ref, dict):
@@ -55,11 +54,12 @@ class PKCS11Connector(BaseConnector):
         try:
             import pkcs11
         except ImportError as exc:
-            raise RuntimeError("python-pkcs11 is required for PKCS#11 connector") from exc
+            raise RuntimeError(
+                "python-pkcs11 is required for PKCS#11 connector"
+            ) from exc
 
         creds = await self._get_credentials()
         user_pin = creds.get("user_pin") or creds.get("pin")
-        so_pin = creds.get("so_pin")
 
         if not user_pin:
             raise RuntimeError("PKCS#11 connector requires user_pin from vault")
@@ -83,33 +83,57 @@ class PKCS11Connector(BaseConnector):
                         for obj in session_pkcs11.get_objects():
                             try:
                                 obj_class = obj.get_attribute(pkcs11.Attribute.CLASS)
-                                obj_label = obj.get_attribute(pkcs11.Attribute.LABEL, "")
+                                obj_label = obj.get_attribute(
+                                    pkcs11.Attribute.LABEL, ""
+                                )
                                 obj_id = obj.get_attribute(pkcs11.Attribute.ID, b"")
-                                key_type = obj.get_attribute(pkcs11.Attribute.KEY_TYPE, None)
+                                key_type = obj.get_attribute(
+                                    pkcs11.Attribute.KEY_TYPE, None
+                                )
                                 key_size = None
-                                if obj_class in (pkcs11.ObjectClass.PUBLIC_KEY, pkcs11.ObjectClass.PRIVATE_KEY, pkcs11.ObjectClass.SECRET_KEY):
+                                if obj_class in (
+                                    pkcs11.ObjectClass.PUBLIC_KEY,
+                                    pkcs11.ObjectClass.PRIVATE_KEY,
+                                    pkcs11.ObjectClass.SECRET_KEY,
+                                ):
                                     if hasattr(pkcs11.Attribute, "MODULUS_BITS"):
                                         try:
-                                            key_size = obj.get_attribute(pkcs11.Attribute.MODULUS_BITS)
+                                            key_size = obj.get_attribute(
+                                                pkcs11.Attribute.MODULUS_BITS
+                                            )
                                         except Exception:
                                             pass
-                                    if key_size is None and hasattr(pkcs11.Attribute, "VALUE_BITS"):
+                                    if key_size is None and hasattr(
+                                        pkcs11.Attribute, "VALUE_BITS"
+                                    ):
                                         try:
-                                            key_size = obj.get_attribute(pkcs11.Attribute.VALUE_BITS)
+                                            key_size = obj.get_attribute(
+                                                pkcs11.Attribute.VALUE_BITS
+                                            )
                                         except Exception:
                                             pass
                                 key_type_str = str(key_type) if key_type else "UNKNOWN"
-                                results.append({
-                                    "token_label": token.label,
-                                    "slot_id": slot.slot_id,
-                                    "object_label": obj_label,
-                                    "object_id": obj_id.hex() if isinstance(obj_id, bytes) else str(obj_id),
-                                    "object_class": str(obj_class) if obj_class else "UNKNOWN",
-                                    "key_type": key_type_str,
-                                    "key_size": key_size,
-                                })
+                                results.append(
+                                    {
+                                        "token_label": token.label,
+                                        "slot_id": slot.slot_id,
+                                        "object_label": obj_label,
+                                        "object_id": (
+                                            obj_id.hex()
+                                            if isinstance(obj_id, bytes)
+                                            else str(obj_id)
+                                        ),
+                                        "object_class": (
+                                            str(obj_class) if obj_class else "UNKNOWN"
+                                        ),
+                                        "key_type": key_type_str,
+                                        "key_size": key_size,
+                                    }
+                                )
                             except Exception as exc:
-                                errors.append(f"Object {getattr(obj, 'label', 'unknown')}: {exc}")
+                                errors.append(
+                                    f"Object {getattr(obj, 'label', 'unknown')}: {exc}"
+                                )
                 except Exception as exc:
                     errors.append(f"Slot {slot.slot_id}: {exc}")
             return results
@@ -123,7 +147,9 @@ class PKCS11Connector(BaseConnector):
         for obj in hsm_objects:
             try:
                 asset_name = f"pkcs11:{obj['token_label']}:{obj['object_label'] or obj['object_id']}"
-                stmt = select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+                stmt = select(Asset).where(
+                    Asset.name == asset_name, Asset.deleted_at.is_(None)
+                )
                 res = await session.execute(stmt)
                 existing = res.scalar_one_or_none()
 
@@ -154,7 +180,9 @@ class PKCS11Connector(BaseConnector):
                     session.add(asset)
                     imported += 1
             except Exception as exc:
-                errors.append(f"Database error for asset {obj.get('object_label')}: {exc}")
+                errors.append(
+                    f"Database error for asset {obj.get('object_label')}: {exc}"
+                )
 
         return {
             "status": "success",
@@ -199,7 +227,7 @@ class KMIPConnector(BaseConnector):
             return self.credentials_ref
 
         from app.connectors.vault_helper import get_vault_secret
-        
+
         vault_path = ""
         version = None
         if isinstance(self.credentials_ref, dict):
@@ -214,19 +242,18 @@ class KMIPConnector(BaseConnector):
     async def sync(self, session: AsyncSession, **kwargs: Any) -> Dict[str, Any]:
         try:
             from kmip import client as kmip_client
-            from kmip.core import enums as kmip_enums
-            from kmip.pie import objects as kmip_objects
         except ImportError as exc:
             raise RuntimeError("python-kmip is required for KMIP connector") from exc
 
         creds = await self._get_credentials()
-        
+
         imported = 0
         updated = 0
         errors: List[str] = []
 
         def get_kmip_objects():
             import ssl as _ssl
+
             client = kmip_client.KMIPClient(
                 hostname=self.host,
                 port=self.port,
@@ -244,26 +271,34 @@ class KMIPConnector(BaseConnector):
                 for uuid in uuids:
                     try:
                         obj = client.get(uuid)
-                        name = getattr(obj, 'name', uuid)
-                        obj_type = getattr(obj, 'object_type', 'UNKNOWN')
-                        crypto_alg = getattr(obj, 'cryptographic_algorithm', 'UNKNOWN')
-                        key_length = getattr(obj, 'cryptographic_length', None)
-                        state = getattr(obj, 'state', 'UNKNOWN')
-                        usage_mask = getattr(obj, 'usage_mask', None)
-                        activation_date = getattr(obj, 'activation_date', None)
-                        deactivation_date = getattr(obj, 'deactivation_date', None)
-                        
-                        results.append({
-                            "uuid": uuid,
-                            "name": name,
-                            "object_type": str(obj_type),
-                            "crypto_algorithm": str(crypto_alg),
-                            "key_length": key_length,
-                            "state": str(state),
-                            "usage_mask": str(usage_mask) if usage_mask else None,
-                            "activation_date": str(activation_date) if activation_date else None,
-                            "deactivation_date": str(deactivation_date) if deactivation_date else None,
-                        })
+                        name = getattr(obj, "name", uuid)
+                        obj_type = getattr(obj, "object_type", "UNKNOWN")
+                        crypto_alg = getattr(obj, "cryptographic_algorithm", "UNKNOWN")
+                        key_length = getattr(obj, "cryptographic_length", None)
+                        state = getattr(obj, "state", "UNKNOWN")
+                        usage_mask = getattr(obj, "usage_mask", None)
+                        activation_date = getattr(obj, "activation_date", None)
+                        deactivation_date = getattr(obj, "deactivation_date", None)
+
+                        results.append(
+                            {
+                                "uuid": uuid,
+                                "name": name,
+                                "object_type": str(obj_type),
+                                "crypto_algorithm": str(crypto_alg),
+                                "key_length": key_length,
+                                "state": str(state),
+                                "usage_mask": str(usage_mask) if usage_mask else None,
+                                "activation_date": (
+                                    str(activation_date) if activation_date else None
+                                ),
+                                "deactivation_date": (
+                                    str(deactivation_date)
+                                    if deactivation_date
+                                    else None
+                                ),
+                            }
+                        )
                     except Exception as exc:
                         errors.append(f"KMIP object {uuid}: {exc}")
                 return results
@@ -280,10 +315,12 @@ class KMIPConnector(BaseConnector):
             try:
                 uuid = obj["uuid"]
                 asset_name = f"kmip:{self.host}:{uuid}"
-                stmt = select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+                stmt = select(Asset).where(
+                    Asset.name == asset_name, Asset.deleted_at.is_(None)
+                )
                 res = await session.execute(stmt)
                 existing = res.scalar_one_or_none()
-                
+
                 metadata = {
                     "provider": "kmip",
                     "host": self.host,
@@ -298,7 +335,7 @@ class KMIPConnector(BaseConnector):
                     "activation_date": obj["activation_date"],
                     "deactivation_date": obj["deactivation_date"],
                 }
-                
+
                 if existing:
                     existing.asset_type = "kms_key"
                     existing.asset_metadata = metadata
@@ -314,7 +351,9 @@ class KMIPConnector(BaseConnector):
                     session.add(asset)
                     imported += 1
             except Exception as exc:
-                errors.append(f"Database error for KMIP object {obj.get('uuid')}: {exc}")
+                errors.append(
+                    f"Database error for KMIP object {obj.get('uuid')}: {exc}"
+                )
 
         return {
             "status": "success" if not errors else "partial",
@@ -348,13 +387,12 @@ class ADCSConnector(BaseConnector):
         """Resolve vault credential reference."""
         # Direct credentials dictionary fallback/override
         if isinstance(self.credentials_ref, dict) and (
-            "username" in self.credentials_ref
-            or "password" in self.credentials_ref
+            "username" in self.credentials_ref or "password" in self.credentials_ref
         ):
             return self.credentials_ref
 
         from app.connectors.vault_helper import get_vault_secret
-        
+
         vault_path = ""
         version = None
         if isinstance(self.credentials_ref, dict):
@@ -415,13 +453,21 @@ class ADCSConnector(BaseConnector):
             for entry in conn.entries:
                 ca_name = str(entry.cn) if entry.cn else "unknown"
                 dns_host = str(entry.dNSHostName) if entry.dNSHostName else ""
-                results.append({
-                    "ca_name": ca_name,
-                    "dns_host": dns_host,
-                    "ca_certificate_dn": str(entry.cACertificateDN) if entry.cACertificateDN else "",
-                    "certificate_templates": [str(t) for t in entry.certificateTemplates] if entry.certificateTemplates else [],
-                    "flags": str(entry.flags) if entry.flags else "",
-                })
+                results.append(
+                    {
+                        "ca_name": ca_name,
+                        "dns_host": dns_host,
+                        "ca_certificate_dn": (
+                            str(entry.cACertificateDN) if entry.cACertificateDN else ""
+                        ),
+                        "certificate_templates": (
+                            [str(t) for t in entry.certificateTemplates]
+                            if entry.certificateTemplates
+                            else []
+                        ),
+                        "flags": str(entry.flags) if entry.flags else "",
+                    }
+                )
             return results
 
         try:
@@ -434,7 +480,9 @@ class ADCSConnector(BaseConnector):
             try:
                 ca_name = entry["ca_name"]
                 asset_name = f"adcs:{ca_name}"
-                stmt = select(Asset).where(Asset.name == asset_name, Asset.deleted_at.is_(None))
+                stmt = select(Asset).where(
+                    Asset.name == asset_name, Asset.deleted_at.is_(None)
+                )
                 res = await session.execute(stmt)
                 existing = res.scalar_one_or_none()
 
@@ -463,7 +511,9 @@ class ADCSConnector(BaseConnector):
                     session.add(asset)
                     imported += 1
             except Exception as exc:
-                errors.append(f"Database error for CA entry {entry.get('ca_name')}: {exc}")
+                errors.append(
+                    f"Database error for CA entry {entry.get('ca_name')}: {exc}"
+                )
 
         return {
             "status": "success",

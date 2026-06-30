@@ -10,13 +10,12 @@ above 80% by exercising:
   * `scan_mail_endpoint` SMTPS / port-465 path
   * `scan_mail_endpoint` exception in executor
 """
+
 from __future__ import annotations
 
 import asyncio
-import socket
 from unittest.mock import patch
 
-import pytest
 
 from app.scanners import mail_scanner as mail_mod
 from app.scanners.mail_scanner import (
@@ -114,8 +113,10 @@ def test_scan_mail_endpoint_connection_failure():
 
 def test_scan_mail_endpoint_exception_in_executor():
     """An exception in _do_mail_connect is captured as a failure result."""
+
     def boom(*a, **kw):
         raise OSError("network unreachable")
+
     with patch.object(mail_mod, "_do_mail_connect", side_effect=boom):
         result = asyncio.run(scan_mail_endpoint("mx.example.com", port=25))
     assert result.success is False

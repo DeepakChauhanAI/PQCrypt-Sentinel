@@ -6,6 +6,7 @@ Endpoints:
   GET    /api/v1/scan-groups/{id}    - group detail with member list
   DELETE /api/v1/scan-groups/{id}    - cancel a group and all running members
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -89,7 +90,9 @@ async def create_scan_group(
             config=spec.config,
             credential_profile=spec.credential_profile,
             advanced_tools=(
-                payload.advanced_tools if spec.advanced_tools is None else spec.advanced_tools
+                payload.advanced_tools
+                if spec.advanced_tools is None
+                else spec.advanced_tools
             ),
             target_label=spec.target_label,
             target_kind=spec.target_kind,
@@ -136,17 +139,19 @@ async def list_scan_groups(
     out: List[ScanGroupOut] = []
     for g in groups:
         rollups = await _compute_group_rollups(session, g.id)
-        out.append(ScanGroupOut(
-            id=str(g.id),
-            name=g.name,
-            description=g.description,
-            status=g.status,
-            started_at=g.started_at,
-            completed_at=g.completed_at,
-            created_at=g.created_at,
-            updated_at=g.updated_at,
-            **rollups,
-        ))
+        out.append(
+            ScanGroupOut(
+                id=str(g.id),
+                name=g.name,
+                description=g.description,
+                status=g.status,
+                started_at=g.started_at,
+                completed_at=g.completed_at,
+                created_at=g.created_at,
+                updated_at=g.updated_at,
+                **rollups,
+            )
+        )
     return out
 
 

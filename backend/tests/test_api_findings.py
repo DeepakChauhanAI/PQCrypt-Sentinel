@@ -1,6 +1,7 @@
 """
 Tests for `app.api.findings` - list / get / update / rescan endpoints.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -29,6 +30,7 @@ app.dependency_overrides[get_current_user] = lambda: mock_user
 def mock_db():
     session = AsyncMock()
     from app.db import get_session
+
     app.dependency_overrides[get_session] = lambda: session
     yield session
     app.dependency_overrides.pop(get_session, None)

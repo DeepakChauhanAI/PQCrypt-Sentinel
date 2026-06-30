@@ -13,13 +13,41 @@ from __future__ import annotations
 from typing import Any, Optional
 
 LAYER_DEFINITIONS = [
-    {"id": "L1", "name": "Network", "description": "TLS, SSH, VPN/IKEv2, DNSSEC, OCSP, SMTP STARTTLS"},
-    {"id": "L2", "name": "PKI", "description": "Root CA, Intermediate CAs, TLS Server Certs, Code-signing, TSA"},
-    {"id": "L3", "name": "HSM/KMS", "description": "General HSMs, Payment HSMs (3DES), Cloud KMS"},
-    {"id": "L4", "name": "Application", "description": "JWT Algorithms, Container Images, API Crypto"},
-    {"id": "L5", "name": "Data", "description": "TDE Algorithms, Backup Encryption, Column-level Encryption"},
-    {"id": "L6", "name": "Infrastructure", "description": "SSH Host Keys, Kerberos RC4, Windows CNG/Schannel"},
-    {"id": "L7", "name": "Endpoint", "description": "Windows Cert Store, BitLocker, Firmware Signing"},
+    {
+        "id": "L1",
+        "name": "Network",
+        "description": "TLS, SSH, VPN/IKEv2, DNSSEC, OCSP, SMTP STARTTLS",
+    },
+    {
+        "id": "L2",
+        "name": "PKI",
+        "description": "Root CA, Intermediate CAs, TLS Server Certs, Code-signing, TSA",
+    },
+    {
+        "id": "L3",
+        "name": "HSM/KMS",
+        "description": "General HSMs, Payment HSMs (3DES), Cloud KMS",
+    },
+    {
+        "id": "L4",
+        "name": "Application",
+        "description": "JWT Algorithms, Container Images, API Crypto",
+    },
+    {
+        "id": "L5",
+        "name": "Data",
+        "description": "TDE Algorithms, Backup Encryption, Column-level Encryption",
+    },
+    {
+        "id": "L6",
+        "name": "Infrastructure",
+        "description": "SSH Host Keys, Kerberos RC4, Windows CNG/Schannel",
+    },
+    {
+        "id": "L7",
+        "name": "Endpoint",
+        "description": "Windows Cert Store, BitLocker, Firmware Signing",
+    },
 ]
 
 ASSET_TO_LAYER = {

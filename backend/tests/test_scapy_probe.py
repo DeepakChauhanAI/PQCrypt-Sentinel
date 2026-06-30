@@ -12,6 +12,7 @@ above 80% by exercising:
 The scapy imports happen INSIDE `_do_probe` (line 74: `from scapy.all import
 IP, TCP, sr1`), so we patch the names in the `scapy.all` namespace.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -128,7 +129,9 @@ def test_probe_tls_with_pqc_groups_timeout():
 
 def test_probe_tls_with_pqc_groups_exception():
     """An exception in the executor is captured."""
-    with patch("app.scanners.scapy_probe._do_probe", side_effect=RuntimeError("scapy crashed")):
+    with patch(
+        "app.scanners.scapy_probe._do_probe", side_effect=RuntimeError("scapy crashed")
+    ):
         result = asyncio.run(probe_tls_with_pqc_groups("1.2.3.4", port=443, timeout=2))
     assert result.success is False
     assert "scapy crashed" in result.error_message

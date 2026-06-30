@@ -2,14 +2,13 @@
 Tests for `app.services.report_service` - the post-processing helpers
 and the small utilities that are easy to exercise in isolation.
 """
+
 from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 
 from app.services.report_service import (
     _CRYPTO_PROPERTIES_ORDER,
@@ -115,11 +114,13 @@ def test_post_process_cbom_invalid_json_returns_unchanged():
 
 
 def test_post_process_cbom_sets_spec_version():
-    cbom = json.dumps({
-        "bomFormat": "CycloneDX",
-        "specVersion": "1.0",
-        "components": [],
-    })
+    cbom = json.dumps(
+        {
+            "bomFormat": "CycloneDX",
+            "specVersion": "1.0",
+            "components": [],
+        }
+    )
     out = post_process_cbom(cbom, assets_map={})
     parsed = json.loads(out)
     assert parsed["specVersion"] == "1.7"
@@ -127,14 +128,16 @@ def test_post_process_cbom_sets_spec_version():
 
 def test_post_process_cbom_certificate_rsa_pqc_vulnerable():
     """An RSA cert with no PQC support -> pqcSafe=False, pqc_status=vulnerable."""
-    cbom = json.dumps({
-        "components": [
-            {
-                "bom-ref": "cert-abc123",
-                "type": "certificate",
-            }
-        ]
-    })
+    cbom = json.dumps(
+        {
+            "components": [
+                {
+                    "bom-ref": "cert-abc123",
+                    "type": "certificate",
+                }
+            ]
+        }
+    )
     cert_obj = _make_cert()
     assets_map = {"cert-abc123": cert_obj}
     out = post_process_cbom(cbom, assets_map)
@@ -149,11 +152,13 @@ def test_post_process_cbom_certificate_rsa_pqc_vulnerable():
 
 def test_post_process_cbom_certificate_ed25519_pqc_safe():
     """An Ed25519 cert is pqcSafe=True, variant=Ed25519."""
-    cbom = json.dumps({
-        "components": [
-            {"bom-ref": "cert-ed", "type": "certificate"},
-        ]
-    })
+    cbom = json.dumps(
+        {
+            "components": [
+                {"bom-ref": "cert-ed", "type": "certificate"},
+            ]
+        }
+    )
     cert_obj = _make_cert(
         sig_algorithm="ed25519",
         pub_key_algorithm="ed25519",
@@ -168,12 +173,16 @@ def test_post_process_cbom_certificate_ed25519_pqc_safe():
 
 def test_post_process_cbom_certificate_pqc_capable():
     """A pqc_capable cert gets pqcSafe=True and nistQuantumSecurityLevel=3."""
-    cbom = json.dumps({
-        "components": [
-            {"bom-ref": "cert-pqc", "type": "certificate"},
-        ]
-    })
-    cert_obj = _make_cert(pqc_capable=True, sig_algorithm="mldsa", pub_key_algorithm="mldsa")
+    cbom = json.dumps(
+        {
+            "components": [
+                {"bom-ref": "cert-pqc", "type": "certificate"},
+            ]
+        }
+    )
+    cert_obj = _make_cert(
+        pqc_capable=True, sig_algorithm="mldsa", pub_key_algorithm="mldsa"
+    )
     out = post_process_cbom(cbom, {"cert-pqc": cert_obj})
     cp = json.loads(out)["components"][0]["cryptoProperties"]
     assert cp["pqcSafe"] is True
@@ -182,11 +191,13 @@ def test_post_process_cbom_certificate_pqc_capable():
 
 def test_post_process_cbom_certificate_ecdsa_p256():
     """An ECDSA P-256 cert -> variant=ECDSA-P256, classical sec level 128."""
-    cbom = json.dumps({
-        "components": [
-            {"bom-ref": "cert-ec", "type": "certificate"},
-        ]
-    })
+    cbom = json.dumps(
+        {
+            "components": [
+                {"bom-ref": "cert-ec", "type": "certificate"},
+            ]
+        }
+    )
     cert_obj = _make_cert(
         sig_algorithm="ecdsa-with-SHA256",
         pub_key_algorithm="ec",
@@ -201,11 +212,13 @@ def test_post_process_cbom_certificate_ecdsa_p256():
 
 def test_post_process_cbom_certificate_rsa_4096_classical_128():
     """An RSA 4096 cert -> classicalSecurityLevel=128."""
-    cbom = json.dumps({
-        "components": [
-            {"bom-ref": "cert-rsa4k", "type": "certificate"},
-        ]
-    })
+    cbom = json.dumps(
+        {
+            "components": [
+                {"bom-ref": "cert-rsa4k", "type": "certificate"},
+            ]
+        }
+    )
     cert_obj = _make_cert(pub_key_size=4096)
     out = post_process_cbom(cbom, {"cert-rsa4k": cert_obj})
     cp = json.loads(out)["components"][0]["cryptoProperties"]
@@ -214,11 +227,13 @@ def test_post_process_cbom_certificate_rsa_4096_classical_128():
 
 def test_post_process_cbom_certificate_rsa_1024_classical_80():
     """RSA 1024 -> classical sec level 80."""
-    cbom = json.dumps({
-        "components": [
-            {"bom-ref": "cert-rsa1k", "type": "certificate"},
-        ]
-    })
+    cbom = json.dumps(
+        {
+            "components": [
+                {"bom-ref": "cert-rsa1k", "type": "certificate"},
+            ]
+        }
+    )
     cert_obj = _make_cert(pub_key_size=1024)
     out = post_process_cbom(cbom, {"cert-rsa1k": cert_obj})
     cp = json.loads(out)["components"][0]["cryptoProperties"]
@@ -227,15 +242,17 @@ def test_post_process_cbom_certificate_rsa_1024_classical_80():
 
 def test_post_process_cbom_algorithm_component_passthrough():
     """Algorithm components without an assets_map entry are passed through unchanged."""
-    cbom = json.dumps({
-        "components": [
-            {
-                "bom-ref": "algo-rsa2048",
-                "type": "algorithm",
-                "name": "RSA-2048",
-            }
-        ]
-    })
+    cbom = json.dumps(
+        {
+            "components": [
+                {
+                    "bom-ref": "algo-rsa2048",
+                    "type": "algorithm",
+                    "name": "RSA-2048",
+                }
+            ]
+        }
+    )
     out = post_process_cbom(cbom, {})
     comp = json.loads(out)["components"][0]
     # The function doesn't decorate algo components; the component is preserved
@@ -245,14 +262,16 @@ def test_post_process_cbom_algorithm_component_passthrough():
 
 def test_post_process_cbom_preserves_existing_crypto_properties():
     """If the component already has cryptoProperties, they are kept + augmented."""
-    cbom = json.dumps({
-        "components": [
-            {
-                "bom-ref": "cert-existing",
-                "cryptoProperties": {"oid": "1.2.3", "pqcSafe": True},
-            }
-        ]
-    })
+    cbom = json.dumps(
+        {
+            "components": [
+                {
+                    "bom-ref": "cert-existing",
+                    "cryptoProperties": {"oid": "1.2.3", "pqcSafe": True},
+                }
+            ]
+        }
+    )
     cert_obj = _make_cert()
     out = post_process_cbom(cbom, {"cert-existing": cert_obj})
     cp = json.loads(out)["components"][0]["cryptoProperties"]

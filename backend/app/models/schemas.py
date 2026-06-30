@@ -46,6 +46,7 @@ class ScanCreate(ScanBase):
     For grouped scans, use ``ScanGroupCreate`` instead — it fans out to
     multiple ``Scan`` rows under one logical operation.
     """
+
     # Optional correlation metadata. May be supplied by the client or
     # derived server-side from the target string.
     target_label: Optional[str] = None
@@ -306,7 +307,7 @@ class FindingOut(BaseModel):
 
 class FindingUpdate(BaseModel):
     status: Optional[str] = None
-    reason: Optional[str] = None # For marking false positive/accepting with reason
+    reason: Optional[str] = None  # For marking false positive/accepting with reason
 
 
 class DashboardSummary(BaseModel):
@@ -376,6 +377,7 @@ class ScanGroupMemberSpec(BaseModel):
     The member's ``scan_type`` and ``target`` are required; everything else
     is inherited from the group (e.g. advanced_tools) unless overridden.
     """
+
     scan_type: str
     target: str
     target_label: Optional[str] = None
@@ -421,6 +423,5 @@ class ScanGroupOut(BaseModel):
 
 class ScanGroupDetailOut(ScanGroupOut):
     """Detailed view with the full member list."""
+
     members: list[ScanOut] = []
-
-

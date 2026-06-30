@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from app.connectors.git_secrets_connector import GitSecretsConnector, SECRET_PATTERNS
+from app.connectors.git_secrets_connector import GitSecretsConnector
 
 
 class TestGitSecretsConnectorInit:
@@ -35,7 +35,11 @@ class TestRunGit:
     def test_run_git_called_process_error(self):
         connector = GitSecretsConnector("/tmp/repo")
         import subprocess
-        with patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, "git", stderr="fatal")):
+
+        with patch(
+            "subprocess.run",
+            side_effect=subprocess.CalledProcessError(1, "git", stderr="fatal"),
+        ):
             output = connector._run_git("log")
             assert output == ""
 
@@ -56,7 +60,9 @@ class TestScanContentForSecrets:
 
     def test_ec_private_key_detected(self):
         connector = GitSecretsConnector("/tmp/repo")
-        content = "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEI...\n-----END EC PRIVATE KEY-----"
+        content = (
+            "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEI...\n-----END EC PRIVATE KEY-----"
+        )
         findings = connector._scan_content_for_secrets(content)
         assert "EC private key" in findings
 
@@ -144,7 +150,9 @@ class TestScanRecentDiffs:
     @pytest.mark.asyncio
     async def test_success_with_secrets(self):
         connector = GitSecretsConnector("/tmp/repo")
-        diff_output = "-----BEGIN RSA PRIVATE KEY-----\ndata\n-----END RSA PRIVATE KEY-----"
+        diff_output = (
+            "-----BEGIN RSA PRIVATE KEY-----\ndata\n-----END RSA PRIVATE KEY-----"
+        )
         with patch("asyncio.to_thread", new_callable=AsyncMock) as mock_thread:
             mock_thread.return_value = diff_output
             findings = await connector._scan_recent_diffs()
@@ -162,7 +170,11 @@ class TestScanRecentDiffs:
     @pytest.mark.asyncio
     async def test_exception_handled(self):
         connector = GitSecretsConnector("/tmp/repo")
-        with patch("asyncio.to_thread", new_callable=AsyncMock, side_effect=Exception("git error")):
+        with patch(
+            "asyncio.to_thread",
+            new_callable=AsyncMock,
+            side_effect=Exception("git error"),
+        ):
             findings = await connector._scan_recent_diffs()
             assert len(findings) == 0
 
@@ -213,7 +225,11 @@ class TestScanTrackedFiles:
     @pytest.mark.asyncio
     async def test_ls_files_exception(self):
         connector = GitSecretsConnector("/tmp/repo")
-        with patch("asyncio.to_thread", new_callable=AsyncMock, side_effect=Exception("git error")):
+        with patch(
+            "asyncio.to_thread",
+            new_callable=AsyncMock,
+            side_effect=Exception("git error"),
+        ):
             findings = await connector._scan_tracked_files()
             assert len(findings) == 0
 
@@ -334,10 +350,24 @@ class TestSync:
         mock_result.scalar_one_or_none.return_value = None
         session.execute.return_value = mock_result
 
-        with patch.object(connector, "_scan_recent_diffs", new_callable=AsyncMock, return_value={"RSA private key": 1}), \
-             patch.object(connector, "_scan_tracked_files", new_callable=AsyncMock, return_value={"X.509 certificate": 2}), \
-             patch.object(connector, "_get_commit_count", new_callable=AsyncMock, return_value=100), \
-             patch.object(connector, "_get_repo_info", new_callable=AsyncMock, return_value={"remotes": ["origin"], "branches": ["main"]}):
+        with patch.object(
+            connector,
+            "_scan_recent_diffs",
+            new_callable=AsyncMock,
+            return_value={"RSA private key": 1},
+        ), patch.object(
+            connector,
+            "_scan_tracked_files",
+            new_callable=AsyncMock,
+            return_value={"X.509 certificate": 2},
+        ), patch.object(
+            connector, "_get_commit_count", new_callable=AsyncMock, return_value=100
+        ), patch.object(
+            connector,
+            "_get_repo_info",
+            new_callable=AsyncMock,
+            return_value={"remotes": ["origin"], "branches": ["main"]},
+        ):
             result = await connector.sync(session)
 
         assert result["status"] == "success"
@@ -360,10 +390,21 @@ class TestSync:
         mock_result.scalar_one_or_none.return_value = existing_asset
         session.execute.return_value = mock_result
 
-        with patch.object(connector, "_scan_recent_diffs", new_callable=AsyncMock, return_value={}), \
-             patch.object(connector, "_scan_tracked_files", new_callable=AsyncMock, return_value={"EC private key": 1}), \
-             patch.object(connector, "_get_commit_count", new_callable=AsyncMock, return_value=50), \
-             patch.object(connector, "_get_repo_info", new_callable=AsyncMock, return_value={"remotes": [], "branches": []}):
+        with patch.object(
+            connector, "_scan_recent_diffs", new_callable=AsyncMock, return_value={}
+        ), patch.object(
+            connector,
+            "_scan_tracked_files",
+            new_callable=AsyncMock,
+            return_value={"EC private key": 1},
+        ), patch.object(
+            connector, "_get_commit_count", new_callable=AsyncMock, return_value=50
+        ), patch.object(
+            connector,
+            "_get_repo_info",
+            new_callable=AsyncMock,
+            return_value={"remotes": [], "branches": []},
+        ):
             result = await connector.sync(session)
 
         assert result["status"] == "success"
@@ -379,10 +420,18 @@ class TestSync:
         mock_result.scalar_one_or_none.return_value = None
         session.execute.return_value = mock_result
 
-        with patch.object(connector, "_scan_recent_diffs", new_callable=AsyncMock) as mock_diffs, \
-             patch.object(connector, "_scan_tracked_files", new_callable=AsyncMock, return_value={}), \
-             patch.object(connector, "_get_commit_count", new_callable=AsyncMock, return_value=10), \
-             patch.object(connector, "_get_repo_info", new_callable=AsyncMock, return_value={"remotes": [], "branches": []}):
+        with patch.object(
+            connector, "_scan_recent_diffs", new_callable=AsyncMock
+        ) as mock_diffs, patch.object(
+            connector, "_scan_tracked_files", new_callable=AsyncMock, return_value={}
+        ), patch.object(
+            connector, "_get_commit_count", new_callable=AsyncMock, return_value=10
+        ), patch.object(
+            connector,
+            "_get_repo_info",
+            new_callable=AsyncMock,
+            return_value={"remotes": [], "branches": []},
+        ):
             result = await connector.sync(session)
             mock_diffs.assert_not_called()
 

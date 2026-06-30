@@ -1,16 +1,11 @@
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-from types import SimpleNamespace
-import asyncio
+from unittest.mock import MagicMock
 
 from app.services.risk_service import (
     calculate_risk_score,
     is_disallowed_now,
     derive_data_longevity_years,
-    derive_hndl_exposure,
     derive_replaceability,
     risk_score_to_percent,
-    DISALLOWED_NOW_PATTERNS,
 )
 
 
@@ -171,14 +166,18 @@ class TestCalculateRiskScoreExtended:
         asset = MagicMock()
         asset.asset_type = "web_app"
         asset.environment = "production"
-        score = calculate_risk_score(asset=asset, pqc_status="vulnerable", years_to_deadline=10)
+        score = calculate_risk_score(
+            asset=asset, pqc_status="vulnerable", years_to_deadline=10
+        )
         assert score > 0
 
     def test_asset_api_exposure(self):
         asset = MagicMock()
         asset.asset_type = "api"
         asset.environment = "production"
-        score = calculate_risk_score(asset=asset, pqc_status="vulnerable", years_to_deadline=10)
+        score = calculate_risk_score(
+            asset=asset, pqc_status="vulnerable", years_to_deadline=10
+        )
         assert score > 0
 
     def test_years_to_deadline_thresholds(self):

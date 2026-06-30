@@ -6,6 +6,7 @@ for deciding whether a scan should be auto-wrapped in a ScanGroup.
 These tests pin the expected behaviour for every shape the orchestrator
 and the API layer can hand us.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -18,6 +19,7 @@ from app.utils.target_classifier import (
 
 
 # Table-driven cases ---------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     "target, expected_kind, expected_label, expected_groupable",
@@ -37,13 +39,23 @@ from app.utils.target_classifier import (
         ("scanme.pqc", "domain", "scanme.pqc", True),
         ("example.com", "domain", "example.com", True),
         # Comma-separated multi-host
-        ("10.0.0.1,10.0.0.2,10.0.0.3", "network_range", "10.0.0.1,10.0.0.2,10.0.0.3", True),
+        (
+            "10.0.0.1,10.0.0.2,10.0.0.3",
+            "network_range",
+            "10.0.0.1,10.0.0.2,10.0.0.3",
+            True,
+        ),
         # Semicolons should be treated like commas
         ("10.0.0.1;10.0.0.2", "network_range", "10.0.0.1;10.0.0.2", True),
         # Connector-style single-endpoint targets
         ("ssh:10.0.0.1:22", "host", "ssh:10.0.0.1:22", False),
         ("winrm:host:5985", "host", "winrm:host:5985", False),
-        ("pkcs11:/usr/lib/softhsm/libsofthsm2.so", "host", "pkcs11:/usr/lib/softhsm/libsofthsm2.so", False),
+        (
+            "pkcs11:/usr/lib/softhsm/libsofthsm2.so",
+            "host",
+            "pkcs11:/usr/lib/softhsm/libsofthsm2.so",
+            False,
+        ),
         ("aws:us-east-1", "host", "aws:us-east-1", False),
         # URL form: the classifier strips the protocol + path and
         # returns the host portion as the label. If the host looks
@@ -71,24 +83,15 @@ def test_classify_target_preserves_whitespace_in_cidr():
 
 
 def test_suggest_group_name_network_range():
-    assert (
-        suggest_group_name("192.168.1.0/24")
-        == "Network scan: 192.168.1.0/24"
-    )
+    assert suggest_group_name("192.168.1.0/24") == "Network scan: 192.168.1.0/24"
 
 
 def test_suggest_group_name_domain():
-    assert (
-        suggest_group_name("scanme.pqc")
-        == "Domain scan: scanme.pqc"
-    )
+    assert suggest_group_name("scanme.pqc") == "Domain scan: scanme.pqc"
 
 
 def test_suggest_group_name_host():
-    assert (
-        suggest_group_name("10.0.0.1")
-        == "Host scan: 10.0.0.1"
-    )
+    assert suggest_group_name("10.0.0.1") == "Host scan: 10.0.0.1"
 
 
 def test_suggest_group_name_falls_back_when_empty():

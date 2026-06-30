@@ -594,7 +594,7 @@ export default function Connectors() {
         const data = await response.json();
         setConnectors(data);
       }
-    } catch (err) {
+    } catch {
       // Ignored
     }
   };

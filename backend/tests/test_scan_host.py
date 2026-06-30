@@ -8,15 +8,13 @@ IKE/Mail, CT log, advanced scanners) without doing real network I/O.
 The probe functions are patched at the module level so the tests are
 fully offline and fast.
 """
+
 from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from typing import List
 from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 
 # --------------------------------------------------------------- helpers -----
@@ -38,7 +36,8 @@ def _tls_ok(port: int = 443):
             "pub_key_size": 2048,
             "curve_name": None,
             "not_before": datetime.now(timezone.utc),
-            "not_after": datetime.now(timezone.utc) + __import__("datetime").timedelta(days=365),
+            "not_after": datetime.now(timezone.utc)
+            + __import__("datetime").timedelta(days=365),
             "is_self_signed": False,
             "is_ca": False,
             "key_usage": ["digitalSignature"],
@@ -147,7 +146,9 @@ def test_scan_host_tls_failure_no_finding():
 
     session = _make_session()
     fail = _tls_fail()
-    with patch("app.services.scan_host.scan_tls_endpoint", new=AsyncMock(return_value=fail)):
+    with patch(
+        "app.services.scan_host.scan_tls_endpoint", new=AsyncMock(return_value=fail)
+    ):
         result = asyncio.run(
             scan_host(
                 session=session,
@@ -212,8 +213,12 @@ def test_scan_host_targeted_runs_ike_and_mail():
         cipher_suite="ECDHE-RSA-AES256",
         cert_data=None,
     )
-    with patch("app.services.scan_host.scan_ike_endpoint", new=AsyncMock(return_value=ike_res)), \
-         patch("app.services.scan_host.scan_mail_endpoint", new=AsyncMock(return_value=mail_res)):
+    with patch(
+        "app.services.scan_host.scan_ike_endpoint", new=AsyncMock(return_value=ike_res)
+    ), patch(
+        "app.services.scan_host.scan_mail_endpoint",
+        new=AsyncMock(return_value=mail_res),
+    ):
         result = asyncio.run(
             scan_host(
                 session=session,
@@ -239,7 +244,10 @@ def test_scan_host_saves_savepoint_on_error():
     session = _make_session()
 
     # Make the first TLS probe raise.
-    with patch("app.services.scan_host.scan_tls_endpoint", new=AsyncMock(side_effect=RuntimeError("boom"))):
+    with patch(
+        "app.services.scan_host.scan_tls_endpoint",
+        new=AsyncMock(side_effect=RuntimeError("boom")),
+    ):
         result = asyncio.run(
             scan_host(
                 session=session,
@@ -262,8 +270,13 @@ def test_scan_host_returns_error_on_fatal():
 
     session = _make_session()
 
-    with patch("app.services.scan_host.scan_tls_endpoint", new=AsyncMock(return_value=_tls_ok(443))), \
-         patch("app.services.scan_host.generate_findings", new=AsyncMock(side_effect=ValueError("nope"))):
+    with patch(
+        "app.services.scan_host.scan_tls_endpoint",
+        new=AsyncMock(return_value=_tls_ok(443)),
+    ), patch(
+        "app.services.scan_host.generate_findings",
+        new=AsyncMock(side_effect=ValueError("nope")),
+    ):
         result = asyncio.run(
             scan_host(
                 session=session,
@@ -287,11 +300,45 @@ def test_scan_host_advanced_tools_runs_sslyze():
     from app.services.scan_host import scan_host
 
     session = _make_session()
-    with patch("app.services.scan_host._run_advanced_scanners", new=AsyncMock(return_value=(True, 1, 0))), \
-         patch("app.services.scan_host.scan_tls_endpoint", new=AsyncMock(side_effect=[_tls_ok(443), _tls_fail(), _tls_fail(), _tls_fail(), _tls_fail(), _tls_fail(), _tls_fail()])), \
-         patch("app.services.scan_host.scan_ssh_endpoint", new=AsyncMock(side_effect=[_ssh_fail(), _ssh_fail(), _ssh_fail()])), \
-         patch("app.services.scan_host.scan_ike_endpoint", new=AsyncMock(return_value=SimpleNamespace(success=False, ike_version=0, pqc_status="unknown", dh_groups=[]))), \
-         patch("app.services.scan_host.scan_mail_endpoint", new=AsyncMock(return_value=SimpleNamespace(success=False, mode="", starttls_supported=False, tls_version="", cipher_suite="", cert_data=None))):
+    with patch(
+        "app.services.scan_host._run_advanced_scanners",
+        new=AsyncMock(return_value=(True, 1, 0)),
+    ), patch(
+        "app.services.scan_host.scan_tls_endpoint",
+        new=AsyncMock(
+            side_effect=[
+                _tls_ok(443),
+                _tls_fail(),
+                _tls_fail(),
+                _tls_fail(),
+                _tls_fail(),
+                _tls_fail(),
+                _tls_fail(),
+            ]
+        ),
+    ), patch(
+        "app.services.scan_host.scan_ssh_endpoint",
+        new=AsyncMock(side_effect=[_ssh_fail(), _ssh_fail(), _ssh_fail()]),
+    ), patch(
+        "app.services.scan_host.scan_ike_endpoint",
+        new=AsyncMock(
+            return_value=SimpleNamespace(
+                success=False, ike_version=0, pqc_status="unknown", dh_groups=[]
+            )
+        ),
+    ), patch(
+        "app.services.scan_host.scan_mail_endpoint",
+        new=AsyncMock(
+            return_value=SimpleNamespace(
+                success=False,
+                mode="",
+                starttls_supported=False,
+                tls_version="",
+                cipher_suite="",
+                cert_data=None,
+            )
+        ),
+    ):
         result = asyncio.run(
             scan_host(
                 session=session,
@@ -325,7 +372,10 @@ def test_scan_host_ct_monitor_inserts_certificates():
             },
         ],
     )
-    with patch("app.services.scan_host.scan_ct_logs_for_domain", new=AsyncMock(return_value=ct_res)):
+    with patch(
+        "app.services.scan_host.scan_ct_logs_for_domain",
+        new=AsyncMock(return_value=ct_res),
+    ):
         result = asyncio.run(
             scan_host(
                 session=session,
@@ -351,10 +401,32 @@ def test_scan_host_result_shape_contract():
     session = _make_session()
     # Patch every probe so the test is fully offline; we're only
     # validating the result shape here.
-    with patch("app.services.scan_host.scan_tls_endpoint", new=AsyncMock(side_effect=[_tls_fail()] * 7)), \
-         patch("app.services.scan_host.scan_ssh_endpoint", new=AsyncMock(side_effect=[_ssh_fail()] * 3)), \
-         patch("app.services.scan_host.scan_ike_endpoint", new=AsyncMock(return_value=SimpleNamespace(success=False, ike_version=0, pqc_status="unknown", dh_groups=[]))), \
-         patch("app.services.scan_host.scan_mail_endpoint", new=AsyncMock(return_value=SimpleNamespace(success=False, mode="", starttls_supported=False, tls_version="", cipher_suite="", cert_data=None))):
+    with patch(
+        "app.services.scan_host.scan_tls_endpoint",
+        new=AsyncMock(side_effect=[_tls_fail()] * 7),
+    ), patch(
+        "app.services.scan_host.scan_ssh_endpoint",
+        new=AsyncMock(side_effect=[_ssh_fail()] * 3),
+    ), patch(
+        "app.services.scan_host.scan_ike_endpoint",
+        new=AsyncMock(
+            return_value=SimpleNamespace(
+                success=False, ike_version=0, pqc_status="unknown", dh_groups=[]
+            )
+        ),
+    ), patch(
+        "app.services.scan_host.scan_mail_endpoint",
+        new=AsyncMock(
+            return_value=SimpleNamespace(
+                success=False,
+                mode="",
+                starttls_supported=False,
+                tls_version="",
+                cipher_suite="",
+                cert_data=None,
+            )
+        ),
+    ):
         result = asyncio.run(
             scan_host(
                 session=session,

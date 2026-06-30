@@ -20,6 +20,8 @@ Thumbs.db
 .idea/
 *.log
 *.tmp
+.kilo/
+graphify-out/
 *.egg-info/
 .eggs/
 venv/

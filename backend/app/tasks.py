@@ -57,13 +57,17 @@ def execute_scan(self, scan_id: str):
         logger.warning(
             f"Scan {scan_id} failed (attempt {self.request.retries + 1}/{self.max_retries + 1}): {exc}"
         )
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries * 10)  # 10s, 20s, 40s
+        raise self.retry(
+            exc=exc, countdown=2**self.request.retries * 10
+        )  # 10s, 20s, 40s
 
 
 @celery_app.task(name="app.tasks.execute_report", bind=True)
 def execute_report(self, report_id: str, scan_ids=None):
     """Celery background task to execute report generation."""
-    logger.info(f"Received celery task execute_report for report_id: {report_id}, scan_ids={scan_ids}")
+    logger.info(
+        f"Received celery task execute_report for report_id: {report_id}, scan_ids={scan_ids}"
+    )
     from app.db import AsyncSessionLocal
     from app.models.models import Report
     from app.services.report_service import generate_report
@@ -116,7 +120,9 @@ def execute_scheduled_scan(self):
                 for asset in assets:
                     if asset.ip_address:
                         unique_targets.add(asset.ip_address)
-                    elif asset.name and not asset.name.startswith(("aws:", "azure:", "gcp:", "pkcs11:", "kmip:")):
+                    elif asset.name and not asset.name.startswith(
+                        ("aws:", "azure:", "gcp:", "pkcs11:", "kmip:")
+                    ):
                         unique_targets.add(asset.name)
                 targets = list(unique_targets)
 
@@ -149,7 +155,7 @@ def execute_scheduled_scan(self):
 
                 # Import execute_scan locally to avoid circular import
                 from app.tasks import execute_scan
+
                 execute_scan.delay(str(scan.id))
 
     return _run_async(run())
-

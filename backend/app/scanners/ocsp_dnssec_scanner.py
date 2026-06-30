@@ -17,12 +17,11 @@ The DNSSEC probe:
 Both probes are offline-friendly: they are pure network calls and never
 require credentials.
 """
+
 from __future__ import annotations
 
 import asyncio
-import base64
 import logging
-import socket
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 from urllib.parse import urlparse
@@ -46,8 +45,10 @@ logger = logging.getLogger(__name__)
 # are flagged as vulnerable. Per NIST IR 8547, ED25519/ED448 are
 # quantum-vulnerable (disallowed 2035), not safe.
 _DNSSEC_SAFE_ALGS = {
-    "RSASHA256", "RSASHA512",
-    "ECDSAP256SHA256", "ECDSAP384SHA384",
+    "RSASHA256",
+    "RSASHA512",
+    "ECDSAP256SHA256",
+    "ECDSAP384SHA384",
 }
 _DNSSEC_TRANSITION_ALGS = {"ED25519", "ED448"}
 _DNSSEC_WARN_ALGS = {"RSASHA1", "RSAMD5", "DSA", "NSEC3DSA"}
@@ -56,10 +57,11 @@ _DNSSEC_WARN_ALGS = {"RSASHA1", "RSAMD5", "DSA", "NSEC3DSA"}
 @dataclass
 class OCSPProbeResult:
     """Result of an OCSP check for a single certificate."""
+
     host: str
     cert_thumbprint: Optional[str]
     success: bool
-    status: str = "unknown"            # good / revoked / unknown / error
+    status: str = "unknown"  # good / revoked / unknown / error
     responder_url: Optional[str] = None
     responder_name: Optional[str] = None
     signature_algorithm: Optional[str] = None
@@ -71,6 +73,7 @@ class OCSPProbeResult:
 @dataclass
 class DNSSECProbeResult:
     """Result of a DNSSEC probe for a single domain."""
+
     domain: str
     success: bool
     has_dnskey: bool = False
@@ -140,7 +143,7 @@ async def probe_ocsp(
 
     try:
         cert = x509.load_der_x509_certificate(cert_der)
-        thumbprint = cert.fingerprint(hashes.SHA1()).hex()
+        thumbprint = cert.fingerprint(hashes.SHA1()).hex()  # nosec B303
     except Exception as exc:
         return OCSPProbeResult(
             host=host,
@@ -156,10 +159,14 @@ async def probe_ocsp(
     issuer_cert = None
     try:
         from cryptography.x509.oid import ExtensionOID, AuthorityInformationAccessOID
+
         try:
-            aia = cert.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS).value
+            aia = cert.extensions.get_extension_for_oid(
+                ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+            ).value
             ca_issuers = [
-                desc for desc in aia  # type: ignore[attr-defined]
+                desc
+                for desc in aia  # type: ignore[attr-defined]
                 if desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS
             ]
             if ca_issuers:
@@ -169,21 +176,34 @@ async def probe_ocsp(
                     port = parsed.port or (443 if parsed.scheme == "https" else 80)
                     await build_safe_target_async(parsed.hostname or "", port)
                 except (UnsafeTargetError, Exception) as exc:
-                    logger.warning("Unsafe CA issuer URL %s, skipping: %s", ca_issuer_url, exc)
+                    logger.warning(
+                        "Unsafe CA issuer URL %s, skipping: %s", ca_issuer_url, exc
+                    )
                     ca_issuer_url = None
                 if ca_issuer_url:
                     async with httpx.AsyncClient(timeout=timeout) as client:
                         resp = await client.get(ca_issuer_url)
                         if resp.status_code == 200:
                             try:
-                                issuer_cert = x509.load_der_x509_certificate(resp.content)
+                                issuer_cert = x509.load_der_x509_certificate(
+                                    resp.content
+                                )
                             except Exception:
                                 try:
-                                    issuer_cert = x509.load_pem_x509_certificate(resp.content)
+                                    issuer_cert = x509.load_pem_x509_certificate(
+                                        resp.content
+                                    )
                                 except Exception:
-                                    logger.warning("Failed to parse AIA issuer certificate as DER or PEM from %s", ca_issuer_url)
+                                    logger.warning(
+                                        "Failed to parse AIA issuer certificate as DER or PEM from %s",
+                                        ca_issuer_url,
+                                    )
                         else:
-                            logger.warning("Failed to download AIA issuer certificate from %s: HTTP %s", ca_issuer_url, resp.status_code)
+                            logger.warning(
+                                "Failed to download AIA issuer certificate from %s: HTTP %s",
+                                ca_issuer_url,
+                                resp.status_code,
+                            )
         except x509.ExtensionNotFound:
             pass
     except Exception as exc:
@@ -194,7 +214,7 @@ async def probe_ocsp(
     try:
         builder = crypto_ocsp.OCSPRequestBuilder()
         builder = builder.add_certificate(
-            cert=cert, issuer=issuer, algorithm=hashes.SHA1()
+            cert=cert, issuer=issuer, algorithm=hashes.SHA1()  # nosec B303
         )
         req = builder.build()
         req_der = req.public_bytes(serialization.Encoding.DER)
@@ -242,7 +262,11 @@ async def probe_ocsp(
         crypto_ocsp.OCSPCertStatus.UNKNOWN: "unknown",
     }
     status_str = status_map.get(ocsp_resp.certificate_status, "unknown")
-    sig_alg_name = ocsp_resp.signature_algorithm_oid._name if ocsp_resp.signature_algorithm_oid else "unknown"
+    sig_alg_name = (
+        ocsp_resp.signature_algorithm_oid._name
+        if ocsp_resp.signature_algorithm_oid
+        else "unknown"
+    )
 
     pqc_status = "safe"
     if "md5" in sig_alg_name.lower() or "sha1" in sig_alg_name.lower():

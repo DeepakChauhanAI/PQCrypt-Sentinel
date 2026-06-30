@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -44,8 +44,7 @@ class WinRMConnector(BaseConnector):
         """Resolve vault credential reference for WinRM."""
         # Direct credentials dictionary fallback/override
         if isinstance(self.credentials_ref, dict) and (
-            "username" in self.credentials_ref
-            or "password" in self.credentials_ref
+            "username" in self.credentials_ref or "password" in self.credentials_ref
         ):
             return self.credentials_ref
 
@@ -77,15 +76,21 @@ class WinRMConnector(BaseConnector):
 
         try:
             shell_id = p.open_shell()
-            command_id = p.run_command(shell_id, f"powershell -NoProfile -NonInteractive -Command {command}")
+            command_id = p.run_command(
+                shell_id, f"powershell -NoProfile -NonInteractive -Command {command}"
+            )
             std_out, std_err, status_code = p.get_command_output(shell_id, command_id)
             p.cleanup_command(shell_id, command_id)
             p.close_shell(shell_id)
 
             return {
                 "exit_code": status_code,
-                "stdout": std_out.decode("utf-8", errors="ignore").strip() if std_out else "",
-                "stderr": std_err.decode("utf-8", errors="ignore").strip() if std_err else "",
+                "stdout": (
+                    std_out.decode("utf-8", errors="ignore").strip() if std_out else ""
+                ),
+                "stderr": (
+                    std_err.decode("utf-8", errors="ignore").strip() if std_err else ""
+                ),
             }
         except Exception as e:
             return {
@@ -108,6 +113,7 @@ class WinRMConnector(BaseConnector):
         if result["exit_code"] == 0 and result["stdout"]:
             try:
                 import json
+
                 certs = json.loads(result["stdout"])
                 if not isinstance(certs, list):
                     certs = [certs]
@@ -118,7 +124,15 @@ class WinRMConnector(BaseConnector):
 
     async def _get_all_cert_stores(self, protocol) -> Dict[str, List[Dict[str, Any]]]:
         """Enumerate all relevant certificate stores."""
-        stores = ["My", "Root", "CA", "TrustedPublisher", "AuthRoot", "Disallowed", "TrustedPeople"]
+        stores = [
+            "My",
+            "Root",
+            "CA",
+            "TrustedPublisher",
+            "AuthRoot",
+            "Disallowed",
+            "TrustedPeople",
+        ]
         results = {}
         for store in stores:
             certs = await self._get_cert_store(protocol, store)
@@ -132,8 +146,8 @@ class WinRMConnector(BaseConnector):
         Get-ChildItem -Path "CNG:\\*" -Recurse -ErrorAction SilentlyContinue |
         Where-Object {$_.PSIsContainer -eq $false} |
         Select-Object Name, PSPath, @{Name='Provider';Expression={$_.Provider.Name}},
-        @{Name='Algorithm';Expression={$_.AlgorithmGroup}}, 
-        @{Name='KeySize';Expression={$_.Length}}, 
+        @{Name='Algorithm';Expression={$_.AlgorithmGroup}},
+        @{Name='KeySize';Expression={$_.Length}},
         @{Name='ExportPolicy';Expression={$_.ExportPolicy}},
         @{Name='CreationTime';Expression={$_.CreationTime}} |
         ConvertTo-Json -Depth 5
@@ -142,6 +156,7 @@ class WinRMConnector(BaseConnector):
         if result["exit_code"] == 0 and result["stdout"]:
             try:
                 import json
+
                 keys = json.loads(result["stdout"])
                 if not isinstance(keys, list):
                     keys = [keys]
@@ -178,6 +193,7 @@ class WinRMConnector(BaseConnector):
         if result["exit_code"] == 0 and result["stdout"]:
             try:
                 import json
+
                 return json.loads(result["stdout"])
             except Exception:
                 return {}
@@ -212,6 +228,7 @@ class WinRMConnector(BaseConnector):
         if result["exit_code"] == 0 and result["stdout"]:
             try:
                 import json
+
                 bindings = json.loads(result["stdout"])
                 if not isinstance(bindings, list):
                     bindings = [bindings]
@@ -241,6 +258,7 @@ class WinRMConnector(BaseConnector):
         if result["exit_code"] == 0 and result["stdout"]:
             try:
                 import json
+
                 volumes = json.loads(result["stdout"])
                 if not isinstance(volumes, list):
                     volumes = [volumes]
@@ -271,6 +289,7 @@ class WinRMConnector(BaseConnector):
         if result["exit_code"] == 0 and result["stdout"]:
             try:
                 import json
+
                 return json.loads(result["stdout"])
             except Exception:
                 return {}
@@ -299,6 +318,7 @@ class WinRMConnector(BaseConnector):
         if result["exit_code"] == 0 and result["stdout"]:
             try:
                 import json
+
                 return json.loads(result["stdout"])
             except Exception:
                 return {}
@@ -310,7 +330,9 @@ class WinRMConnector(BaseConnector):
         password = creds.get("password") or creds.get("winrm_password")
 
         if not username or not password:
-            raise RuntimeError("WinRM connector requires username and password from vault")
+            raise RuntimeError(
+                "WinRM connector requires username and password from vault"
+            )
 
         protocol = {
             "username": username,
@@ -318,15 +340,17 @@ class WinRMConnector(BaseConnector):
         }
 
         # Run enumeration tasks in parallel
-        cert_stores, cng_keys, schannel, iis_bindings, bitlocker, firmware, tpm = await asyncio.gather(
-            self._get_all_cert_stores(protocol),
-            self._get_cng_keys(protocol),
-            self._get_schannel_settings(protocol),
-            self._get_iis_bindings(protocol),
-            self._get_bitlocker_status(protocol),
-            self._get_firmware_info(protocol),
-            self._get_tpm_info(protocol),
-            return_exceptions=True,
+        cert_stores, cng_keys, schannel, iis_bindings, bitlocker, firmware, tpm = (
+            await asyncio.gather(
+                self._get_all_cert_stores(protocol),
+                self._get_cng_keys(protocol),
+                self._get_schannel_settings(protocol),
+                self._get_iis_bindings(protocol),
+                self._get_bitlocker_status(protocol),
+                self._get_firmware_info(protocol),
+                self._get_tpm_info(protocol),
+                return_exceptions=True,
+            )
         )
 
         # Handle exceptions
@@ -362,10 +386,14 @@ class WinRMConnector(BaseConnector):
             "provider": "winrm_agentless",
             "host": self.host,
             "port": self.port,
-            "cert_stores": cert_stores if not isinstance(cert_stores, Exception) else {},
+            "cert_stores": (
+                cert_stores if not isinstance(cert_stores, Exception) else {}
+            ),
             "cng_keys": cng_keys if not isinstance(cng_keys, Exception) else [],
             "schannel": schannel if not isinstance(schannel, Exception) else {},
-            "iis_bindings": iis_bindings if not isinstance(iis_bindings, Exception) else [],
+            "iis_bindings": (
+                iis_bindings if not isinstance(iis_bindings, Exception) else []
+            ),
             "bitlocker": bitlocker if not isinstance(bitlocker, Exception) else {},
             "firmware": firmware if not isinstance(firmware, Exception) else {},
             "tpm": tpm if not isinstance(tpm, Exception) else {},

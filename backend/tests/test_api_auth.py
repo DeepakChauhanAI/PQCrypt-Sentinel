@@ -1,6 +1,7 @@
 """
 Tests for `app.api.auth` - login / refresh / logout / me endpoints.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -47,6 +48,7 @@ def _scalar_one_or_none(value):
 def mock_db():
     session = AsyncMock()
     from app.db import get_session
+
     app.dependency_overrides[get_session] = lambda: session
     yield session
     app.dependency_overrides.pop(get_session, None)
@@ -69,10 +71,13 @@ def test_login_success(mock_db):
 
     with patch("app.api.auth.verify_password", return_value=True):
         client = TestClient(app)
-        resp = client.post("/api/v1/auth/login", json={
-            "email": "user@pqc.local",
-            "password": "correct-password",
-        })
+        resp = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "user@pqc.local",
+                "password": "correct-password",
+            },
+        )
     assert resp.status_code == 200, resp.text
     body = resp.json()
     assert "access_token" in body
@@ -83,10 +88,13 @@ def test_login_invalid_email(mock_db):
     """No user found -> 401."""
     mock_db.execute.return_value = _scalar_one_or_none(None)
     client = TestClient(app)
-    resp = client.post("/api/v1/auth/login", json={
-        "email": "nope@pqc.local",
-        "password": "x",
-    })
+    resp = client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "nope@pqc.local",
+            "password": "x",
+        },
+    )
     assert resp.status_code == 401
     assert "Invalid" in resp.json()["detail"]
 
@@ -96,10 +104,13 @@ def test_login_wrong_password(mock_db):
     mock_db.execute.return_value = _scalar_one_or_none(user)
     with patch("app.api.auth.verify_password", return_value=False):
         client = TestClient(app)
-        resp = client.post("/api/v1/auth/login", json={
-            "email": "user@pqc.local",
-            "password": "wrong",
-        })
+        resp = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "user@pqc.local",
+                "password": "wrong",
+            },
+        )
     assert resp.status_code == 401
 
 
@@ -108,10 +119,13 @@ def test_login_disabled_account(mock_db):
     mock_db.execute.return_value = _scalar_one_or_none(user)
     with patch("app.api.auth.verify_password", return_value=True):
         client = TestClient(app)
-        resp = client.post("/api/v1/auth/login", json={
-            "email": "user@pqc.local",
-            "password": "correct",
-        })
+        resp = client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "user@pqc.local",
+                "password": "correct",
+            },
+        )
     assert resp.status_code == 401
     assert "Disabled" in resp.json()["detail"]
 
@@ -137,7 +151,8 @@ def test_refresh_wrong_token_type_returns_401(mock_db):
 def test_refresh_revoked_token_returns_401(mock_db):
     fake_decoded = SimpleNamespace(type="refresh", jti="xxx", sub="user-id", exp=None)
     stored = SimpleNamespace(
-        revoked=True, expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+        revoked=True,
+        expires_at=datetime.now(timezone.utc) + timedelta(days=1),
     )
     call_count = {"n": 0}
 
@@ -169,8 +184,12 @@ def test_refresh_expired_token_returns_401(mock_db):
 
 def test_refresh_success(mock_db):
     """Happy path: stored token found, user found, active -> new tokens."""
-    fake_decoded_old = SimpleNamespace(type="refresh", jti="old-jti", sub="user-id", exp=None)
-    fake_decoded_new = SimpleNamespace(type="refresh", jti="new-jti", sub="user-id", exp=None)
+    fake_decoded_old = SimpleNamespace(
+        type="refresh", jti="old-jti", sub="user-id", exp=None
+    )
+    fake_decoded_new = SimpleNamespace(
+        type="refresh", jti="new-jti", sub="user-id", exp=None
+    )
     user = _user_row()
     stored = SimpleNamespace(
         revoked=False,
@@ -187,7 +206,9 @@ def test_refresh_success(mock_db):
         return _scalar_one_or_none(None)
 
     mock_db.execute.side_effect = _execute
-    with patch("app.api.auth.decode_token", side_effect=[fake_decoded_old, fake_decoded_new]):
+    with patch(
+        "app.api.auth.decode_token", side_effect=[fake_decoded_old, fake_decoded_new]
+    ):
         client = TestClient(app)
         resp = client.post("/api/v1/auth/refresh", json={"refresh_token": "x"})
     assert resp.status_code == 200
@@ -233,7 +254,9 @@ def test_logout_with_no_token_returns_200(mock_db):
 
 
 def test_logout_with_valid_token_revokes(mock_db):
-    fake_decoded = SimpleNamespace(type="refresh", jti="my-jti", sub="user-id", exp=None)
+    fake_decoded = SimpleNamespace(
+        type="refresh", jti="my-jti", sub="user-id", exp=None
+    )
     stored = SimpleNamespace(revoked=False)
     mock_db.execute.return_value = _scalar_one_or_none(stored)
     with patch("app.api.auth.decode_token", return_value=fake_decoded):
@@ -245,7 +268,9 @@ def test_logout_with_valid_token_revokes(mock_db):
 
 def test_logout_with_already_revoked_token(mock_db):
     """Logout of an already-revoked token is a no-op."""
-    fake_decoded = SimpleNamespace(type="refresh", jti="my-jti", sub="user-id", exp=None)
+    fake_decoded = SimpleNamespace(
+        type="refresh", jti="my-jti", sub="user-id", exp=None
+    )
     stored = SimpleNamespace(revoked=True)
     mock_db.execute.return_value = _scalar_one_or_none(stored)
     with patch("app.api.auth.decode_token", return_value=fake_decoded):

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import socket
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
 
@@ -74,7 +73,7 @@ def _do_probe(host: str, port: int, timeout: int) -> Dict[str, Any]:
         from scapy.all import IP, TCP, sr1  # type: ignore[attr-defined]
 
         groups = _PQC_GROUPS + _CLASSICAL_GROUPS
-        tls_payload = _build_tls_hello(groups, _CIPHERS)
+        _ = _build_tls_hello(groups, _CIPHERS)
         pkt = IP(dst=host) / TCP(dport=port, flags="S")
         syn_ack = sr1(pkt, timeout=timeout)
         if syn_ack is None:
@@ -84,7 +83,9 @@ def _do_probe(host: str, port: int, timeout: int) -> Dict[str, Any]:
                 "target_ip": host,
                 "port": port,
                 "error_message": "No response to SYN probe",
-                "pqc_groups_advertised": [_GROUP_ID_NAMES.get(g, hex(g)) for g in _PQC_GROUPS],
+                "pqc_groups_advertised": [
+                    _GROUP_ID_NAMES.get(g, hex(g)) for g in _PQC_GROUPS
+                ],
             }
         pqc_names = [_GROUP_ID_NAMES.get(g, hex(g)) for g in _PQC_GROUPS]
         return {
@@ -115,7 +116,9 @@ def _do_probe(host: str, port: int, timeout: int) -> Dict[str, Any]:
         }
 
 
-async def probe_tls_with_pqc_groups(target_ip: str, port: int = 443, timeout: int = 10) -> ScapyProbeResult:
+async def probe_tls_with_pqc_groups(
+    target_ip: str, port: int = 443, timeout: int = 10
+) -> ScapyProbeResult:
     try:
         loop = asyncio.get_event_loop()
         result = await asyncio.wait_for(

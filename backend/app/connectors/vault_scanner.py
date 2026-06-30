@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from typing import Any, Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +12,9 @@ logger = logging.getLogger(__name__)
 class VaultScannerConnector(BaseConnector):
     """Scan HashiCorp Vault for cryptographic material in secrets."""
 
-    def __init__(self, vault_url: str, token: str, mount_point: str = "secret", path: str = ""):
+    def __init__(
+        self, vault_url: str, token: str, mount_point: str = "secret", path: str = ""
+    ):
         super().__init__(f"Vault Scanner ({vault_url})")
         self.vault_url = vault_url.rstrip("/")
         self.token = token
@@ -22,6 +23,7 @@ class VaultScannerConnector(BaseConnector):
 
     async def _vault_request(self, method: str, vpath: str) -> Dict[str, Any]:
         import httpx
+
         url = f"{self.vault_url}/v1/{vpath}"
         headers = {"X-Vault-Token": self.token}
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -56,7 +58,9 @@ class VaultScannerConnector(BaseConnector):
 
     async def _upsert_secret(self, session: AsyncSession, secret_path: str) -> str:
         secret_data = await self._read_kv_entry(secret_path)
-        has_cert = any(k in secret_data for k in ("cert", "certificate", "tls_cert", "ca_cert"))
+        has_cert = any(
+            k in secret_data for k in ("cert", "certificate", "tls_cert", "ca_cert")
+        )
         has_key = any(k in secret_data for k in ("private_key", "key", "tls_key"))
 
         asset_name = f"vault:{self.mount_point}:{secret_path}"
