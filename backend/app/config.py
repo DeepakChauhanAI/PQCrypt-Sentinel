@@ -51,7 +51,11 @@ def redact_sensitive(text: str) -> str:
 # Dynamically find the .env file in the project root or backend dir
 _backend_dir = Path(__file__).resolve().parent.parent
 _project_root = _backend_dir.parent
-_env_files = [str(_project_root / ".env"), str(_backend_dir / ".env"), ".env"]
+_env_files: list[str | Path] = [
+    str(_project_root / ".env"),
+    str(_backend_dir / ".env"),
+    ".env",
+]
 
 
 class Settings(BaseSettings):

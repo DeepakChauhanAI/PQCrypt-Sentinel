@@ -308,7 +308,7 @@ class SSHConnector(BaseConnector):
         return tpm_info
 
     async def sync(self, session: AsyncSession, **kwargs: Any) -> Dict[str, Any]:
-        import paramiko
+        import paramiko  # type: ignore[import-untyped]
 
         creds = await self._get_ssh_credentials()
         username = creds.get("username") or creds.get("user")

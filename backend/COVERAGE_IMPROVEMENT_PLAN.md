@@ -4,7 +4,7 @@
 
 | Metric | Value |
 |--------|-------|
-| **Total coverage** | **95.87%** (9,385 / 9,789 statements) |
+| **Total coverage** | **95.85%** (9,338 / 9,742 statements) |
 | Missing statements | 404 |
 | Total tests | 1,504 (1,104 original + 400 new); 1,499 passed, 5 skipped |
 | Failures | 0 |
@@ -100,7 +100,7 @@ This section records the work done after the original session was terminated by 
 
 - `backend/pytest.ini`: raised `--cov-fail-under` from `85` to `95` and added `--cov-report=html`.
 
-### Notes on remaining 468 missed statements
+### Notes on remaining 404 missed statements
 
 A small number of the originally-listed lines are now known to be unreachable in the current implementation (e.g., `resolve_curve_status` SECP fallbacks after the `ck_clean` substring match, and `_parse_key_size` digit fallbacks after the regex match). They were left intact to avoid behavioural changes; the coverage target is still met.
 
