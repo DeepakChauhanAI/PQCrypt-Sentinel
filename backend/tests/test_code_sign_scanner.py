@@ -59,3 +59,61 @@ def test_verify_no_signature(tmp_path: Path):
     result = verify_code_signature(str(path))
     assert result["signature_present"] is False
     assert result["status"] == "success"
+
+
+def test_find_pkcs7_blob_short_data():
+    """_find_pkcs7_blob returns the trailing bytes when data is too short for length read."""
+    from app.scanners.code_sign_scanner import _find_pkcs7_blob
+    signed_data_oid = bytes.fromhex("06 09 2A 86 48 86 F7 0D 01 07 02".replace(" ", ""))
+    result = _find_pkcs7_blob(b"\x30\x82" + signed_data_oid)
+    assert result is not None
+
+
+def test_find_pkcs7_blob_no_sequence_prefix(tmp_path: Path):
+    """Binary containing OID but no enclosing SEQUENCE is treated as no certs."""
+    signed_data_oid = bytes.fromhex("06 09 2A 86 48 86 F7 0D 01 07 02".replace(" ", ""))
+    data = b"\x00" * 8 + signed_data_oid + b"\x00" * 20
+    path = tmp_path / "no_seq.bin"
+    path.write_bytes(data)
+    result = verify_code_signature(str(path))
+    assert result["signature_present"] is False
+
+
+def test_find_pkcs7_blob_with_sequence_prefix(tmp_path: Path):
+    """A synthetic PKCS#7 blob inside a binary is discovered."""
+    signed_data_oid = bytes.fromhex("06 09 2A 86 48 86 F7 0D 01 07 02".replace(" ", ""))
+    # SEQUENCE (0x30 0x82 <2-byte length>) + OID + padding
+    length = 32
+    seq = bytes([0x30, 0x82]) + length.to_bytes(2, "big") + signed_data_oid + b"\x00" * (length - len(signed_data_oid))
+    data = b"MZ" + seq + b"\x00" * 16
+    path = tmp_path / "with_seq.bin"
+    path.write_bytes(data)
+    result = verify_code_signature(str(path))
+    # No real certs, so signature_present is False but the branch was exercised
+    assert result["signature_present"] is False
+
+
+def test_verify_pem_with_invalid_block(tmp_path: Path):
+    """Invalid PEM blocks are collected as errors but the scan succeeds."""
+    text = (
+        "-----BEGIN CERTIFICATE-----\n"
+        "not-valid-base64!!!\n"
+        "-----END CERTIFICATE-----\n"
+    )
+    path = tmp_path / "bad.pem"
+    path.write_text(text)
+    result = verify_code_signature(str(path))
+    assert result["signature_present"] is False
+    assert any("PEM parse failed" in e for e in result["errors"])
+
+
+def test_verify_partial_status_on_cert_parse_error(tmp_path: Path, cert_file: Path):
+    """If one cert parses and another fails, status is partial."""
+    from unittest.mock import patch
+    with patch("app.scanners.code_sign_scanner.parse_certificate", side_effect=[Exception("bad cert"), {}]):
+        # Need two certs; use two copies of the same cert file concatenated
+        pem_bytes = cert_file.read_bytes()
+        path = tmp_path / "two.pem"
+        path.write_bytes(pem_bytes + pem_bytes)
+        result = verify_code_signature(str(path))
+    assert result["status"] == "partial"

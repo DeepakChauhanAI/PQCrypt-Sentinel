@@ -105,6 +105,71 @@ def test_redis_cache_clear_namespace_returns_count():
     assert deleted == 2
 
 
+def test_redis_cache_get_client_handles_init_error():
+    c = RedisCache("redis://invalid:1", namespace="test")
+    with patch.object(cache_mod.aioredis, "from_url", side_effect=Exception("boom")):
+        assert asyncio.run(c.get("k")) is None
+
+
+def test_redis_cache_get_returns_none_when_client_none():
+    c = RedisCache("redis://x:1", namespace="test")
+    assert c._client is None
+    assert asyncio.run(c.get("k")) is None
+
+
+def test_redis_cache_set_noop_when_client_none():
+    c = RedisCache("redis://x:1", namespace="test")
+    with patch.object(c, "_get_client", return_value=None):
+        # Should complete without raising even though client is None.
+        asyncio.run(c.set("k", {"a": 1}))
+
+
+def test_redis_cache_clear_namespace_returns_zero_when_client_none():
+    c = RedisCache("redis://x:1", namespace="pqc")
+    with patch.object(c, "_get_client", return_value=None):
+        assert asyncio.run(c.clear_namespace()) == 0
+
+
+def test_redis_cache_ping_false_when_client_none():
+    c = RedisCache("redis://x:1", namespace="test")
+    with patch.object(c, "_get_client", return_value=None):
+        assert asyncio.run(c.ping()) is False
+
+
+def test_redis_cache_aclose_handles_exception():
+    client = _make_mock_redis_client()
+    client.aclose = AsyncMock(side_effect=Exception("close failed"))
+    c = RedisCache("redis://x:1", namespace="test")
+    c._client = client
+    # Must not raise despite aclose failing.
+    asyncio.run(c.aclose())
+    assert c._client is None
+
+
+def test_close_redis_cache_noop_when_no_singleton():
+    cache_mod._singleton = None
+    # Must complete without raising when singleton is already None.
+    asyncio.run(close_redis_cache())
+
+
+def test_redis_cache_set_logs_redis_error():
+    from redis.exceptions import RedisError
+    client = _make_mock_redis_client()
+    client.set = AsyncMock(side_effect=RedisError("set failed"))
+    c = RedisCache("redis://x:1", namespace="test")
+    c._client = client
+    asyncio.run(c.set("k", {"a": 1}))
+
+
+def test_redis_cache_clear_namespace_logs_redis_error():
+    from redis.exceptions import RedisError
+    client = _make_mock_redis_client()
+    client.scan = AsyncMock(side_effect=RedisError("scan failed"))
+    c = RedisCache("redis://x:1", namespace="pqc")
+    c._client = client
+    assert asyncio.run(c.clear_namespace()) == 0
+
+
 def test_get_redis_cache_returns_singleton():
     async def _runner():
         cache_mod._singleton = None

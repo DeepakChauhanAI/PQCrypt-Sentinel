@@ -89,6 +89,9 @@ class TestLooksLikePassiveInterface:
     def test_http_prefix(self):
         assert _looks_like_passive_interface("http://eth0") is False
 
+    def test_https_prefix(self):
+        assert _looks_like_passive_interface("https://eth0") is False
+
 
 class TestLooksLikeConnectorPrefix:
     def test_ssh(self):
@@ -132,6 +135,11 @@ class TestClassifyTargetExtended:
         cls = classify_target("http://10.0.0.1:8080/api")
         assert cls.kind == "host"
         assert cls.label == "10.0.0.1:8080"
+
+    def test_url_with_fqdn(self):
+        cls = classify_target("https://example.com/path")
+        assert cls.kind == "domain"
+        assert cls.label == "example.com"
 
     def test_passive_interface(self):
         cls = classify_target("eth0")

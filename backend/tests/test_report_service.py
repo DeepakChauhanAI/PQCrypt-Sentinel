@@ -1059,3 +1059,235 @@ def test_generate_pdf_executive_report_weasyprint_failure():
         assert out_path.endswith(".html")
         assert os.path.exists(out_path)
 
+
+# ------------------- Coverage gap fill-ins --------------------
+
+
+def test_generate_pdf_executive_report_unsupported_format():
+    """Unsupported executive format raises ValueError."""
+    from app.services.report_service import generate_pdf_executive_report
+
+    session = AsyncMock()
+    with pytest.raises(ValueError, match="Unsupported executive report format"):
+        asyncio.run(generate_pdf_executive_report(session, "r-x", fmt="docx"))
+
+
+def test_generate_compliance_report_unsupported_format():
+    """Unsupported compliance format raises ValueError."""
+    from app.services.report_service import generate_compliance_report
+
+    session = AsyncMock()
+    with pytest.raises(ValueError, match="Unsupported compliance report format"):
+        asyncio.run(generate_compliance_report(session, "r-x", fmt="pdf"))
+
+
+def test_generate_compliance_report_html_output():
+    """Compliance report fmt='html' writes and returns HTML path."""
+    from app.services.report_service import generate_compliance_report
+
+    session = AsyncMock()
+    session.execute.side_effect = lambda stmt: MagicMock(
+        scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
+    )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        with patch("app.services.report_service.os.path.dirname") as mock_dirname:
+            mock_dirname.return_value = tmp
+            out_path = asyncio.run(generate_compliance_report(session, "report-c-html", fmt="html"))
+        assert out_path.endswith(".html")
+        assert os.path.exists(out_path)
+
+
+def test_render_compliance_html_empty():
+    """_render_compliance_html with empty report renders all fallback rows."""
+    from app.services.report_service import _render_compliance_html
+
+    html = _render_compliance_html({
+        "report_metadata": {"report_id": "r-empty"},
+        "executive_summary": {},
+    })
+    assert "r-empty" in html
+    assert "No remediation data" in html
+    assert "No algorithms recorded" in html
+    assert "No assets in scope" in html
+    assert "No findings recorded" in html
+    assert "No compliance mapping data" in html
+
+
+def test_render_compliance_html_rich():
+    """_render_compliance_html with rich data renders every table section."""
+    from app.services.report_service import _render_compliance_html
+
+    report = {
+        "report_metadata": {
+            "report_id": "r-rich",
+            "framework": "NIST",
+            "generated_at": "2026-01-01T00:00:00Z",
+            "scope_filters": {"environment": "prod"},
+        },
+        "executive_summary": {
+            "total_assets": 2,
+            "total_findings": 3,
+            "overall_pqc_readiness_pct": 66.7,
+            "findings_by_severity": {"critical": 1, "high": 1, "medium": 0, "low": 1, "info": 0},
+            "remediation_status": {"open": 2, "resolved": 1},
+            "algorithm_distribution": {"pqc_ready": 1, "vulnerable": 2},
+        },
+        "findings_by_asset": [
+            {
+                "asset_name": "srv-1",
+                "asset_type": "server",
+                "environment": "prod",
+                "fqdn": "srv-1.example.com",
+                "ip_address": "10.0.0.1",
+                "pqc_readiness_pct": 50.0,
+                "findings": [
+                    {
+                        "finding_type": "weak_algorithm",
+                        "severity": "critical",
+                        "risk_score": 95,
+                        "status": "open",
+                        "recommended_algorithm": "ML-KEM-768",
+                        "remediation": "Rotate",
+                        "nist_control": "SC-17",
+                    }
+                ],
+            }
+        ],
+        "compliance_mapping": [
+            {
+                "asset_name": "srv-1",
+                "finding_type": "weak_algorithm",
+                "nist_control": "SC-17",
+                "risk_score": 95,
+                "status": "open",
+                "recommended_algorithm": "ML-KEM-768",
+                "remediation": "Rotate",
+            }
+        ],
+    }
+    html = _render_compliance_html(report)
+    assert "r-rich" in html
+    assert "srv-1" in html
+    assert "weak_algorithm" in html
+    assert "66.7%" in html
+    assert "SC-17" in html
+    assert "ML-KEM-768" in html
+
+
+def test_generate_pdf_executive_report_html_format():
+    """fmt='html' returns the HTML path directly."""
+    from app.services.report_service import generate_pdf_executive_report
+
+    session = AsyncMock()
+    session.execute.return_value = MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[]))))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        with patch("app.services.report_service.os.path.dirname") as mock_dirname:
+            mock_dirname.return_value = tmp
+            out_path = asyncio.run(generate_pdf_executive_report(session, "r-html", fmt="html"))
+        assert out_path.endswith(".html")
+        assert os.path.exists(out_path)
+
+
+def test_generate_pdf_executive_report_owner_id_filter():
+    """owner_id scope filter is applied."""
+    from app.services.report_service import generate_pdf_executive_report
+
+    session = AsyncMock()
+    session.execute.return_value = MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[]))))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        with patch("app.services.report_service.os.path.dirname") as mock_dirname, \
+             patch.dict("sys.modules", {"weasyprint": None}):
+            mock_dirname.return_value = tmp
+            out_path = asyncio.run(generate_pdf_executive_report(session, "r-owner", scope_filters={"owner_id": "u-1"}))
+        assert out_path.endswith(".html")
+
+
+def test_generate_compliance_report_with_scope_filters():
+    """Compliance report applies environment, business_service, owner_id filters."""
+    from app.services.report_service import generate_compliance_report
+
+    session = AsyncMock()
+    session.execute.side_effect = lambda stmt: MagicMock(
+        scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
+    )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        with patch("app.services.report_service.os.path.dirname") as mock_dirname:
+            mock_dirname.return_value = tmp
+            out_path = asyncio.run(generate_compliance_report(
+                session, "r-c-filters",
+                scope_filters={"environment": "prod", "business_service": "pay", "owner_id": "u-1"},
+            ))
+        assert os.path.exists(out_path)
+
+
+def test_post_process_cbom_meta_extraction_branches():
+    """Exercise all meta extraction branches for protocol components."""
+    from app.services.report_service import post_process_cbom
+
+    class FakeAsset:
+        asset_metadata = {"tls_version": "TLSv1.2", "cipher_suite": "AES128-SHA", "asset_type": "web_app"}
+
+    def _cert(**kwargs):
+        defaults = {
+            "thumbprint": "a" * 64,
+            "pub_key_size": 2048,
+            "not_before": datetime(2026, 1, 1, tzinfo=timezone.utc),
+            "not_after": datetime(2027, 1, 1, tzinfo=timezone.utc),
+        }
+        defaults.update(kwargs)
+        return SimpleNamespace(**defaults)
+
+    class CertWithTemp:
+        thumbprint = "a" * 64
+        pub_key_size = 2048
+        not_before = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        not_after = datetime(2027, 1, 1, tzinfo=timezone.utc)
+        temp_asset_metadata = {"tls_version": "TLSv1.0", "cipher_suite": "DES", "asset_type": "legacy"}
+
+    cert_with_asset = _cert(asset=FakeAsset())
+    cert_with_meta = _cert(asset_metadata={"tls_version": "TLSv1.3"})
+
+    class CertWithMetaError:
+        thumbprint = "a" * 64
+        pub_key_size = 2048
+        not_before = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        not_after = datetime(2027, 1, 1, tzinfo=timezone.utc)
+        @property
+        def temp_asset_metadata(self):
+            raise RuntimeError("boom")
+        @property
+        def asset(self):
+            return None
+        @property
+        def asset_metadata(self):
+            raise RuntimeError("also boom")
+
+    cbom = {
+        "components": [
+            {"bom-ref": "cert-1", "type": "certificate"},
+            {"bom-ref": "cert-2", "type": "certificate"},
+            {"bom-ref": "cert-3", "type": "certificate"},
+            {"bom-ref": "cert-4", "type": "certificate"},
+        ]
+    }
+    assets_map = {
+        "cert-1": CertWithTemp(),
+        "cert-2": cert_with_asset,
+        "cert-3": cert_with_meta,
+        "cert-4": CertWithMetaError(),
+    }
+    out = json.loads(post_process_cbom(json.dumps(cbom), assets_map))
+    comps = {c["bom-ref"]: c for c in out["components"]}
+    assert "protocol-1" in comps
+    assert comps["protocol-1"]["cryptoProperties"]["version"] == "TLSv1.0"
+    assert "protocol-2" in comps
+    assert comps["protocol-2"]["cryptoProperties"]["version"] == "TLSv1.2"
+    assert "protocol-3" in comps
+    assert comps["protocol-3"]["cryptoProperties"]["version"] == "TLSv1.3"
+    assert "protocol-4" in comps
+    assert comps["protocol-4"]["cryptoProperties"]["version"] == "unknown"
+

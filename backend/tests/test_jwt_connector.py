@@ -231,3 +231,63 @@ class TestFakeAsset:
         assert fa.asset_type == "jwt"
         assert fa.discovery_source == "jwt"
         assert fa.asset_metadata == {}
+
+
+class TestCredentialsAndFetch:
+    @pytest.mark.asyncio
+    async def test_get_credentials_empty(self):
+        connector = JWTConnector()
+        assert await connector._get_credentials() == {}
+
+    @pytest.mark.asyncio
+    async def test_get_credentials_direct_token(self):
+        connector = JWTConnector(credentials_ref={"token": "secret"})
+        assert await connector._get_credentials() == {"token": "secret"}
+
+    @pytest.mark.asyncio
+    async def test_get_credentials_vault_dict(self):
+        connector = JWTConnector(credentials_ref={"vault_path": "path/to/secret"})
+        with patch("app.connectors.jwt_connector.get_vault_secret", new=AsyncMock(return_value={"token": "vault"})) as m:
+            result = await connector._get_credentials()
+        assert result == {"token": "vault"}
+        m.assert_awaited_once_with("path/to/secret", None)
+
+    @pytest.mark.asyncio
+    async def test_get_credentials_vault_object(self):
+        class Ref:
+            vault_path = "path/obj"
+            version = 2
+        connector = JWTConnector(credentials_ref=Ref())
+        with patch("app.connectors.jwt_connector.get_vault_secret", new=AsyncMock(return_value={"token": "obj"})) as m:
+            result = await connector._get_credentials()
+        assert result == {"token": "obj"}
+        m.assert_awaited_once_with("path/obj", 2)
+
+    def test_decode_unverified_bad_base64(self):
+        h = base64.urlsafe_b64encode(json.dumps({"alg": "RS256"}).encode()).rstrip(b"=").decode()
+        bad = "not-b64!"
+        with pytest.raises(Exception, match="base64"):
+            JWTConnector._decode_unverified(f"{h}.{bad}.sig")
+
+    def test_decode_unverified_bad_header_type(self):
+        h = base64.urlsafe_b64encode(json.dumps(["not", "dict"]).encode()).rstrip(b"=").decode()
+        p = base64.urlsafe_b64encode(json.dumps({"sub": "x"}).encode()).rstrip(b"=").decode()
+        with pytest.raises(Exception, match="JSON objects"):
+            JWTConnector._decode_unverified(f"{h}.{p}.sig")
+
+
+class TestDeriveKeySizeBitsEdgeCases:
+    def test_rsa_n_with_leading_zero(self):
+        n_bytes = b"\x00" + b"\x01" + b"\x00" * 255
+        n_b64 = base64.urlsafe_b64encode(n_bytes).rstrip(b"=").decode()
+        assert JWTConnector._derive_key_size_bits({"n": n_b64}) == 2048
+
+    def test_rsa_n_decode_error(self):
+        assert JWTConnector._derive_key_size_bits({"n": "!!!"}) is None
+
+    def test_rsa_only_e_returns_none(self):
+        assert JWTConnector._derive_key_size_bits({"e": "AQAB"}) is None
+
+    def test_pqc_alg_classified(self):
+        with patch("app.connectors.jwt_connector._PQC_ALGS", {"PQC-TEST"}):
+            assert JWTConnector._classify("PQC-TEST", None) == "pqc_ready"
